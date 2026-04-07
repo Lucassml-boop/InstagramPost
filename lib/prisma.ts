@@ -9,7 +9,10 @@ declare global {
 
 function createPrismaClient() {
   const adapter = new PrismaPg({
-    connectionString: requireEnv("DATABASE_URL")
+    connectionString: requireEnv("DATABASE_URL"),
+    ssl: {
+      rejectUnauthorized: false
+    }
   });
 
   return new PrismaClient({

@@ -16,3 +16,4 @@ data/*.db-wal
 prisma/*.db
 prisma/*.db-shm
 prisma/*.db-wal
+.vercel
