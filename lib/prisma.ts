@@ -38,10 +38,20 @@ function createPrismaClient() {
   });
 }
 
-export const prisma =
-  global.__prisma__ ??
-  createPrismaClient();
+function getPrismaClient() {
+  if (!global.__prisma__) {
+    global.__prisma__ = createPrismaClient();
+  }
+
+  return global.__prisma__;
+}
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property, receiver) {
+    return Reflect.get(getPrismaClient(), property, receiver);
+  }
+});
 
 if (process.env.NODE_ENV !== "production") {
-  global.__prisma__ = prisma;
+  global.__prisma__ = getPrismaClient();
 }
