@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id               String             @id @default(cuid())
+  email            String             @unique
+  passwordHash     String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  sessions         Session[]
+  instagramAccount InstagramAccount?
+  posts            Post[]
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String
+  sessionHash String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model InstagramAccount {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  instagramUserId   String   @unique
+  username          String
+  profilePictureUrl String?
+  accessToken       String
+  accessTokenIv     String
+  accessTokenTag    String
+  connected         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id              String     @id @default(cuid())
+  userId          String
+  topic           String
+  message         String
+  tone            String
+  brandColors     String
+  keywords        String?
+  caption         String
+  hashtags        String
+  htmlLayout      String
+  imageUrl        String
+  imagePath       String
+  status          PostStatus @default(DRAFT)
+  scheduledTime   DateTime?
+  publishedMediaId String?
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, scheduledTime])
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
