@@ -25,6 +25,12 @@ function getRuntimeDatabaseUrl() {
 }
 
 function createPrismaClient() {
+  console.log("[prisma] Initializing Prisma client", {
+    env: process.env.NODE_ENV ?? "unknown",
+    vercelEnv: process.env.VERCEL_ENV ?? "unknown",
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL)
+  });
+
   const adapter = new PrismaPg({
     connectionString: getRuntimeDatabaseUrl(),
     ssl: {

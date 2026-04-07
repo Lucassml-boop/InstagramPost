@@ -8,6 +8,8 @@ import {
   saveInstagramAccount
 } from "@/lib/instagram";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const user = await getCurrentUser();
 
