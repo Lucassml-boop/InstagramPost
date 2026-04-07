@@ -12,9 +12,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
+  const baseUrl = getBaseUrl();
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", getBaseUrl()));
+    console.warn("[instagram-callback] Anonymous callback, redirecting to login", {
+      baseUrl
+    });
+    return NextResponse.redirect(new URL("/login", baseUrl));
   }
 
   const url = new URL(request.url);
@@ -25,23 +29,46 @@ export async function GET(request: Request) {
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(OAUTH_STATE_COOKIE_NAME)?.value;
 
+  console.log("[instagram-callback] Received callback", {
+    requestUrl: request.url,
+    baseUrl,
+    redirectUri: process.env.INSTAGRAM_REDIRECT_URI ?? null,
+    hasCode: Boolean(code),
+    stateLength: state?.length ?? 0,
+    expectedStateLength: expectedState?.length ?? 0,
+    error: error ?? null,
+    errorReason: errorReason ?? null
+  });
+
   cookieStore.delete(OAUTH_STATE_COOKIE_NAME);
 
   if (error) {
+    console.error("[instagram-callback] OAuth provider returned error", {
+      error,
+      errorReason
+    });
     return NextResponse.redirect(
-      new URL(`/dashboard?error=${encodeURIComponent(errorReason ?? error)}`, getBaseUrl())
+      new URL(`/dashboard?error=${encodeURIComponent(errorReason ?? error)}`, baseUrl)
     );
   }
 
   if (!code) {
+    console.error("[instagram-callback] Missing authorization code", {
+      requestUrl: request.url
+    });
     return NextResponse.redirect(
-      new URL("/dashboard?error=Missing%20authorization%20code", getBaseUrl())
+      new URL("/dashboard?error=Missing%20authorization%20code", baseUrl)
     );
   }
 
   if (!state || !expectedState || state !== expectedState) {
+    console.error("[instagram-callback] Invalid OAuth state", {
+      stateLength: state?.length ?? 0,
+      expectedStateLength: expectedState?.length ?? 0,
+      stateMatches: state === expectedState
+    });
     return NextResponse.redirect(
-      new URL("/dashboard?error=Invalid%20OAuth%20state", getBaseUrl())
+      new URL("/dashboard?error=Invalid%20OAuth%20state", baseUrl)
     );
   }
 
@@ -60,15 +87,25 @@ export async function GET(request: Request) {
       accessToken: tokenResponse.accessToken
     });
 
-    return NextResponse.redirect(new URL("/dashboard?connected=1", getBaseUrl()));
+    console.log("[instagram-callback] Instagram account connected", {
+      userId: user.id,
+      instagramUserId: profile.instagramUserId
+    });
+
+    return NextResponse.redirect(new URL("/dashboard?connected=1", baseUrl));
   } catch (callbackError) {
     const message =
       callbackError instanceof Error
         ? callbackError.message
         : "Unable to complete Instagram authentication.";
 
+    console.error("[instagram-callback] Callback flow failed", {
+      message,
+      stack: callbackError instanceof Error ? callbackError.stack : null
+    });
+
     return NextResponse.redirect(
-      new URL(`/dashboard?error=${encodeURIComponent(message)}`, getBaseUrl())
+      new URL(`/dashboard?error=${encodeURIComponent(message)}`, baseUrl)
     );
   }
 }

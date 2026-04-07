@@ -5,10 +5,11 @@ import { prisma } from "@/lib/prisma";
 const INSTAGRAM_API_VERSION = "v23.0";
 
 export function getInstagramAuthUrl(state: string) {
+  const redirectUri = requireEnv("INSTAGRAM_REDIRECT_URI");
   const url = new URL("https://www.instagram.com/oauth/authorize");
 
   url.searchParams.set("client_id", requireEnv("INSTAGRAM_APP_ID"));
-  url.searchParams.set("redirect_uri", requireEnv("INSTAGRAM_REDIRECT_URI"));
+  url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set(
     "scope",
@@ -17,16 +18,27 @@ export function getInstagramAuthUrl(state: string) {
   url.searchParams.set("state", state);
   url.searchParams.set("force_authentication", "1");
 
+  console.log("[instagram] Building auth URL", {
+    redirectUri,
+    stateLength: state.length
+  });
+
   return url.toString();
 }
 
 export async function exchangeCodeForAccessToken(code: string) {
+  const redirectUri = requireEnv("INSTAGRAM_REDIRECT_URI");
   const body = new URLSearchParams({
     client_id: requireEnv("INSTAGRAM_APP_ID"),
     client_secret: requireEnv("INSTAGRAM_APP_SECRET"),
     grant_type: "authorization_code",
-    redirect_uri: requireEnv("INSTAGRAM_REDIRECT_URI"),
+    redirect_uri: redirectUri,
     code
+  });
+
+  console.log("[instagram] Exchanging code for token", {
+    redirectUri,
+    codeLength: code.length
   });
 
   const response = await fetch("https://api.instagram.com/oauth/access_token", {
@@ -38,8 +50,20 @@ export async function exchangeCodeForAccessToken(code: string) {
   const json = await response.json();
 
   if (!response.ok || !json.access_token) {
+    console.error("[instagram] Token exchange failed", {
+      status: response.status,
+      statusText: response.statusText,
+      redirectUri,
+      errorType: json.error_type ?? null,
+      errorMessage: json.error_message ?? null
+    });
     throw new Error(json.error_message ?? "Unable to exchange Instagram code.");
   }
+
+  console.log("[instagram] Token exchange succeeded", {
+    status: response.status,
+    instagramUserId: String(json.user_id ?? "")
+  });
 
   return {
     accessToken: String(json.access_token),
@@ -75,6 +99,12 @@ export async function fetchInstagramProfile(accessToken: string, instagramUserId
       if (response.ok && !json.error) {
         const profilePictureUrl = await fetchInstagramProfilePicture(endpoint, accessToken);
 
+        console.log("[instagram] Profile fetch succeeded", {
+          endpoint,
+          fields,
+          instagramUserId: String(json.id ?? instagramUserId ?? "")
+        });
+
         return {
           instagramUserId: String(json.id ?? instagramUserId ?? ""),
           username: String(json.username ?? ""),
@@ -84,6 +114,13 @@ export async function fetchInstagramProfile(accessToken: string, instagramUserId
       }
 
       lastError = json.error?.message ?? "Unable to fetch Instagram profile.";
+      console.error("[instagram] Profile fetch failed", {
+        endpoint,
+        fields,
+        status: response.status,
+        errorMessage: json.error?.message ?? null,
+        errorCode: json.error?.code ?? null
+      });
     }
   }
 

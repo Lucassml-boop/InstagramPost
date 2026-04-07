@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { InstagramAccountCard } from "@/components/InstagramAccountCard";
 import { Panel, SectionTitle } from "@/components/ui";
 import { destroySession, getCurrentUser } from "@/lib/auth";
@@ -11,17 +12,22 @@ export default async function DashboardPage({
   searchParams: Promise<{ connected?: string; published?: string; error?: string }>;
 }) {
   const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
   const params = await searchParams;
   const instagram = await prisma.instagramAccount.findUnique({
-    where: { userId: user!.id }
+    where: { userId: user.id }
   });
   const instagramSnapshot = instagram ? getInstagramAccountSnapshot(instagram) : null;
   const [scheduledCount, publishedCount] = await Promise.all([
     prisma.post.count({
-      where: { userId: user!.id, status: "SCHEDULED" }
+      where: { userId: user.id, status: "SCHEDULED" }
     }),
     prisma.post.count({
-      where: { userId: user!.id, status: "PUBLISHED" }
+      where: { userId: user.id, status: "PUBLISHED" }
     })
   ]);
 
@@ -36,7 +42,7 @@ export default async function DashboardPage({
         <SectionTitle
           eyebrow="Dashboard"
           title="Instagram publishing workspace"
-          description={`Logged in as ${user!.email}. Connect the Instagram account, generate content with AI, preview it, and publish or schedule it for your Meta review flow.`}
+          description={`Logged in as ${user.email}. Connect the Instagram account, generate content with AI, preview it, and publish or schedule it for your Meta review flow.`}
         />
         <form action={logoutAction}>
           <button
