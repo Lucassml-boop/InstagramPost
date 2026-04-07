@@ -2,6 +2,7 @@ import Link from "next/link";
 import { InstagramAccountCard } from "@/components/InstagramAccountCard";
 import { Panel, SectionTitle } from "@/components/ui";
 import { destroySession, getCurrentUser } from "@/lib/auth";
+import { getInstagramAccountSnapshot } from "@/lib/instagram";
 import { prisma } from "@/lib/prisma";
 
 export default async function DashboardPage({
@@ -14,6 +15,7 @@ export default async function DashboardPage({
   const instagram = await prisma.instagramAccount.findUnique({
     where: { userId: user!.id }
   });
+  const instagramSnapshot = instagram ? getInstagramAccountSnapshot(instagram) : null;
   const [scheduledCount, publishedCount] = await Promise.all([
     prisma.post.count({
       where: { userId: user!.id, status: "SCHEDULED" }
@@ -68,7 +70,7 @@ export default async function DashboardPage({
         <Panel className="p-5">
           <p className="text-sm text-slate-500">Connection status</p>
           <p className="mt-2 text-2xl font-semibold text-ink">
-            {instagram?.connected ? "Connected" : "Pending"}
+            {instagramSnapshot?.connected ? "Connected" : "Pending"}
           </p>
         </Panel>
         <Panel className="p-5">
@@ -82,12 +84,12 @@ export default async function DashboardPage({
       </div>
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1fr_320px]">
-        {instagram ? (
+        {instagramSnapshot ? (
           <InstagramAccountCard
-            username={instagram.username}
-            instagramUserId={instagram.instagramUserId}
-            profilePictureUrl={instagram.profilePictureUrl}
-            connected={instagram.connected}
+            username={instagramSnapshot.username}
+            instagramUserId={instagramSnapshot.instagramUserId}
+            profilePictureUrl={instagramSnapshot.profilePictureUrl}
+            connected={instagramSnapshot.connected}
           />
         ) : (
           <Panel className="p-6">

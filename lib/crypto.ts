@@ -2,12 +2,20 @@ import crypto from "node:crypto";
 
 function getEncryptionKey() {
   const secret =
-    process.env.INSTAGRAM_APP_SECRET || process.env.OPENAI_API_KEY || "development-secret";
+    process.env.APP_ENCRYPTION_KEY ||
+    process.env.INSTAGRAM_APP_SECRET ||
+    process.env.OPENAI_API_KEY ||
+    "development-secret";
+
   return crypto.createHash("sha256").update(secret).digest();
 }
 
 export function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+export function hashSensitiveValue(value: string) {
+  return crypto.createHash("sha256").update(value).digest("hex");
 }
 
 export function randomToken(size = 32) {

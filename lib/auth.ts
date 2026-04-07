@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { hashToken, randomToken } from "@/lib/crypto";
+import { decryptValue, encryptValue, hashSensitiveValue, hashToken, randomToken } from "@/lib/crypto";
 
 export const SESSION_COOKIE_NAME = "social_manager_session";
 export const OAUTH_STATE_COOKIE_NAME = "instagram_oauth_state";
@@ -13,6 +13,23 @@ export type AuthUser = {
   email: string;
 };
 
+function getStoredEmail(user: {
+  email: string | null;
+  emailEncrypted: string | null;
+  emailIv: string | null;
+  emailTag: string | null;
+}) {
+  if (user.emailEncrypted && user.emailIv && user.emailTag) {
+    return decryptValue({
+      encrypted: user.emailEncrypted,
+      iv: user.emailIv,
+      tag: user.emailTag
+    });
+  }
+
+  return user.email ?? "";
+}
+
 export async function loginOrRegister(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -20,15 +37,26 @@ export async function loginOrRegister(email: string, password: string) {
     throw new Error("Email and password are required.");
   }
 
-  let user = await prisma.user.findUnique({
-    where: { email: normalizedEmail }
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { emailHash: hashSensitiveValue(normalizedEmail) },
+        { email: normalizedEmail }
+      ]
+    }
   });
 
   if (!user) {
     const passwordHash = await bcrypt.hash(password, 12);
+    const encryptedEmail = encryptValue(normalizedEmail);
+
     user = await prisma.user.create({
       data: {
-        email: normalizedEmail,
+        email: null,
+        emailHash: hashSensitiveValue(normalizedEmail),
+        emailEncrypted: encryptedEmail.encrypted,
+        emailIv: encryptedEmail.iv,
+        emailTag: encryptedEmail.tag,
         passwordHash
       }
     });
@@ -38,11 +66,26 @@ export async function loginOrRegister(email: string, password: string) {
     if (!isValid) {
       throw new Error("Invalid email or password.");
     }
+
+    if (!user.emailHash || !user.emailEncrypted || !user.emailIv || !user.emailTag || user.email) {
+      const encryptedEmail = encryptValue(normalizedEmail);
+
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: null,
+          emailHash: hashSensitiveValue(normalizedEmail),
+          emailEncrypted: encryptedEmail.encrypted,
+          emailIv: encryptedEmail.iv,
+          emailTag: encryptedEmail.tag
+        }
+      });
+    }
   }
 
   return {
     id: user.id,
-    email: user.email
+    email: getStoredEmail(user)
   } satisfies AuthUser;
 }
 
@@ -89,7 +132,7 @@ export async function getCurrentUser() {
 
   return {
     id: session.user.id,
-    email: session.user.email
+    email: getStoredEmail(session.user)
   } satisfies AuthUser;
 }
 

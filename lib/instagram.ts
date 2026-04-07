@@ -1,4 +1,4 @@
-import { encryptValue, decryptValue } from "@/lib/crypto";
+import { decryptValue, encryptValue, hashSensitiveValue } from "@/lib/crypto";
 import { getBaseUrl, requireEnv } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 
@@ -117,30 +117,104 @@ export async function saveInstagramAccount(input: {
   profilePictureUrl: string | null;
   accessToken: string;
 }) {
-  const encrypted = encryptValue(input.accessToken);
+  const encryptedAccessToken = encryptValue(input.accessToken);
+  const encryptedInstagramUserId = encryptValue(input.instagramUserId);
+  const encryptedUsername = encryptValue(input.username);
 
   return prisma.instagramAccount.upsert({
     where: { userId: input.userId },
     update: {
-      instagramUserId: input.instagramUserId,
-      username: input.username,
+      instagramUserId: null,
+      instagramUserIdHash: hashSensitiveValue(input.instagramUserId),
+      instagramUserIdEncrypted: encryptedInstagramUserId.encrypted,
+      instagramUserIdIv: encryptedInstagramUserId.iv,
+      instagramUserIdTag: encryptedInstagramUserId.tag,
+      username: null,
+      usernameEncrypted: encryptedUsername.encrypted,
+      usernameIv: encryptedUsername.iv,
+      usernameTag: encryptedUsername.tag,
       profilePictureUrl: input.profilePictureUrl,
-      accessToken: encrypted.encrypted,
-      accessTokenIv: encrypted.iv,
-      accessTokenTag: encrypted.tag,
+      accessToken: encryptedAccessToken.encrypted,
+      accessTokenIv: encryptedAccessToken.iv,
+      accessTokenTag: encryptedAccessToken.tag,
       connected: true
     },
     create: {
       userId: input.userId,
-      instagramUserId: input.instagramUserId,
-      username: input.username,
+      instagramUserId: null,
+      instagramUserIdHash: hashSensitiveValue(input.instagramUserId),
+      instagramUserIdEncrypted: encryptedInstagramUserId.encrypted,
+      instagramUserIdIv: encryptedInstagramUserId.iv,
+      instagramUserIdTag: encryptedInstagramUserId.tag,
+      username: null,
+      usernameEncrypted: encryptedUsername.encrypted,
+      usernameIv: encryptedUsername.iv,
+      usernameTag: encryptedUsername.tag,
       profilePictureUrl: input.profilePictureUrl,
-      accessToken: encrypted.encrypted,
-      accessTokenIv: encrypted.iv,
-      accessTokenTag: encrypted.tag,
+      accessToken: encryptedAccessToken.encrypted,
+      accessTokenIv: encryptedAccessToken.iv,
+      accessTokenTag: encryptedAccessToken.tag,
       connected: true
     }
   });
+}
+
+function getStoredInstagramUserId(account: {
+  instagramUserId: string | null;
+  instagramUserIdEncrypted: string | null;
+  instagramUserIdIv: string | null;
+  instagramUserIdTag: string | null;
+}) {
+  if (
+    account.instagramUserIdEncrypted &&
+    account.instagramUserIdIv &&
+    account.instagramUserIdTag
+  ) {
+    return decryptValue({
+      encrypted: account.instagramUserIdEncrypted,
+      iv: account.instagramUserIdIv,
+      tag: account.instagramUserIdTag
+    });
+  }
+
+  return account.instagramUserId ?? "";
+}
+
+function getStoredUsername(account: {
+  username: string | null;
+  usernameEncrypted: string | null;
+  usernameIv: string | null;
+  usernameTag: string | null;
+}) {
+  if (account.usernameEncrypted && account.usernameIv && account.usernameTag) {
+    return decryptValue({
+      encrypted: account.usernameEncrypted,
+      iv: account.usernameIv,
+      tag: account.usernameTag
+    });
+  }
+
+  return account.username ?? "";
+}
+
+export function getInstagramAccountSnapshot(account: {
+  instagramUserId: string | null;
+  instagramUserIdEncrypted: string | null;
+  instagramUserIdIv: string | null;
+  instagramUserIdTag: string | null;
+  username: string | null;
+  usernameEncrypted: string | null;
+  usernameIv: string | null;
+  usernameTag: string | null;
+  profilePictureUrl: string | null;
+  connected: boolean;
+}) {
+  return {
+    instagramUserId: getStoredInstagramUserId(account),
+    username: getStoredUsername(account),
+    profilePictureUrl: account.profilePictureUrl,
+    connected: account.connected
+  };
 }
 
 export async function getInstagramAccessToken(userId: string) {
@@ -168,13 +242,14 @@ export async function publishInstagramImage(input: {
   imageUrl: string;
 }) {
   const { account, accessToken } = await getInstagramAccessToken(input.userId);
+  const instagramUserId = getStoredInstagramUserId(account);
   const mediaBody = new URLSearchParams({
     image_url: input.imageUrl,
     caption: input.caption
   });
 
   const mediaResponse = await fetch(
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${account.instagramUserId}/media`,
+    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/media`,
     {
       method: "POST",
       headers: {
@@ -196,7 +271,7 @@ export async function publishInstagramImage(input: {
   });
 
   const publishResponse = await fetch(
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${account.instagramUserId}/media_publish`,
+    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/media_publish`,
     {
       method: "POST",
       headers: {

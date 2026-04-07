@@ -51,6 +51,7 @@ APP_BASE_URL=http://localhost:3000
 - Prisma config: `prisma.config.ts`
 - `DATABASE_URL` is used by Prisma Client at runtime and should point to the Supabase pooler
 - `DIRECT_URL` is used by Prisma CLI commands such as `prisma db push`
+- `APP_ENCRYPTION_KEY` should be set to a long random secret to encrypt sensitive values stored in the database
 - Run `npm run db:generate` after dependency changes
 - Run `npm run db:push` whenever the schema changes
 
@@ -60,6 +61,7 @@ Configure these environment variables in Vercel before the first deploy:
 
 - `DATABASE_URL`
 - `DIRECT_URL`
+- `APP_ENCRYPTION_KEY`
 - `INSTAGRAM_APP_ID`
 - `INSTAGRAM_APP_SECRET`
 - `INSTAGRAM_REDIRECT_URI`

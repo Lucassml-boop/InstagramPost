@@ -10,7 +10,11 @@ datasource db {
 
 model User {
   id               String             @id @default(cuid())
-  email            String             @unique
+  email            String?            @unique
+  emailHash        String?            @unique
+  emailEncrypted   String?
+  emailIv          String?
+  emailTag         String?
   passwordHash     String
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
@@ -31,18 +35,25 @@ model Session {
 }
 
 model InstagramAccount {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  instagramUserId   String   @unique
-  username          String
-  profilePictureUrl String?
-  accessToken       String
-  accessTokenIv     String
-  accessTokenTag    String
-  connected         Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  instagramUserId         String?  @unique
+  instagramUserIdHash     String?  @unique
+  instagramUserIdEncrypted String?
+  instagramUserIdIv       String?
+  instagramUserIdTag      String?
+  username                String?
+  usernameEncrypted       String?
+  usernameIv              String?
+  usernameTag             String?
+  profilePictureUrl       String?
+  accessToken             String
+  accessTokenIv           String
+  accessTokenTag          String
+  connected               Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Post {
