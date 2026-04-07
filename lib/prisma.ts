@@ -7,9 +7,26 @@ declare global {
   var __prisma__: PrismaClient | undefined;
 }
 
+function getRuntimeDatabaseUrl() {
+  const databaseUrl = requireEnv("DATABASE_URL");
+
+  // pg-connection-string can let `sslmode=require` override the explicit `ssl`
+  // config when using the Prisma pg adapter. For Supabase poolers, `no-verify`
+  // avoids the self-signed certificate chain failure in serverless runtimes.
+  if (databaseUrl.includes("sslmode=require")) {
+    return databaseUrl.replace("sslmode=require", "sslmode=no-verify");
+  }
+
+  if (databaseUrl.includes("?")) {
+    return `${databaseUrl}&sslmode=no-verify`;
+  }
+
+  return `${databaseUrl}?sslmode=no-verify`;
+}
+
 function createPrismaClient() {
   const adapter = new PrismaPg({
-    connectionString: requireEnv("DATABASE_URL"),
+    connectionString: getRuntimeDatabaseUrl(),
     ssl: {
       rejectUnauthorized: false
     }
