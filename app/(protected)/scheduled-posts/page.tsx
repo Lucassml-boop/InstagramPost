@@ -2,6 +2,8 @@ import Image from "next/image";
 import { PostStatus } from "@prisma/client";
 import { Panel, SectionTitle } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
+import { getLocaleFromCookies } from "@/lib/i18n-server";
 import { prisma } from "@/lib/prisma";
 
 export default async function ScheduledPostsPage({
@@ -10,6 +12,8 @@ export default async function ScheduledPostsPage({
   searchParams: Promise<{ saved?: string }>;
 }) {
   const user = await getCurrentUser();
+  const locale = await getLocaleFromCookies();
+  const dictionary = getDictionary(locale);
   const params = await searchParams;
   const posts = await prisma.post.findMany({
     where: {
@@ -26,14 +30,14 @@ export default async function ScheduledPostsPage({
   return (
     <div>
       <SectionTitle
-        eyebrow="Queue"
-        title="Scheduled Posts"
-        description="Track content waiting to be published as well as already-posted items for your review walkthrough."
+        eyebrow={dictionary.scheduledPage.eyebrow}
+        title={dictionary.scheduledPage.title}
+        description={dictionary.scheduledPage.description}
       />
 
       {params.saved ? (
         <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Scheduled post saved successfully.
+          {dictionary.scheduledPage.savedSuccess}
         </div>
       ) : null}
 
@@ -42,10 +46,10 @@ export default async function ScheduledPostsPage({
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-4 py-3 font-medium">Preview</th>
-                <th className="px-4 py-3 font-medium">Caption</th>
-                <th className="px-4 py-3 font-medium">Scheduled time</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.preview}</th>
+                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.caption}</th>
+                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.scheduledTime}</th>
+                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.status}</th>
               </tr>
             </thead>
             <tbody>
@@ -53,7 +57,7 @@ export default async function ScheduledPostsPage({
                 <tr key={post.id} className="border-t border-slate-100 align-top">
                   <td className="px-4 py-4">
                     <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-slate-100">
-                      <Image src={post.imageUrl} alt="Post preview" fill className="object-cover" unoptimized />
+                      <Image src={post.imageUrl} alt={dictionary.scheduledPage.previewAlt} fill className="object-cover" unoptimized />
                     </div>
                   </td>
                   <td className="max-w-md px-4 py-4 text-slate-700">
@@ -72,7 +76,7 @@ export default async function ScheduledPostsPage({
               {posts.length === 0 ? (
                 <tr>
                   <td className="px-4 py-10 text-center text-slate-500" colSpan={4}>
-                    No scheduled or published posts yet.
+                    {dictionary.scheduledPage.noPosts}
                   </td>
                 </tr>
               ) : null}

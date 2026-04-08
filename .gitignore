@@ -6,6 +6,8 @@ node_modules
 .env
 .env.*
 !.env.example
+public/generated-posts
+public/uploads
 
 *.log
 tsconfig.tsbuildinfo

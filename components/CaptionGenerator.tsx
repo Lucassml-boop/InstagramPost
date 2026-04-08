@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useI18n } from "@/components/I18nProvider";
 import { ImageUploader } from "@/components/ImageUploader";
 import { PostLayoutPreview } from "@/components/PostLayoutPreview";
 import { PostScheduler } from "@/components/PostScheduler";
@@ -18,6 +19,7 @@ type DraftResponse = {
 
 export function CaptionGenerator() {
   const router = useRouter();
+  const { dictionary } = useI18n();
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"professional" | "casual" | "promotional">("professional");
@@ -31,29 +33,61 @@ export function CaptionGenerator() {
   const [isPublishing, startPublishing] = useTransition();
 
   async function generatePost() {
-    setError(null);
+    const startedAt = Date.now();
 
-    const response = await fetch("/api/posts/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic,
-        message,
-        tone,
-        brandColors,
-        keywords
-      })
+    setError(null);
+    console.info("[post-generator] Starting generation request", {
+      topic,
+      tone,
+      hasMessage: Boolean(message.trim()),
+      hasBrandColors: Boolean(brandColors.trim()),
+      hasKeywords: Boolean(keywords.trim())
     });
 
-    const json = (await response.json()) as DraftResponse & { error?: string };
+    try {
+      const response = await fetch("/api/posts/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          message,
+          tone,
+          brandColors,
+          keywords
+        })
+      });
 
-    if (!response.ok) {
-      setError(json.error ?? "Unable to generate post.");
-      return;
+      console.info("[post-generator] Received response", {
+        ok: response.ok,
+        status: response.status,
+        durationMs: Date.now() - startedAt
+      });
+
+      const json = (await response.json()) as DraftResponse & { error?: string };
+
+      if (!response.ok) {
+        console.error("[post-generator] Generation failed", {
+          status: response.status,
+          error: json.error ?? dictionary.generator.generateError
+        });
+        setError(json.error ?? dictionary.generator.generateError);
+        return;
+      }
+
+      console.info("[post-generator] Generation succeeded", {
+        postId: json.postId,
+        hashtagsCount: json.hashtags.length,
+        durationMs: Date.now() - startedAt
+      });
+      setDraft(json);
+      setCaption(`${json.caption}\n\n${json.hashtags.join(" ")}`.trim());
+    } catch (error) {
+      console.error("[post-generator] Request crashed", {
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      setError(error instanceof Error ? error.message : dictionary.generator.generateError);
     }
-
-    setDraft(json);
-    setCaption(`${json.caption}\n\n${json.hashtags.join(" ")}`.trim());
   }
 
   async function publishNow() {
@@ -75,7 +109,7 @@ export function CaptionGenerator() {
     const json = (await response.json()) as { error?: string };
 
     if (!response.ok) {
-      setError(json.error ?? "Unable to publish.");
+      setError(json.error ?? dictionary.generator.publishError);
       return;
     }
 
@@ -85,7 +119,7 @@ export function CaptionGenerator() {
 
   async function schedulePost() {
     if (!draft || !scheduleTime) {
-      setError("Choose a schedule time before saving.");
+      setError(dictionary.generator.scheduleTimeRequired);
       return;
     }
 
@@ -104,7 +138,7 @@ export function CaptionGenerator() {
     const json = (await response.json()) as { error?: string };
 
     if (!response.ok) {
-      setError(json.error ?? "Unable to schedule.");
+      setError(json.error ?? dictionary.generator.scheduleError);
       return;
     }
 
@@ -117,28 +151,28 @@ export function CaptionGenerator() {
       <Panel className="p-6">
         <div className="grid gap-4">
           <label className="block text-sm font-medium text-slate-700">
-            Product or topic
+            {dictionary.generator.topic}
             <input
               value={topic}
               onChange={(event) => setTopic(event.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-              placeholder="Spring skincare launch"
+              placeholder={dictionary.generator.topicPlaceholder}
             />
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Promotion or message
+            {dictionary.generator.message}
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
               className="mt-2 min-h-28 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-              placeholder="Promote the limited-time launch offer and highlight natural ingredients."
+              placeholder={dictionary.generator.messagePlaceholder}
             />
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              Tone
+              {dictionary.generator.tone}
               <select
                 value={tone}
                 onChange={(event) =>
@@ -146,14 +180,14 @@ export function CaptionGenerator() {
                 }
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
               >
-                <option value="professional">Professional</option>
-                <option value="casual">Casual</option>
-                <option value="promotional">Promotional</option>
+                <option value="professional">{dictionary.generator.toneProfessional}</option>
+                <option value="casual">{dictionary.generator.toneCasual}</option>
+                <option value="promotional">{dictionary.generator.tonePromotional}</option>
               </select>
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Brand colors
+              {dictionary.generator.brandColors}
               <input
                 value={brandColors}
                 onChange={(event) => setBrandColors(event.target.value)}
@@ -164,12 +198,12 @@ export function CaptionGenerator() {
           </div>
 
           <label className="block text-sm font-medium text-slate-700">
-            Optional keywords
+            {dictionary.generator.keywords}
             <input
               value={keywords}
               onChange={(event) => setKeywords(event.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-              placeholder="clean beauty, launch, limited offer"
+              placeholder={dictionary.generator.keywordsPlaceholder}
             />
           </label>
         </div>
@@ -181,14 +215,14 @@ export function CaptionGenerator() {
             disabled={isGenerating}
             className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
           >
-            {isGenerating ? "Generating..." : "Generate Post"}
+            {isGenerating ? dictionary.generator.generating : dictionary.generator.generate}
           </button>
         </div>
 
         {draft ? (
           <div className="mt-8 space-y-4">
             <label className="block text-sm font-medium text-slate-700">
-              Edit caption
+              {dictionary.generator.editCaption}
               <textarea
                 value={caption}
                 onChange={(event) => setCaption(event.target.value)}
@@ -217,7 +251,7 @@ export function CaptionGenerator() {
                 disabled={isPublishing}
                 className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
               >
-                {isPublishing ? "Publishing..." : "Publish Now"}
+                {isPublishing ? dictionary.generator.publishing : dictionary.generator.publishNow}
               </button>
             </div>
 
@@ -228,7 +262,7 @@ export function CaptionGenerator() {
               disabled={isPublishing}
               className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-60"
             >
-              Save Schedule
+              {dictionary.generator.saveSchedule}
             </button>
           </div>
         ) : null}

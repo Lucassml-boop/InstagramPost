@@ -4,6 +4,7 @@ import { getCurrentUser, OAUTH_STATE_COOKIE_NAME } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/env";
 import {
   exchangeCodeForAccessToken,
+  exchangeForLongLivedAccessToken,
   fetchInstagramProfile,
   saveInstagramAccount
 } from "@/lib/instagram";
@@ -74,8 +75,9 @@ export async function GET(request: Request) {
 
   try {
     const tokenResponse = await exchangeCodeForAccessToken(code);
+    const longLivedToken = await exchangeForLongLivedAccessToken(tokenResponse.accessToken);
     const profile = await fetchInstagramProfile(
-      tokenResponse.accessToken,
+      longLivedToken.accessToken,
       tokenResponse.instagramUserId
     );
 
@@ -84,12 +86,15 @@ export async function GET(request: Request) {
       instagramUserId: profile.instagramUserId,
       username: profile.username,
       profilePictureUrl: profile.profilePictureUrl,
-      accessToken: tokenResponse.accessToken
+      accessToken: longLivedToken.accessToken,
+      tokenExpiresAt: longLivedToken.expiresAt,
+      tokenLastRefreshedAt: new Date()
     });
 
     console.log("[instagram-callback] Instagram account connected", {
       userId: user.id,
-      instagramUserId: profile.instagramUserId
+      instagramUserId: profile.instagramUserId,
+      tokenExpiresAt: longLivedToken.expiresAt?.toISOString() ?? null
     });
 
     return NextResponse.redirect(new URL("/dashboard?connected=1", baseUrl));

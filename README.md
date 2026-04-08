@@ -1,12 +1,12 @@
 # Instagram AI Publisher Demo
 
-Complete demo app built with Next.js App Router, React, TypeScript, Tailwind CSS, Prisma ORM, Supabase Postgres, OpenAI, Puppeteer, and the Instagram Graph API.
+Complete demo app built with Next.js App Router, React, TypeScript, Tailwind CSS, Prisma ORM, Supabase Postgres, Ollama Cloud, Puppeteer, and the Instagram Graph API.
 
 It demonstrates:
 
 - connecting an Instagram Professional account
 - retrieving profile data with `instagram_business_basic`
-- generating captions, hashtags, and HTML/CSS layouts with OpenAI
+- generating captions, hashtags, and HTML/CSS layouts with Ollama Cloud
 - rendering a 1080x1080 post image with Puppeteer
 - previewing content before approval
 - publishing immediately or scheduling for later
@@ -16,7 +16,7 @@ It demonstrates:
 - Frontend: Next.js App Router, React, TypeScript, Tailwind CSS
 - Backend: Next.js Route Handlers, Node.js
 - Database: Supabase Postgres with Prisma ORM
-- AI: OpenAI API
+- AI: Ollama Cloud API
 - Rendering: Puppeteer
 
 ## Required Environment Variables
@@ -26,12 +26,15 @@ DATABASE_URL="postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@aws-0-REGION.poole
 DIRECT_URL="postgresql://postgres:YOUR_PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres"
 INSTAGRAM_APP_ID=your-instagram-app-id
 INSTAGRAM_APP_SECRET=your-instagram-app-secret
-INSTAGRAM_REDIRECT_URI=http://localhost:3000/api/auth/instagram/callback
-OPENAI_API_KEY=your-openai-api-key
-APP_BASE_URL=http://localhost:3000
+INSTAGRAM_REDIRECT_URI=http://localhost:3020/api/auth/instagram/callback
+OLLAMA_API_KEY=your-ollama-api-key
+OLLAMA_MODEL=kimi-k2.5:cloud
+OLLAMA_TIMEOUT_MS=120000
+APP_BASE_URL=http://localhost:3020
 ```
 
 `APP_BASE_URL` is strongly recommended for publishing because Instagram must be able to fetch the generated image from a public URL. For real publishing, use a public URL or tunnel.
+`OLLAMA_TIMEOUT_MS` is optional and controls how long the server waits for Ollama Cloud before aborting the request.
 
 ## How To Run
 
@@ -43,7 +46,7 @@ APP_BASE_URL=http://localhost:3000
 6. Copy the Direct Connection string into `DIRECT_URL`.
 7. Run `npm run db:push`.
 8. Start the app with `npm run dev`.
-9. Open `http://localhost:3000`.
+9. Open `http://localhost:3020`.
 
 ## Supabase + Prisma
 
@@ -65,7 +68,8 @@ Configure these environment variables in Vercel before the first deploy:
 - `INSTAGRAM_APP_ID`
 - `INSTAGRAM_APP_SECRET`
 - `INSTAGRAM_REDIRECT_URI`
-- `OPENAI_API_KEY`
+- `OLLAMA_API_KEY`
+- `OLLAMA_MODEL`
 - `APP_BASE_URL`
 
 Production values should usually be:
@@ -81,16 +85,16 @@ Create a Meta Developer App and configure Instagram API with Instagram Login.
 
 For this demo, configure:
 
-- Redirect URI: `http://localhost:3000/api/auth/instagram/callback`
+- Redirect URI: `http://localhost:3020/api/auth/instagram/callback`
 - Permissions:
   - `instagram_business_basic`
   - `instagram_business_content_publish`
 
 The Instagram account used in testing must be a Professional account, meaning Business or Creator.
 
-## OpenAI Usage
+## Ollama Cloud Usage
 
-The app calls OpenAI to generate:
+The app calls Ollama Cloud to generate:
 
 - caption text
 - hashtags

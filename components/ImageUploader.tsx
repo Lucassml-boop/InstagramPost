@@ -1,12 +1,14 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
+import { useI18n } from "@/components/I18nProvider";
 
 export function ImageUploader({
   onUploaded
 }: {
   onUploaded: (payload: { imageUrl: string; imagePath: string }) => void;
 }) {
+  const { dictionary } = useI18n();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +39,7 @@ export function ImageUploader({
     setUploading(false);
 
     if (!response.ok || !json.imageUrl || !json.imagePath) {
-      setError(json.error ?? "Upload failed.");
+      setError(json.error ?? dictionary.upload.error);
       return;
     }
 
@@ -49,12 +51,10 @@ export function ImageUploader({
 
   return (
     <div className="rounded-2xl border border-dashed border-slate-300 p-4">
-      <p className="text-sm font-medium text-ink">Upload custom image</p>
-      <p className="mt-1 text-sm text-slate-600">
-        Uploading an image overrides the AI-generated preview for publishing.
-      </p>
+      <p className="text-sm font-medium text-ink">{dictionary.upload.title}</p>
+      <p className="mt-1 text-sm text-slate-600">{dictionary.upload.description}</p>
       <input type="file" accept="image/*" onChange={handleChange} className="mt-4 block text-sm" />
-      {uploading ? <p className="mt-2 text-sm text-slate-500">Uploading...</p> : null}
+      {uploading ? <p className="mt-2 text-sm text-slate-500">{dictionary.upload.uploading}</p> : null}
       {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
     </div>
   );

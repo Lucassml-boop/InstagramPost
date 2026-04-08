@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { InstagramAccountCard } from "@/components/InstagramAccountCard";
 import { Panel, SectionTitle } from "@/components/ui";
 import { destroySession, getCurrentUser } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n";
+import { getLocaleFromCookies } from "@/lib/i18n-server";
 import { getInstagramAccountSnapshot } from "@/lib/instagram";
 import { prisma } from "@/lib/prisma";
 
@@ -12,6 +14,8 @@ export default async function DashboardPage({
   searchParams: Promise<{ connected?: string; published?: string; error?: string }>;
 }) {
   const user = await getCurrentUser();
+  const locale = await getLocaleFromCookies();
+  const dictionary = getDictionary(locale);
 
   if (!user) {
     redirect("/login");
@@ -40,16 +44,16 @@ export default async function DashboardPage({
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <SectionTitle
-          eyebrow="Dashboard"
-          title="Instagram publishing workspace"
-          description={`Logged in as ${user.email}. Connect the Instagram account, generate content with AI, preview it, and publish or schedule it for your Meta review flow.`}
+          eyebrow={dictionary.dashboard.eyebrow}
+          title={dictionary.dashboard.title}
+          description={dictionary.dashboard.description(user.email)}
         />
         <form action={logoutAction}>
           <button
             type="submit"
             className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
           >
-            Logout
+            {dictionary.dashboard.logout}
           </button>
         </form>
       </div>
@@ -62,29 +66,29 @@ export default async function DashboardPage({
 
       {params.connected ? (
         <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Instagram account connected successfully.
+          {dictionary.dashboard.connectedSuccess}
         </div>
       ) : null}
 
       {params.published ? (
         <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Post published successfully.
+          {dictionary.dashboard.publishedSuccess}
         </div>
       ) : null}
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <Panel className="p-5">
-          <p className="text-sm text-slate-500">Connection status</p>
+          <p className="text-sm text-slate-500">{dictionary.dashboard.connectionStatus}</p>
           <p className="mt-2 text-2xl font-semibold text-ink">
-            {instagramSnapshot?.connected ? "Connected" : "Pending"}
+            {instagramSnapshot?.connected ? dictionary.common.connected : dictionary.common.pending}
           </p>
         </Panel>
         <Panel className="p-5">
-          <p className="text-sm text-slate-500">Scheduled posts</p>
+          <p className="text-sm text-slate-500">{dictionary.dashboard.scheduledPosts}</p>
           <p className="mt-2 text-2xl font-semibold text-ink">{scheduledCount}</p>
         </Panel>
         <Panel className="p-5">
-          <p className="text-sm text-slate-500">Published posts</p>
+          <p className="text-sm text-slate-500">{dictionary.dashboard.publishedPosts}</p>
           <p className="mt-2 text-2xl font-semibold text-ink">{publishedCount}</p>
         </Panel>
       </div>
@@ -96,42 +100,40 @@ export default async function DashboardPage({
             instagramUserId={instagramSnapshot.instagramUserId}
             profilePictureUrl={instagramSnapshot.profilePictureUrl}
             connected={instagramSnapshot.connected}
+            locale={locale}
           />
         ) : (
           <Panel className="p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-              Connected Instagram Account
+              {dictionary.dashboard.connectedAccount}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-ink">No account connected yet</h2>
-            <p className="mt-3 text-sm text-slate-600">
-              Connect an Instagram Professional account to unlock AI post generation and
-              publishing.
-            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-ink">{dictionary.dashboard.noAccountTitle}</h2>
+            <p className="mt-3 text-sm text-slate-600">{dictionary.dashboard.noAccountDescription}</p>
             <Link
               href="/connect-instagram"
               className="mt-6 inline-flex rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Connect Instagram
+              {dictionary.dashboard.connectInstagram}
             </Link>
           </Panel>
         )}
 
         <Panel className="p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-            Quick actions
+            {dictionary.dashboard.quickActions}
           </p>
           <div className="mt-4 grid gap-3">
             <Link
               href="/create-post"
               className="rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Create Post
+              {dictionary.dashboard.createPost}
             </Link>
             <Link
               href="/scheduled-posts"
               className="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
             >
-              View Scheduled Posts
+              {dictionary.dashboard.viewScheduledPosts}
             </Link>
           </div>
         </Panel>

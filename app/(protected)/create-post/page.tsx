@@ -1,13 +1,18 @@
 import { CaptionGenerator } from "@/components/CaptionGenerator";
 import { SectionTitle } from "@/components/ui";
+import { getDictionary } from "@/lib/i18n";
+import { getLocaleFromCookies } from "@/lib/i18n-server";
 
-export default function CreatePostPage() {
+export default async function CreatePostPage() {
+  const locale = await getLocaleFromCookies();
+  const dictionary = getDictionary(locale);
+
   return (
     <div>
       <SectionTitle
-        eyebrow="AI Generator"
-        title="Create Instagram Post"
-        description="Generate a caption, hashtags, and a 1080x1080 visual layout with OpenAI. Preview it, edit the copy, optionally replace the image, then publish or schedule it."
+        eyebrow={dictionary.createPost.eyebrow}
+        title={dictionary.createPost.title}
+        description={dictionary.createPost.description}
       />
       <div className="mt-8">
         <CaptionGenerator />

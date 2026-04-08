@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/I18nProvider";
+
 export function PostScheduler({
   value,
   onChange
@@ -7,10 +9,12 @@ export function PostScheduler({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const { dictionary } = useI18n();
+
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700">
-        Schedule time
+        {dictionary.scheduler.label}
         <input
           type="datetime-local"
           value={value}

@@ -12,7 +12,7 @@ export default async function LoginPage() {
 
   return (
     <PageShell>
-      <div className="flex min-h-[calc(100vh-3rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center">
         <LoginForm />
       </div>
     </PageShell>

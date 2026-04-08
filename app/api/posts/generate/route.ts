@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const generated = await generateInstagramPost(parsed);
 
     if (!generated) {
-      throw new Error("OpenAI did not return a structured post payload.");
+      throw new Error("The AI provider did not return a structured post payload.");
     }
 
     const image = await renderPostImage({

@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
+import { useI18n } from "@/components/I18nProvider";
 
 export function LoginForm() {
   const router = useRouter();
+  const { dictionary } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export function LoginForm() {
     const json = (await response.json()) as { error?: string };
 
     if (!response.ok) {
-      setError(json.error ?? "Unable to continue.");
+      setError(json.error ?? dictionary.login.continueError);
       return;
     }
 
@@ -36,34 +38,31 @@ export function LoginForm() {
   return (
     <form className="panel w-full max-w-md p-8" onSubmit={handleSubmit}>
       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-        Social Media Manager
+        {dictionary.common.appName}
       </p>
-      <h1 className="mt-2 text-3xl font-semibold text-ink">Login</h1>
-      <p className="mt-3 text-sm text-slate-600">
-        Use any email and password. If the account does not exist yet, the app creates it
-        automatically for this review demo.
-      </p>
+      <h1 className="mt-2 text-3xl font-semibold text-ink">{dictionary.login.title}</h1>
+      <p className="mt-3 text-sm text-slate-600">{dictionary.login.description}</p>
 
       <div className="mt-8 space-y-4">
         <label className="block text-sm font-medium text-slate-700">
-          Email
+          {dictionary.login.email}
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-            placeholder="reviewer@example.com"
+            placeholder={dictionary.login.emailPlaceholder}
             required
           />
         </label>
         <label className="block text-sm font-medium text-slate-700">
-          Password
+          {dictionary.login.password}
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-            placeholder="minimum 6 characters"
+            placeholder={dictionary.login.passwordPlaceholder}
             required
           />
         </label>
@@ -80,7 +79,7 @@ export function LoginForm() {
         disabled={isPending}
         className="mt-6 w-full rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
       >
-        {isPending ? "Signing in..." : "Login"}
+        {isPending ? dictionary.login.submitting : dictionary.login.submit}
       </button>
     </form>
   );

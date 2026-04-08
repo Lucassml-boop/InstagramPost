@@ -3,6 +3,41 @@ import { getBaseUrl, requireEnv } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 
 const INSTAGRAM_API_VERSION = "v23.0";
+const LONG_LIVED_TOKEN_LIFETIME_SECONDS = 60 * 24 * 60 * 60;
+const TOKEN_REFRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const TOKEN_MIN_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const MEDIA_CONTAINER_POLL_INTERVAL_MS = 2_000;
+const MEDIA_CONTAINER_MAX_WAIT_MS = 30_000;
+
+function getTokenExpiryDate(expiresInSeconds?: string | number | null) {
+  const seconds = Number(expiresInSeconds);
+
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return null;
+  }
+
+  return new Date(Date.now() + seconds * 1000);
+}
+
+async function persistInstagramAccessToken(input: {
+  accountId: string;
+  accessToken: string;
+  tokenExpiresAt?: Date | null;
+  tokenLastRefreshedAt?: Date | null;
+}) {
+  const encryptedAccessToken = encryptValue(input.accessToken);
+
+  return prisma.instagramAccount.update({
+    where: { id: input.accountId },
+    data: {
+      accessToken: encryptedAccessToken.encrypted,
+      accessTokenIv: encryptedAccessToken.iv,
+      accessTokenTag: encryptedAccessToken.tag,
+      tokenExpiresAt: input.tokenExpiresAt ?? null,
+      tokenLastRefreshedAt: input.tokenLastRefreshedAt ?? null
+    }
+  });
+}
 
 export function getInstagramAuthUrl(state: string) {
   const redirectUri = requireEnv("INSTAGRAM_REDIRECT_URI");
@@ -68,6 +103,90 @@ export async function exchangeCodeForAccessToken(code: string) {
   return {
     accessToken: String(json.access_token),
     instagramUserId: String(json.user_id ?? "")
+  };
+}
+
+export async function exchangeForLongLivedAccessToken(shortLivedAccessToken: string) {
+  console.log("[instagram] Exchanging short-lived token for long-lived token", {
+    accessTokenLength: shortLivedAccessToken.length
+  });
+
+  const response = await fetch(
+    `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(
+      requireEnv("INSTAGRAM_APP_SECRET")
+    )}&access_token=${encodeURIComponent(shortLivedAccessToken)}`,
+    {
+      cache: "no-store"
+    }
+  );
+
+  const json = await response.json();
+
+  if (!response.ok || !json.access_token) {
+    console.error("[instagram] Long-lived token exchange failed", {
+      status: response.status,
+      errorMessage: json.error?.message ?? json.error_message ?? null,
+      errorCode: json.error?.code ?? null
+    });
+    throw new Error(
+      json.error?.message ?? json.error_message ?? "Unable to exchange for a long-lived Instagram token."
+    );
+  }
+
+  const expiresAt = getTokenExpiryDate(
+    json.expires_in ?? LONG_LIVED_TOKEN_LIFETIME_SECONDS
+  );
+
+  console.log("[instagram] Long-lived token exchange succeeded", {
+    status: response.status,
+    expiresAt: expiresAt?.toISOString() ?? null
+  });
+
+  return {
+    accessToken: String(json.access_token),
+    expiresAt
+  };
+}
+
+export async function refreshLongLivedAccessToken(accessToken: string) {
+  console.log("[instagram] Refreshing long-lived access token", {
+    accessTokenLength: accessToken.length
+  });
+
+  const response = await fetch(
+    `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(
+      accessToken
+    )}`,
+    {
+      cache: "no-store"
+    }
+  );
+
+  const json = await response.json();
+
+  if (!response.ok || !json.access_token) {
+    console.error("[instagram] Token refresh failed", {
+      status: response.status,
+      errorMessage: json.error?.message ?? json.error_message ?? null,
+      errorCode: json.error?.code ?? null
+    });
+    throw new Error(
+      json.error?.message ?? json.error_message ?? "Unable to refresh Instagram access token."
+    );
+  }
+
+  const expiresAt = getTokenExpiryDate(
+    json.expires_in ?? LONG_LIVED_TOKEN_LIFETIME_SECONDS
+  );
+
+  console.log("[instagram] Token refresh succeeded", {
+    status: response.status,
+    expiresAt: expiresAt?.toISOString() ?? null
+  });
+
+  return {
+    accessToken: String(json.access_token),
+    expiresAt
   };
 }
 
@@ -153,16 +272,25 @@ export async function saveInstagramAccount(input: {
   username: string;
   profilePictureUrl: string | null;
   accessToken: string;
+  tokenExpiresAt?: Date | null;
+  tokenLastRefreshedAt?: Date | null;
 }) {
+  const instagramUserIdHash = hashSensitiveValue(input.instagramUserId);
   const encryptedAccessToken = encryptValue(input.accessToken);
   const encryptedInstagramUserId = encryptValue(input.instagramUserId);
   const encryptedUsername = encryptValue(input.username);
 
-  return prisma.instagramAccount.upsert({
-    where: { userId: input.userId },
-    update: {
+  return prisma.$transaction(async (tx) => {
+    const existingForUser = await tx.instagramAccount.findUnique({
+      where: { userId: input.userId }
+    });
+    const existingForInstagram = await tx.instagramAccount.findUnique({
+      where: { instagramUserIdHash }
+    });
+
+    const commonData = {
       instagramUserId: null,
-      instagramUserIdHash: hashSensitiveValue(input.instagramUserId),
+      instagramUserIdHash,
       instagramUserIdEncrypted: encryptedInstagramUserId.encrypted,
       instagramUserIdIv: encryptedInstagramUserId.iv,
       instagramUserIdTag: encryptedInstagramUserId.tag,
@@ -174,25 +302,51 @@ export async function saveInstagramAccount(input: {
       accessToken: encryptedAccessToken.encrypted,
       accessTokenIv: encryptedAccessToken.iv,
       accessTokenTag: encryptedAccessToken.tag,
+      tokenExpiresAt: input.tokenExpiresAt ?? null,
+      tokenLastRefreshedAt: input.tokenLastRefreshedAt ?? null,
       connected: true
-    },
-    create: {
-      userId: input.userId,
-      instagramUserId: null,
-      instagramUserIdHash: hashSensitiveValue(input.instagramUserId),
-      instagramUserIdEncrypted: encryptedInstagramUserId.encrypted,
-      instagramUserIdIv: encryptedInstagramUserId.iv,
-      instagramUserIdTag: encryptedInstagramUserId.tag,
-      username: null,
-      usernameEncrypted: encryptedUsername.encrypted,
-      usernameIv: encryptedUsername.iv,
-      usernameTag: encryptedUsername.tag,
-      profilePictureUrl: input.profilePictureUrl,
-      accessToken: encryptedAccessToken.encrypted,
-      accessTokenIv: encryptedAccessToken.iv,
-      accessTokenTag: encryptedAccessToken.tag,
-      connected: true
+    } as const;
+
+    if (existingForInstagram) {
+      if (existingForUser && existingForUser.id !== existingForInstagram.id) {
+        console.warn("[instagram] Replacing current user's existing Instagram connection", {
+          userId: input.userId,
+          currentConnectionId: existingForUser.id,
+          targetConnectionId: existingForInstagram.id
+        });
+        await tx.instagramAccount.delete({
+          where: { id: existingForUser.id }
+        });
+      }
+
+      console.info("[instagram] Reusing existing Instagram connection", {
+        instagramAccountId: existingForInstagram.id,
+        previousUserId: existingForInstagram.userId,
+        nextUserId: input.userId
+      });
+
+      return tx.instagramAccount.update({
+        where: { id: existingForInstagram.id },
+        data: {
+          userId: input.userId,
+          ...commonData
+        }
+      });
     }
+
+    if (existingForUser) {
+      return tx.instagramAccount.update({
+        where: { id: existingForUser.id },
+        data: commonData
+      });
+    }
+
+    return tx.instagramAccount.create({
+      data: {
+        userId: input.userId,
+        ...commonData
+      }
+    });
   });
 }
 
@@ -255,7 +409,7 @@ export function getInstagramAccountSnapshot(account: {
 }
 
 export async function getInstagramAccessToken(userId: string) {
-  const account = await prisma.instagramAccount.findUnique({
+  let account = await prisma.instagramAccount.findUnique({
     where: { userId }
   });
 
@@ -263,14 +417,46 @@ export async function getInstagramAccessToken(userId: string) {
     throw new Error("No connected Instagram account found.");
   }
 
-  return {
-    account,
-    accessToken: decryptValue({
-      encrypted: account.accessToken,
-      iv: account.accessTokenIv,
-      tag: account.accessTokenTag
-    })
-  };
+  let accessToken = decryptValue({
+    encrypted: account.accessToken,
+    iv: account.accessTokenIv,
+    tag: account.accessTokenTag
+  });
+
+  const now = Date.now();
+  const expiresAtMs = account.tokenExpiresAt?.getTime() ?? 0;
+  const refreshIsDue =
+    !account.tokenExpiresAt || expiresAtMs - now <= TOKEN_REFRESH_WINDOW_MS;
+  const refreshIsAllowed =
+    !account.tokenLastRefreshedAt ||
+    now - account.tokenLastRefreshedAt.getTime() >= TOKEN_MIN_REFRESH_INTERVAL_MS;
+
+  if (refreshIsDue && refreshIsAllowed) {
+    try {
+      const refreshed = await refreshLongLivedAccessToken(accessToken);
+      account = await persistInstagramAccessToken({
+        accountId: account.id,
+        accessToken: refreshed.accessToken,
+        tokenExpiresAt: refreshed.expiresAt,
+        tokenLastRefreshedAt: new Date()
+      });
+      accessToken = refreshed.accessToken;
+    } catch (error) {
+      const tokenStillValid = !account.tokenExpiresAt || account.tokenExpiresAt.getTime() > now;
+
+      console.error("[instagram] Automatic token refresh failed", {
+        accountId: account.id,
+        tokenStillValid,
+        error: error instanceof Error ? error.message : String(error)
+      });
+
+      if (!tokenStillValid) {
+        throw error;
+      }
+    }
+  }
+
+  return { account, accessToken };
 }
 
 export async function publishInstagramImage(input: {
@@ -280,6 +466,41 @@ export async function publishInstagramImage(input: {
 }) {
   const { account, accessToken } = await getInstagramAccessToken(input.userId);
   const instagramUserId = getStoredInstagramUserId(account);
+
+  let imageProbeResponse: Response | null = null;
+
+  try {
+    imageProbeResponse = await fetch(input.imageUrl, {
+      method: "HEAD",
+      redirect: "follow",
+      cache: "no-store"
+    });
+  } catch {
+    imageProbeResponse = null;
+  }
+
+  if (!imageProbeResponse || !imageProbeResponse.ok) {
+    imageProbeResponse = await fetch(input.imageUrl, {
+      method: "GET",
+      redirect: "follow",
+      cache: "no-store"
+    });
+  }
+
+  const imageContentType = imageProbeResponse.headers.get("content-type");
+
+  if (!imageProbeResponse.ok) {
+    throw new Error(
+      `The public image URL is not reachable (${imageProbeResponse.status}) and Instagram cannot fetch it.`
+    );
+  }
+
+  if (!imageContentType?.startsWith("image/")) {
+    throw new Error(
+      `The public image URL returned content-type ${imageContentType ?? "unknown"} instead of an image.`
+    );
+  }
+
   const mediaBody = new URLSearchParams({
     image_url: input.imageUrl,
     caption: input.caption
@@ -303,8 +524,15 @@ export async function publishInstagramImage(input: {
     throw new Error(mediaJson.error?.message ?? "Unable to create Instagram media container.");
   }
 
+  const creationId = String(mediaJson.id);
+  await waitForInstagramMediaContainer({
+    creationId,
+    accessToken,
+    instagramUserId
+  });
+
   const publishBody = new URLSearchParams({
-    creation_id: String(mediaJson.id)
+    creation_id: creationId
   });
 
   const publishResponse = await fetch(
@@ -328,6 +556,112 @@ export async function publishInstagramImage(input: {
   return {
     mediaId: String(publishJson.id)
   };
+}
+
+async function waitForInstagramMediaContainer(input: {
+  creationId: string;
+  accessToken: string;
+  instagramUserId: string;
+}) {
+  const startedAt = Date.now();
+  let attempt = 0;
+
+  while (Date.now() - startedAt <= MEDIA_CONTAINER_MAX_WAIT_MS) {
+    attempt += 1;
+
+    const statusResponse = await fetch(
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${input.creationId}?fields=status_code,status&access_token=${encodeURIComponent(
+        input.accessToken
+      )}`,
+      {
+        cache: "no-store"
+      }
+    );
+
+    const statusJson = await statusResponse.json();
+    const statusCode = String(statusJson.status_code ?? "");
+    const status = String(statusJson.status ?? "");
+
+    if (!statusResponse.ok) {
+      throw new Error(
+        statusJson.error?.message ?? "Unable to verify Instagram media container status."
+      );
+    }
+
+    if (statusCode === "FINISHED") {
+      return;
+    }
+
+    if (statusCode === "ERROR" || status === "ERROR" || statusCode === "EXPIRED") {
+      throw new Error(
+        `Instagram media container did not become publishable. status_code=${statusCode || "unknown"} status=${status || "unknown"}.`
+      );
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, MEDIA_CONTAINER_POLL_INTERVAL_MS));
+  }
+
+  throw new Error(
+    `Instagram media container was not ready after ${Math.round(MEDIA_CONTAINER_MAX_WAIT_MS / 1000)} seconds.`
+  );
+}
+
+export async function refreshInstagramAccessTokens() {
+  const candidates = await prisma.instagramAccount.findMany({
+    where: {
+      connected: true,
+      OR: [
+        { tokenExpiresAt: null },
+        {
+          tokenExpiresAt: {
+            lte: new Date(Date.now() + TOKEN_REFRESH_WINDOW_MS)
+          }
+        }
+      ]
+    }
+  });
+
+  let refreshedCount = 0;
+
+  for (const account of candidates) {
+    const refreshIsAllowed =
+      !account.tokenLastRefreshedAt ||
+      Date.now() - account.tokenLastRefreshedAt.getTime() >= TOKEN_MIN_REFRESH_INTERVAL_MS;
+
+    if (!refreshIsAllowed) {
+      continue;
+    }
+
+    try {
+      const accessToken = decryptValue({
+        encrypted: account.accessToken,
+        iv: account.accessTokenIv,
+        tag: account.accessTokenTag
+      });
+      const refreshed = await refreshLongLivedAccessToken(accessToken);
+
+      await persistInstagramAccessToken({
+        accountId: account.id,
+        accessToken: refreshed.accessToken,
+        tokenExpiresAt: refreshed.expiresAt,
+        tokenLastRefreshedAt: new Date()
+      });
+
+      refreshedCount += 1;
+    } catch (error) {
+      console.error("[instagram] Scheduled token refresh failed", {
+        accountId: account.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  console.info("[instagram] Scheduled token refresh completed", {
+    candidates: candidates.length,
+    refreshedCount
+  });
+
+  return refreshedCount;
 }
 
 export function getAbsoluteAssetUrl(assetPath: string, requestOrigin?: string) {

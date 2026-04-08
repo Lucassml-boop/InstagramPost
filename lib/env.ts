@@ -35,5 +35,5 @@ export function getBaseUrl(fallbackOrigin?: string) {
     return new URL(redirectUri).origin;
   }
 
-  return "http://localhost:3000";
+  return "http://localhost:3020";
 }
