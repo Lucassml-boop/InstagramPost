@@ -68,6 +68,8 @@ type Dictionary = {
     description: string;
   };
   generator: {
+    contentTab: string;
+    settingsTab: string;
     topic: string;
     topicPlaceholder: string;
     message: string;
@@ -76,11 +78,25 @@ type Dictionary = {
     toneProfessional: string;
     toneCasual: string;
     tonePromotional: string;
+    outputLanguage: string;
+    outputLanguageDescription: string;
+    outputLanguageEnglish: string;
+    outputLanguagePtBR: string;
+    customInstructions: string;
+    customInstructionsDescription: string;
+    customInstructionsPlaceholder: string;
+    restoreDefaultInstructions: string;
+    settingsSaved: string;
+    settingsSaveError: string;
     brandColors: string;
     keywords: string;
     keywordsPlaceholder: string;
     generate: string;
     generating: string;
+    generationProgress: string;
+    generationEstimate: string;
+    generationElapsed: string;
+    generationSlow: string;
     editCaption: string;
     publishNow: string;
     publishing: string;
@@ -196,6 +212,8 @@ const dictionaries: Record<Locale, Dictionary> = {
         "Generate a caption, hashtags, and a 1080x1080 visual layout with Ollama Cloud. Preview it, edit the copy, optionally replace the image, then publish or schedule it."
     },
     generator: {
+      contentTab: "Content",
+      settingsTab: "Settings",
       topic: "Product or topic",
       topicPlaceholder: "Spring skincare launch",
       message: "Promotion or message",
@@ -205,11 +223,25 @@ const dictionaries: Record<Locale, Dictionary> = {
       toneProfessional: "Professional",
       toneCasual: "Casual",
       tonePromotional: "Promotional",
+      outputLanguage: "Output language",
+      outputLanguageDescription: "Choose the language used in the caption and in the text rendered inside the generated post image.",
+      outputLanguageEnglish: "English",
+      outputLanguagePtBR: "Portuguese (Brazil)",
+      customInstructions: "Prompt formula",
+      customInstructionsDescription: "Customize the base instruction sent to the AI. You can keep the default formula or rewrite it to match your brand voice.",
+      customInstructionsPlaceholder: "You are an expert Instagram content strategist and visual designer.",
+      restoreDefaultInstructions: "Restore default formula",
+      settingsSaved: "Settings saved successfully.",
+      settingsSaveError: "Unable to save settings.",
       brandColors: "Brand colors",
       keywords: "Optional keywords",
       keywordsPlaceholder: "clean beauty, launch, limited offer",
       generate: "Generate Post",
       generating: "Generating...",
+      generationProgress: "Generating your post",
+      generationEstimate: "This usually takes up to a few minutes while AI writes and renders the image.",
+      generationElapsed: "Elapsed",
+      generationSlow: "Still working. If it gets close to the limit, we will surface a timeout instead of silently hanging.",
       editCaption: "Edit caption",
       publishNow: "Publish Now",
       publishing: "Publishing...",
@@ -324,6 +356,8 @@ const dictionaries: Record<Locale, Dictionary> = {
         "Gere legenda, hashtags e um layout visual 1080x1080 com Ollama Cloud. Veja a previa, edite o texto, substitua a imagem se quiser, e depois publique ou agende."
     },
     generator: {
+      contentTab: "Conteudo",
+      settingsTab: "Configuracoes",
       topic: "Produto ou tema",
       topicPlaceholder: "Lancamento de skincare de primavera",
       message: "Promocao ou mensagem",
@@ -333,11 +367,25 @@ const dictionaries: Record<Locale, Dictionary> = {
       toneProfessional: "Profissional",
       toneCasual: "Casual",
       tonePromotional: "Promocional",
+      outputLanguage: "Idioma de saida",
+      outputLanguageDescription: "Escolha o idioma usado na legenda e nos textos renderizados dentro da imagem gerada.",
+      outputLanguageEnglish: "Ingles",
+      outputLanguagePtBR: "Portugues (Brasil)",
+      customInstructions: "Formula do prompt",
+      customInstructionsDescription: "Personalize a instrucao base enviada para a IA. Voce pode manter a formula padrao ou reescrever para combinar com a voz da sua marca.",
+      customInstructionsPlaceholder: "Voce e um especialista em estrategia de conteudo para Instagram e design visual.",
+      restoreDefaultInstructions: "Restaurar formula padrao",
+      settingsSaved: "Configuracoes salvas com sucesso.",
+      settingsSaveError: "Nao foi possivel salvar as configuracoes.",
       brandColors: "Cores da marca",
       keywords: "Palavras-chave opcionais",
       keywordsPlaceholder: "beleza limpa, lancamento, oferta limitada",
       generate: "Gerar Post",
       generating: "Gerando...",
+      generationProgress: "Gerando seu post",
+      generationEstimate: "Isso pode levar alguns minutos enquanto a IA escreve e renderiza a imagem.",
+      generationElapsed: "Tempo decorrido",
+      generationSlow: "Ainda estamos processando. Se chegar perto do limite, vamos mostrar timeout em vez de parecer travado.",
       editCaption: "Editar legenda",
       publishNow: "Publicar agora",
       publishing: "Publicando...",

@@ -11,6 +11,8 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 export type AuthUser = {
   id: string;
   email: string;
+  preferredOutputLanguage?: "en" | "pt-BR";
+  preferredCustomInstructions?: string | null;
 };
 
 function getStoredEmail(user: {
@@ -85,7 +87,10 @@ export async function loginOrRegister(email: string, password: string) {
 
   return {
     id: user.id,
-    email: getStoredEmail(user)
+    email: getStoredEmail(user),
+    preferredOutputLanguage:
+      user.preferredOutputLanguage === "pt-BR" ? "pt-BR" : "en",
+    preferredCustomInstructions: user.preferredCustomInstructions
   } satisfies AuthUser;
 }
 
@@ -132,7 +137,10 @@ export async function getCurrentUser() {
 
   return {
     id: session.user.id,
-    email: getStoredEmail(session.user)
+    email: getStoredEmail(session.user),
+    preferredOutputLanguage:
+      session.user.preferredOutputLanguage === "pt-BR" ? "pt-BR" : "en",
+    preferredCustomInstructions: session.user.preferredCustomInstructions
   } satisfies AuthUser;
 }
 

@@ -40,16 +40,33 @@ export async function renderPostImage(input: {
   html: string;
   css: string;
 }) {
+  const startedAt = Date.now();
+  console.info("[renderer] Starting image render", {
+    slug: input.slug,
+    htmlLength: input.html.length,
+    cssLength: input.css.length
+  });
+
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
   try {
+    console.info("[renderer] Browser launched", {
+      slug: input.slug,
+      durationMs: Date.now() - startedAt
+    });
+
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 1 });
     await page.setContent(buildHtmlDocument(input.html, input.css), {
       waitUntil: "networkidle0"
+    });
+
+    console.info("[renderer] Content rendered in page", {
+      slug: input.slug,
+      durationMs: Date.now() - startedAt
     });
 
     const outputDir = path.join(process.cwd(), "public", "generated-posts");
@@ -62,6 +79,13 @@ export async function renderPostImage(input: {
 
     await writeFile(absolutePath, buffer);
 
+    console.info("[renderer] Image saved", {
+      slug: input.slug,
+      durationMs: Date.now() - startedAt,
+      outputPath: absolutePath,
+      bytes: buffer.length
+    });
+
     return {
       fileName,
       absolutePath,
@@ -69,5 +93,9 @@ export async function renderPostImage(input: {
     };
   } finally {
     await browser.close();
+    console.info("[renderer] Browser closed", {
+      slug: input.slug,
+      durationMs: Date.now() - startedAt
+    });
   }
 }

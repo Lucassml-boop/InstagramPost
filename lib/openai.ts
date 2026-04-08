@@ -18,7 +18,7 @@ const generatedPostSchema = z.object({
 type GeneratePostInput = z.infer<typeof generatePostSchema>;
 type GeneratedPost = z.infer<typeof generatedPostSchema>;
 
-const DEFAULT_OLLAMA_TIMEOUT_MS = 120_000;
+const DEFAULT_OLLAMA_TIMEOUT_MS = 480_000;
 
 function getOllamaTimeoutMs() {
   const rawValue = process.env.OLLAMA_TIMEOUT_MS?.trim();
@@ -48,6 +48,19 @@ function normalizeHashtag(tag: string) {
   }
 
   return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
+function getFallbackModels(primaryModel: string) {
+  const rawValue = process.env.OLLAMA_FALLBACK_MODELS?.trim();
+
+  if (!rawValue) {
+    return [];
+  }
+
+  return rawValue
+    .split(",")
+    .map((model) => model.trim())
+    .filter((model) => Boolean(model) && model !== primaryModel);
 }
 
 function coerceGeneratedPost(raw: unknown): GeneratedPost {
@@ -93,13 +106,16 @@ function coerceGeneratedPost(raw: unknown): GeneratedPost {
 
 function buildPrompt(input: GeneratePostInput) {
   const keywords = input.keywords?.trim() ? input.keywords.trim() : "none";
+  const customInstructions = input.customInstructions?.trim();
+  const languageLabel = input.outputLanguage === "pt-BR" ? "Brazilian Portuguese" : "English";
 
   return [
-    "You are an expert Instagram content strategist and visual designer.",
+    customInstructions || "You are an expert Instagram content strategist and visual designer.",
     "Return only valid JSON with the keys caption, hashtags, html, and css.",
     "Do not wrap the JSON in markdown or add any commentary.",
+    `Write the caption and every visible piece of text inside the HTML in ${languageLabel}.`,
     "Requirements:",
-    "- caption: persuasive Instagram caption in English, 2 to 4 short paragraphs, no emojis unless highly relevant",
+    `- caption: persuasive Instagram caption in ${languageLabel}, 2 to 4 short paragraphs, no emojis unless highly relevant`,
     "- hashtags: array with 6 to 10 relevant Instagram hashtags",
     "- html: semantic markup for a premium 1080x1080 promotional card inside a single root <section>",
     "- css: complete CSS for the HTML, optimized for a square Instagram visual",
@@ -109,6 +125,7 @@ function buildPrompt(input: GeneratePostInput) {
     `Topic: ${input.topic}`,
     `Message: ${input.message}`,
     `Tone: ${input.tone}`,
+    `Output language: ${languageLabel}`,
     `Brand colors: ${input.brandColors}`,
     `Keywords: ${keywords}`
   ].join("\n");
@@ -128,68 +145,164 @@ function extractJsonPayload(content: string) {
 export async function generateInstagramPost(input: GeneratePostInput) {
   const parsedInput = generatePostSchema.parse(input);
   const apiKey = requireEnv("OLLAMA_API_KEY");
-  const model = process.env.OLLAMA_MODEL?.trim() || "kimi-k2.5:cloud";
+  const primaryModel = process.env.OLLAMA_MODEL?.trim() || "kimi-k2.5:cloud";
+  const fallbackModels = getFallbackModels(primaryModel);
+  const modelsToTry = [primaryModel, ...fallbackModels];
   const timeoutMs = getOllamaTimeoutMs();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const requestStartedAt = Date.now();
+  const prompt = buildPrompt(parsedInput);
+  const attemptErrors: string[] = [];
 
-  try {
-    const response = await fetch("https://ollama.com/api/chat", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+  console.info("[ollama] Starting generation workflow", {
+    modelsToTry,
+    timeoutMs,
+    topic: parsedInput.topic,
+    tone: parsedInput.tone,
+    outputLanguage: parsedInput.outputLanguage,
+    hasCustomInstructions: Boolean(parsedInput.customInstructions?.trim()),
+    messageLength: parsedInput.message.length,
+    brandColors: parsedInput.brandColors,
+    keywordsLength: parsedInput.keywords?.length ?? 0
+  });
+
+  for (const [index, model] of modelsToTry.entries()) {
+    const controller = new AbortController();
+    const startedAt = Date.now();
+    const timeout = setTimeout(() => {
+      console.error("[ollama] Request aborted after timeout", {
         model,
-        stream: false,
-        format: "json",
-        options: {
-          temperature: 0.8
-        },
-        messages: [
-          {
-            role: "system",
-            content:
-              "You generate structured Instagram content payloads for direct rendering and publishing."
-          },
-          {
-            role: "user",
-            content: buildPrompt(parsedInput)
-          }
-        ]
-      }),
-      signal: controller.signal
+        timeoutMs,
+        attempt: index + 1,
+        durationMs: Date.now() - startedAt,
+        totalDurationMs: Date.now() - requestStartedAt,
+        topic: parsedInput.topic,
+        tone: parsedInput.tone
+      });
+      controller.abort();
+    }, timeoutMs);
+
+    console.info("[ollama] Starting chat request", {
+      model,
+      timeoutMs,
+      attempt: index + 1,
+      totalAttempts: modelsToTry.length
     });
 
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      throw new Error(`Ollama request failed: ${response.status} ${responseText}`.trim());
-    }
-
-    const parsedResponse = ollamaResponseSchema.parse(JSON.parse(responseText));
-
-    let content: unknown;
-    const jsonPayload = extractJsonPayload(parsedResponse.message.content);
-
     try {
-      content = JSON.parse(jsonPayload);
-    } catch {
-      throw new Error("Ollama did not return valid JSON content.");
+      const response = await fetch("https://ollama.com/api/chat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model,
+          stream: false,
+          format: "json",
+          options: {
+            temperature: 0.4
+          },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You generate structured Instagram content payloads for direct rendering and publishing."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ]
+        }),
+        signal: controller.signal
+      });
+
+      console.info("[ollama] Received HTTP response", {
+        model,
+        status: response.status,
+        ok: response.ok,
+        attempt: index + 1,
+        durationMs: Date.now() - startedAt,
+        totalDurationMs: Date.now() - requestStartedAt
+      });
+
+      const responseText = await response.text();
+
+      console.info("[ollama] Response body received", {
+        model,
+        status: response.status,
+        attempt: index + 1,
+        durationMs: Date.now() - startedAt,
+        totalDurationMs: Date.now() - requestStartedAt,
+        responseTextLength: responseText.length
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ollama request failed: ${response.status} ${responseText}`.trim());
+      }
+
+      const parsedResponse = ollamaResponseSchema.parse(JSON.parse(responseText));
+
+      let content: unknown;
+      const jsonPayload = extractJsonPayload(parsedResponse.message.content);
+
+      try {
+        content = JSON.parse(jsonPayload);
+      } catch {
+        throw new Error("Ollama did not return valid JSON content.");
+      }
+
+      const generatedPost = coerceGeneratedPost(content);
+
+      console.info("[ollama] Parsed generated post", {
+        model,
+        attempt: index + 1,
+        durationMs: Date.now() - startedAt,
+        totalDurationMs: Date.now() - requestStartedAt,
+        captionLength: generatedPost.caption.length,
+        hashtagsCount: generatedPost.hashtags.length,
+        htmlLength: generatedPost.html.length,
+        cssLength: generatedPost.css.length
+      });
+
+      return generatedPost;
+    } catch (error) {
+      const message =
+        error instanceof Error && error.name === "AbortError"
+          ? `Ollama request timed out after ${Math.round(timeoutMs / 1000)} seconds.`
+          : error instanceof Error
+            ? error.message
+            : String(error);
+
+      attemptErrors.push(`${model}: ${message}`);
+
+      console.error("[ollama] Request failed", {
+        model,
+        attempt: index + 1,
+        totalAttempts: modelsToTry.length,
+        durationMs: Date.now() - startedAt,
+        totalDurationMs: Date.now() - requestStartedAt,
+        timeoutMs,
+        errorName: error instanceof Error ? error.name : "UnknownError",
+        errorMessage: message
+      });
+
+      if (index === modelsToTry.length - 1) {
+        throw new Error(message);
+      }
+
+      console.warn("[ollama] Retrying with fallback model", {
+        failedModel: model,
+        nextModel: modelsToTry[index + 1],
+        attempt: index + 1,
+        errorMessage: message
+      });
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return coerceGeneratedPost(content);
-  } catch (error) {
-    const message =
-      error instanceof Error && error.name === "AbortError"
-        ? `Ollama request timed out after ${Math.round(timeoutMs / 1000)} seconds.`
-        : error instanceof Error
-          ? error.message
-          : String(error);
-
-    throw new Error(message);
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw new Error(
+    attemptErrors[attemptErrors.length - 1] ?? "Ollama generation failed unexpectedly."
+  );
 }

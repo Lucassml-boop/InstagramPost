@@ -16,6 +16,8 @@ model User {
   emailIv          String?
   emailTag         String?
   passwordHash     String
+  preferredOutputLanguage String?     @default("en")
+  preferredCustomInstructions String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   sessions         Session[]
