@@ -214,6 +214,18 @@ type Dictionary = {
     noAgenda: string;
     structure: string;
     visualIdea: string;
+    strategySection: string;
+    strategyDescription: string;
+    automationSection: string;
+    automationDescription: string;
+    sourcesSection: string;
+    sourcesDescription: string;
+    memorySection: string;
+    memoryDescription: string;
+    agendaRulesSection: string;
+    agendaRulesDescription: string;
+    generatedSection: string;
+    generatedDescription: string;
   };
   automationDiagnostics: {
     eyebrow: string;
@@ -238,6 +250,20 @@ type Dictionary = {
     lastStatus: string;
     notRunYet: string;
     requestFailed: string;
+    summaryLabel: string;
+    weeklySkipped: string;
+    cleanupSkipped: string;
+    itemsGenerated: string;
+    itemsCleared: string;
+    itemsProcessed: string;
+    itemsPublished: string;
+    itemsFailed: string;
+    tokensRefreshed: string;
+    awaitingRun: string;
+    sectionRealtime: string;
+    sectionRealtimeDescription: string;
+    sectionSafety: string;
+    sectionSafetyDescription: string;
   };
 };
 
@@ -472,7 +498,19 @@ const dictionaries: Record<Locale, Dictionary> = {
         "Review the plan that will feed your content creation workflow, including structure, caption, visual idea, and CTA.",
       noAgenda: "No weekly agenda has been generated yet.",
       structure: "Structure",
-      visualIdea: "Visual idea"
+      visualIdea: "Visual idea",
+      strategySection: "Brand strategy",
+      strategyDescription: "Core positioning, editable brief, and the automation controls that define how the system should behave.",
+      automationSection: "Automation controls",
+      automationDescription: "Save settings, run planning, and review the current topic signals collected from external research.",
+      sourcesSection: "Knowledge base",
+      sourcesDescription: "Services, rules, research prompts, and the default carousel narrative used by the planner.",
+      memorySection: "Topic memory",
+      memoryDescription: "This is the compact anti-repetition memory used to avoid recycling the same subject too often.",
+      agendaRulesSection: "Weekly cadence rules",
+      agendaRulesDescription: "Define the role of each weekday so the planner keeps a clear editorial rhythm.",
+      generatedSection: "Generated plan",
+      generatedDescription: "Inspect the current weekly plan in a dedicated section before creating or publishing anything."
     },
     automationDiagnostics: {
       eyebrow: "Diagnostics",
@@ -503,7 +541,23 @@ const dictionaries: Record<Locale, Dictionary> = {
       running: "Running...",
       lastStatus: "Last status",
       notRunYet: "Not run yet",
-      requestFailed: "The request failed."
+      requestFailed: "The request failed.",
+      summaryLabel: "Summary:",
+      weeklySkipped: "the weekly plan was skipped because it already exists",
+      cleanupSkipped: "cleanup skipped for today",
+      itemsGenerated: "items generated",
+      itemsCleared: "topics cleared",
+      itemsProcessed: "scheduled posts processed",
+      itemsPublished: "published",
+      itemsFailed: "failed",
+      tokensRefreshed: "tokens refreshed",
+      awaitingRun: "Run this automation to see a human-readable summary here.",
+      sectionRealtime: "Realtime feedback",
+      sectionRealtimeDescription:
+        "Every action returns the live backend response so you can validate the exact status without opening the terminal.",
+      sectionSafety: "Safe testing",
+      sectionSafetyDescription:
+        "Use the day selector in the weekly publish test if you want to publish only one agenda item instead of the full week."
     }
   },
   "pt-BR": {
@@ -736,7 +790,19 @@ const dictionaries: Record<Locale, Dictionary> = {
         "Revise o planejamento que vai alimentar seu fluxo de criacao, incluindo estrutura, legenda, ideia visual e CTA.",
       noAgenda: "Ainda nao existe uma agenda semanal gerada.",
       structure: "Estrutura",
-      visualIdea: "Ideia visual"
+      visualIdea: "Ideia visual",
+      strategySection: "Estrategia da marca",
+      strategyDescription: "Posicionamento central, briefing editavel e os controles principais que definem como a automacao deve se comportar.",
+      automationSection: "Controles da automacao",
+      automationDescription: "Salve configuracoes, rode o planejamento e acompanhe os temas atuais capturados na pesquisa.",
+      sourcesSection: "Base de conhecimento",
+      sourcesDescription: "Servicos, regras, pesquisas e a narrativa padrao de carrossel usada pelo planejador.",
+      memorySection: "Memoria de temas",
+      memoryDescription: "Esta e a memoria compacta anti-repeticao usada para evitar reciclar os mesmos assuntos com muita frequencia.",
+      agendaRulesSection: "Regras da cadencia semanal",
+      agendaRulesDescription: "Defina o papel de cada dia da semana para que o planejador mantenha um ritmo editorial claro.",
+      generatedSection: "Plano gerado",
+      generatedDescription: "Inspecione o planejamento semanal atual em uma secao dedicada antes de criar ou publicar qualquer coisa."
     },
     automationDiagnostics: {
       eyebrow: "Diagnostico",
@@ -767,7 +833,23 @@ const dictionaries: Record<Locale, Dictionary> = {
       running: "Executando...",
       lastStatus: "Ultimo status",
       notRunYet: "Ainda nao executado",
-      requestFailed: "A requisicao falhou."
+      requestFailed: "A requisicao falhou.",
+      summaryLabel: "Resumo:",
+      weeklySkipped: "o plano semanal foi ignorado porque ja existe",
+      cleanupSkipped: "a limpeza foi ignorada hoje",
+      itemsGenerated: "itens gerados",
+      itemsCleared: "temas limpos",
+      itemsProcessed: "posts agendados processados",
+      itemsPublished: "publicados",
+      itemsFailed: "falharam",
+      tokensRefreshed: "tokens atualizados",
+      awaitingRun: "Execute esta automacao para ver um resumo humano aqui.",
+      sectionRealtime: "Feedback em tempo real",
+      sectionRealtimeDescription:
+        "Cada acao retorna a resposta real do backend para que voce valide o status exato sem abrir o terminal.",
+      sectionSafety: "Teste com seguranca",
+      sectionSafetyDescription:
+        "Use o seletor de dia na publicacao da agenda semanal se quiser disparar apenas um item em vez da semana inteira."
     }
   }
 };

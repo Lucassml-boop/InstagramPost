@@ -279,7 +279,16 @@ export function ContentAutomationSettings({
         </div>
       )}
 
-      <Panel className="p-6">
+      <Panel className="overflow-hidden p-0">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            {dictionary.contentAutomation.strategySection}
+          </p>
+          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+            {dictionary.contentAutomation.strategyDescription}
+          </p>
+        </div>
+        <div className="p-6">
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-5">
             <label className="block text-sm font-medium text-slate-700">
@@ -363,10 +372,20 @@ export function ContentAutomationSettings({
             </p>
           </div>
         </div>
+        </div>
       </Panel>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Panel className="p-6">
+        <Panel className="overflow-hidden p-0">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              {dictionary.contentAutomation.sourcesSection}
+            </p>
+            <p className="mt-2 text-sm text-slate-600">
+              {dictionary.contentAutomation.sourcesDescription}
+            </p>
+          </div>
+          <div className="p-6">
           <div className="grid gap-5 md:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
               <span>{dictionary.contentAutomation.services}</span>
@@ -412,9 +431,19 @@ export function ContentAutomationSettings({
           <p className="mt-3 text-xs text-slate-500">
             {dictionary.contentAutomation.listHint}
           </p>
+          </div>
         </Panel>
 
-        <Panel className="p-6">
+        <Panel className="overflow-hidden p-0">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              {dictionary.contentAutomation.automationSection}
+            </p>
+            <p className="mt-2 text-sm text-slate-600">
+              {dictionary.contentAutomation.automationDescription}
+            </p>
+          </div>
+          <div className="p-6">
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -459,10 +488,20 @@ export function ContentAutomationSettings({
               </div>
             </div>
           ) : null}
+          </div>
         </Panel>
       </div>
 
-      <Panel className="p-6">
+      <Panel className="overflow-hidden p-0">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            {dictionary.contentAutomation.memorySection}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            {dictionary.contentAutomation.memoryDescription}
+          </p>
+        </div>
+        <div className="p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-ink">
@@ -498,9 +537,19 @@ export function ContentAutomationSettings({
             ))}
           </div>
         )}
+        </div>
       </Panel>
 
-      <Panel className="p-6">
+      <Panel className="overflow-hidden p-0">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            {dictionary.contentAutomation.agendaRulesSection}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            {dictionary.contentAutomation.agendaRulesDescription}
+          </p>
+        </div>
+        <div className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-ink">
@@ -549,9 +598,19 @@ export function ContentAutomationSettings({
             </div>
           ))}
         </div>
+        </div>
       </Panel>
 
-      <Panel className="p-6">
+      <Panel className="overflow-hidden p-0">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            {dictionary.contentAutomation.generatedSection}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            {dictionary.contentAutomation.generatedDescription}
+          </p>
+        </div>
+        <div className="p-6">
         <p className="text-sm font-semibold text-ink">
           {dictionary.contentAutomation.generatedAgendaTitle}
         </p>
@@ -612,6 +671,7 @@ export function ContentAutomationSettings({
             ))}
           </div>
         )}
+        </div>
       </Panel>
     </div>
   );
