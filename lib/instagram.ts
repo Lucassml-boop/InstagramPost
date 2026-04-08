@@ -9,6 +9,12 @@ const TOKEN_MIN_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const MEDIA_CONTAINER_POLL_INTERVAL_MS = 2_000;
 const MEDIA_CONTAINER_MAX_WAIT_MS = 30_000;
 
+export type InstagramPostType = "feed" | "story" | "carousel";
+export type PublishableMediaItem = {
+  imageUrl: string;
+  imagePath: string;
+};
+
 function getTokenExpiryDate(expiresInSeconds?: string | number | null) {
   const seconds = Number(expiresInSeconds);
 
@@ -459,18 +465,11 @@ export async function getInstagramAccessToken(userId: string) {
   return { account, accessToken };
 }
 
-export async function publishInstagramImage(input: {
-  userId: string;
-  caption: string;
-  imageUrl: string;
-}) {
-  const { account, accessToken } = await getInstagramAccessToken(input.userId);
-  const instagramUserId = getStoredInstagramUserId(account);
-
+async function assertImageUrlIsReachable(imageUrl: string) {
   let imageProbeResponse: Response | null = null;
 
   try {
-    imageProbeResponse = await fetch(input.imageUrl, {
+    imageProbeResponse = await fetch(imageUrl, {
       method: "HEAD",
       redirect: "follow",
       cache: "no-store"
@@ -480,7 +479,7 @@ export async function publishInstagramImage(input: {
   }
 
   if (!imageProbeResponse || !imageProbeResponse.ok) {
-    imageProbeResponse = await fetch(input.imageUrl, {
+    imageProbeResponse = await fetch(imageUrl, {
       method: "GET",
       redirect: "follow",
       cache: "no-store"
@@ -500,6 +499,16 @@ export async function publishInstagramImage(input: {
       `The public image URL returned content-type ${imageContentType ?? "unknown"} instead of an image.`
     );
   }
+}
+
+async function createInstagramMediaContainer(input: {
+  userId: string;
+  caption: string;
+  imageUrl: string;
+}) {
+  const { account, accessToken } = await getInstagramAccessToken(input.userId);
+  const instagramUserId = getStoredInstagramUserId(account);
+  await assertImageUrlIsReachable(input.imageUrl);
 
   const mediaBody = new URLSearchParams({
     image_url: input.imageUrl,
@@ -524,23 +533,34 @@ export async function publishInstagramImage(input: {
     throw new Error(mediaJson.error?.message ?? "Unable to create Instagram media container.");
   }
 
-  const creationId = String(mediaJson.id);
-  await waitForInstagramMediaContainer({
-    creationId,
+  return {
     accessToken,
-    instagramUserId
+    instagramUserId,
+    creationId: String(mediaJson.id)
+  };
+}
+
+async function publishInstagramCreation(input: {
+  accessToken: string;
+  instagramUserId: string;
+  creationId: string;
+}) {
+  await waitForInstagramMediaContainer({
+    creationId: input.creationId,
+    accessToken: input.accessToken,
+    instagramUserId: input.instagramUserId
   });
 
   const publishBody = new URLSearchParams({
-    creation_id: creationId
+    creation_id: input.creationId
   });
 
   const publishResponse = await fetch(
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/media_publish`,
+    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${input.instagramUserId}/media_publish`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${input.accessToken}`,
         "Content-Type": "application/x-www-form-urlencoded"
       },
       body: publishBody.toString()
@@ -556,6 +576,129 @@ export async function publishInstagramImage(input: {
   return {
     mediaId: String(publishJson.id)
   };
+}
+
+export async function publishInstagramPost(input: {
+  userId: string;
+  postType: InstagramPostType;
+  caption: string;
+  mediaItems: PublishableMediaItem[];
+}) {
+  if (input.mediaItems.length === 0) {
+    throw new Error("At least one image is required to publish.");
+  }
+
+  const { account, accessToken } = await getInstagramAccessToken(input.userId);
+  const instagramUserId = getStoredInstagramUserId(account);
+
+  if (input.postType === "carousel") {
+    if (input.mediaItems.length < 2 || input.mediaItems.length > 10) {
+      throw new Error("Carousel posts require between 2 and 10 images.");
+    }
+
+    const childCreationIds: string[] = [];
+
+    for (const item of input.mediaItems) {
+      await assertImageUrlIsReachable(item.imageUrl);
+
+      const childBody = new URLSearchParams({
+        image_url: item.imageUrl,
+        is_carousel_item: "true"
+      });
+
+      const childResponse = await fetch(
+        `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/media`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: childBody.toString()
+        }
+      );
+
+      const childJson = await childResponse.json();
+
+      if (!childResponse.ok || !childJson.id) {
+        throw new Error(
+          childJson.error?.message ?? "Unable to create Instagram carousel media item."
+        );
+      }
+
+      const creationId = String(childJson.id);
+      childCreationIds.push(creationId);
+
+      await waitForInstagramMediaContainer({
+        creationId,
+        accessToken,
+        instagramUserId
+      });
+    }
+
+    const carouselBody = new URLSearchParams({
+      media_type: "CAROUSEL",
+      children: childCreationIds.join(","),
+      caption: input.caption
+    });
+
+    const carouselResponse = await fetch(
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/media`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: carouselBody.toString()
+      }
+    );
+
+    const carouselJson = await carouselResponse.json();
+
+    if (!carouselResponse.ok || !carouselJson.id) {
+      throw new Error(carouselJson.error?.message ?? "Unable to create Instagram carousel.");
+    }
+
+    return publishInstagramCreation({
+      accessToken,
+      instagramUserId,
+      creationId: String(carouselJson.id)
+    });
+  }
+
+  const primaryMedia = input.mediaItems[0];
+  await assertImageUrlIsReachable(primaryMedia.imageUrl);
+
+  const mediaBody = new URLSearchParams({
+    image_url: primaryMedia.imageUrl,
+    ...(input.postType === "story" ? { media_type: "STORIES" } : {}),
+    ...(input.postType === "feed" ? { caption: input.caption } : {})
+  });
+
+  const mediaResponse = await fetch(
+    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${instagramUserId}/media`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: mediaBody.toString()
+    }
+  );
+
+  const mediaJson = await mediaResponse.json();
+
+  if (!mediaResponse.ok || !mediaJson.id) {
+    throw new Error(mediaJson.error?.message ?? "Unable to create Instagram media container.");
+  }
+
+  return publishInstagramCreation({
+    accessToken,
+    instagramUserId,
+    creationId: String(mediaJson.id)
+  });
 }
 
 async function waitForInstagramMediaContainer(input: {

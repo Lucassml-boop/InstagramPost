@@ -1,0 +1,132 @@
+[
+  {
+    "date": "2026-04-13",
+    "day": "Segunda",
+    "goal": "Mostrar autoridade ensinando algo util",
+    "type": "tutorial",
+    "format": "Carrossel",
+    "theme": "Sincronização Inteligente: Como unificar estoque entre Mercado Livre e Shopee sem conflitos de venda",
+    "structure": [
+      "Capa / Hook: 'Vendeu o que não tinha? Esse erro custa caro' + Visual de estoque zerado",
+      "Contexto / Problema: O desafio de gerenciar estoque em múltiplos marketplaces manualmente",
+      "Desenvolvimento / Conteúdo: 3 camadas de proteção na integração (API, webhook e validação cruzada)",
+      "Insight / Conclusão: Diferença entre sincronização em tempo real vs. batch e impacto no algoritmo",
+      "CTA / Call To Action: 'Comente ESTOQUE para receber o checklist técnico'"
+    ],
+    "caption": "🚨 Alerta para quem vende em mais de um lugar!\n\nVocê já perdeu reputação no Mercado Livre ou Shopee porque vendeu um produto que na verdade tinha acabado no outro canal?\n\nEsse é o pesadelo de quem não tem integração inteligente de estoque.\n\nNa EcomForge desenvolvemos uma arquitetura em três camadas que elimina 100% dos conflitos:\n\n1️⃣ Webhook instantâneo (atualização em segundos)\n2️⃣ Validação cruzada antes da confirmação de venda\n3️⃣ Buffer de segurança configurável\n\nO resultado? Zero cancelamentos por falta de estoque e algoritmo dos marketplaces te favorecendo.\n\n💡 Insight: O Mercado Livre prioriza vendedores com índice de cancelamento abaixo de 2%. Uma sincronização batch (atualização a cada 30min) já é o suficiente para você perder posicionamento.\n\n👉 Quer implementar isso na sua operação? Comente ESTOQUE aqui embaixo que enviamos o checklist técnico completo.\n\n#Automação #Ecommerce #MercadoLivre #Shopee #Integração",
+    "visualIdea": "Design clean com fundo branco e azul corporativo, ícones 3D do Mercado Livre e Shopee conectados por linhas de fluxo de dados animadas, destaque para números de estoque sincronizados em verde",
+    "cta": "Comente 'ESTOQUE' para receber o checklist técnico de integração",
+    "topicKeywords": [
+      "integração",
+      "estoque",
+      "mercado livre",
+      "shopee",
+      "sincronização",
+      "webhook"
+    ]
+  },
+  {
+    "date": "2026-04-14",
+    "day": "Terça",
+    "goal": "Mostrar que a empresa realmente desenvolve tecnologia",
+    "type": "desenvolvimento",
+    "format": "Reels",
+    "theme": "Por trás do código: Arquitetura de um robô de atendimento que responde em 30 segundos",
+    "structure": [
+      "Hook: Tela de código sendo digitado em velocidade + texto 'Isso responde mais rápido que humano'",
+      "Contexto: O problema da latência no atendimento de e-commerce",
+      "Desenvolvimento: Mostrando fluxograma da arquitetura (NLP -> Análise de Intenção -> Busca em Base de Conhecimento -> Resposta)",
+      "Insight: Por que usamos processamento assíncrono para não travar o sistema",
+      "CTA: 'Siga para ver mais bastidores'"
+    ],
+    "caption": "👨‍💻 Terça é dia de mostrar o que acontece nos bastidores da EcomForge.\n\nEsse é o core de um sistema que desenvolvemos para atender leads automaticamente em 30 segundos (sim, menos que um minuto).\n\n🔧 Stack utilizada:\n• Node.js para alta performance\n• NLP (Processamento de Linguagem Natural) para entender a pergunta\n• Fila de processamento assíncrono (não trava mesmo com milhares de chats)\n• Integração direta com WhatsApp Business API e Instagram DM\n\n⚡ O segredo está na arquitetura: em vez de processar tudo na hora, usamos microsserviços que trabalham em paralelo. Enquanto o robô responde uma pergunta, outro módulo já está buscando informações de estoque atualizado.\n\nResultado para o cliente: 90% das perguntas frequentes resolvidas sem intervenção humana, e equipe focada apenas nos atendimentos que realmente geram valor.\n\n💾 Salve esse Reels se você curte tecnologia aplicada a negócios.\n\n#Desenvolvimento #Automação #IA #Backend #Ecommerce",
+    "visualIdea": "Vídeo tela dividida: lado esquerdo mostra código sendo escrito em VS Code com tema escuro, lado direito mostra diagrama de fluxo da arquitetura sendo desenhado em tempo real, transições rápidas com zoom nos pontos críticos do sistema",
+    "cta": "Salve este conteúdo e siga a página para mais bastidores técnicos",
+    "topicKeywords": [
+      "arquitetura",
+      "ia",
+      "automação",
+      "atendimento",
+      "backend",
+      "microsserviços"
+    ]
+  },
+  {
+    "date": "2026-04-15",
+    "day": "Quarta",
+    "goal": "Gerar confianca mostrando resultados",
+    "type": "caso de cliente",
+    "format": "Carrossel",
+    "theme": "Caso Real: Como a TechGadgets reduziu 36 horas semanais de trabalho manual em apenas 2 semanas",
+    "structure": [
+      "Capa / Hook: 'De 40h para 4h semanais' + Foto do antes e depois da operação",
+      "Contexto / Problema: Empresa com 3 funcionários só copiando dados entre sistemas",
+      "Desenvolvimento / Conteúdo: Quais automações foram implementadas (planilha → sistema, emissão de NF, rastreamento automático)",
+      "Insight / Conclusão: Números: 36h economizadas, zero erros de digitação, +15% vendas por tempo focado em estratégia",
+      "CTA / Call To Action: 'Quer resultados assim? Clique no link'"
+    ],
+    "caption": "📊 Quarta é dia de prova social e números reais.\n\nHá 3 meses a TechGadgets (nome fictício para proteger o cliente, mas os números são reais) estava sufocada.\n\n3 funcionários passavam 40 horas semanais só:\n❌ Copiando pedidos do Mercado Livre para planilha\n❌ Consultando CEP para frete manualmente  \n❌ Digitando notas fiscais uma a uma\n❌ Respondendo 'quando chega meu pedido?' 200x por dia\n\nImplementamos um ecossistema integrado:\n✅ Sincronização automática ML → ERP\n✅ Emissão de NF em lote com um clique\n✅ Rastreamento automático via WhatsApp\n✅ Dashboard unificado de vendas\n\n⏱️ Resultado em 15 dias:\n• 36 horas semanais economizadas (equipe redirecionada para marketing)\n• Zero erros de digitação de endereço\n• Tempo de resposta ao cliente: de 3h para 30 segundos\n• Aumento de 15% no faturamento (mesmo mês, mesmo estoque)\n\n🎯 O dono falou: 'Parece que contratei 5 funcionários, mas na verdade só automatizamos o que era robótico.'\n\n💼 Sua operação também está sugando tempo que deveria ir para estratégia?\n\n👉 Link na bio para diagnóstico gratuito.\n\n#Case #Resultados #Automação #Produtividade #Ecommerce",
+    "visualIdea": "Infográfico profissional com split screen: lado esquerdo mostra planilha Excel bagunçada e funcionário estressado (foto ilustrativa), lado direito mostra dashboard clean da EcomForge e equipe sorrindo, gráfico de barras mostrando queda drástica de horas trabalhadas em verde, selo '36h economizadas/semana' em destaque",
+    "cta": "Clique no link da bio para solicitar diagnóstico gratuito da sua operação",
+    "topicKeywords": [
+      "resultados",
+      "produtividade",
+      "automação",
+      "case",
+      "roi",
+      "eficiência"
+    ]
+  },
+  {
+    "date": "2026-04-16",
+    "day": "Quinta",
+    "goal": "Alcance e descoberta",
+    "type": "erro comum",
+    "format": "Reels",
+    "theme": "O erro silencioso que custa R$ 5 mil por mês aos vendedores do Mercado Livre (e como corrigir em 24h)",
+    "structure": [
+      "Hook: Alerta vermelho piscando + texto 'Se você vende no ML, pare agora'",
+      "Problema: A demora na resposta às perguntas (mais de 1h) derruba seu anúncio no algoritmo",
+      "Dado: 68% dos compradores desistem se não respondem em 15 min",
+      "Solução: Automação de respostas com inteligência contextual",
+      "CTA: 'Comente CORRIGIR para saber mais'"
+    ],
+    "caption": "⚠️ ATENÇÃO: Se você vende no Mercado Livre, esse erro está te custando dinheiro agora.\n\nVocê responde as perguntas dos clientes só quando sobra tempo? Ou pior: deixa acumular para responder à noite?\n\n🚨 O algoritmo do Mercado Livre monitora isso. Anúncios com tempo médio de resposta acima de 1h perdem posicionamento no ranking.\n\n💸 O custo disso:\n• 68% dos compradores desistem se não recebem resposta em 15 minutos\n• Cada pergunta não respondida = potencial venda perdida\n• Perda de reputação → menos exposição → menos vendas\n\n💡 A solução não é contratar mais gente para ficar olhando celular. É automação inteligente.\n\nNossos sistemas respondem automaticamente:\n✅ Perguntas sobre estoque ('Tem pronta entrega?')\n✅ Prazos de entrega por CEP\n✅ Dimensões e especificações técnicas\n✅ Status do pedido\n\nE quando precisa de humano? Transfere suavemente com todo o contexto.\n\n⏰ Resultado: Tempo médio de resposta de 30 segundos, 24h por dia.\n\n👉 Comente CORRIGIR aqui embaixo se você quer eliminar esse gargalo na sua operação.\n\n#MercadoLivre #Erros #Algoritmo #Automação #Vendas",
+    "visualIdea": "Reels dinâmico com texto animado em amarelo/vermelho, simulação de tela do celular mostrando notificação de pergunta no ML marcando 3h sem resposta, cronômetro correndo em vermelho, transição abrupta para tela verde mostrando 'Respondido em 30s' com selo de ouro, efeito sonoro de notificação positiva",
+    "cta": "Comente 'CORRIGIR' se você comete esse erro e quer a solução",
+    "topicKeywords": [
+      "mercado livre",
+      "erros",
+      "algoritmo",
+      "respostas",
+      "vendas",
+      "chat"
+    ]
+  },
+  {
+    "date": "2026-04-17",
+    "day": "Sexta",
+    "goal": "Gerar leads",
+    "type": "apresentação de serviço",
+    "format": "Imagem + CTA",
+    "theme": "Diagnóstico Gratuito: Mapeamento Completo de Gargalos da sua Operação de E-commerce",
+    "structure": [
+      "Imagem principal: Mockup de relatório profissional com selo 'Gratuito'",
+      "O que inclui: Análise de 5 pontos críticos (estoque, atendimento, emissão de NF, logística, integração)",
+      "Benefício: Plano de ação personalizado em 48h",
+      "Urgência: Apenas 3 vagas por semana",
+      "Forma de contato: Link na bio ou Direct"
+    ],
+    "caption": "🎯 SEXTA-FEIRA É DIA DE OPORTUNIDADE\n\nVocê sabe exatamente onde sua operação está perdendo dinheiro hoje?\n\nNa EcomForge estamos abrindo 3 vagas essa semana para Diagnóstico Gratuito de Automação.\n\n📋 O que você recebe:\n• Mapeamento dos 3 maiores gargalos da sua operação\n• Análise de quantas horas semanais você pode economizar com automação\n• Plano de implementação em 3 fases (do básico ao avançado)\n• Orçamento detalhado (sem surpresas)\n\n⏱️ Entrega em 48 horas.\n\n💡 É de graça, mas não é para todo mundo. Só atendemos quem:\n✅ Fatura acima de 30k/mês em e-commerce\n✅ Vende em pelo menos 2 canais (ML, Shopee, site, etc)\n✅ Tem real interesse em escalar sem aumentar a equipe proporcionalmente\n\n🚀 As 3 vagas dessa semana costumam preencher em 24h.\n\n👉 Clique no link da bio ou envie 'DIAGNÓSTICO' no Direct agora.\n\n#Consultoria #Gratuito #Automação #Ecommerce #Diagnóstico",
+    "visualIdea": "Post estético minimalista, fundo gradiente azul escuro para preto, ícone 3D de checklist branco flutuando no centro, texto 'Diagnóstico Gratuito' em tipografia bold branca, selo vermelho 'Apenas 3 vagas' no canto superior direito, mockup sutil de relatório PDF no fundo desfocado",
+    "cta": "Clique no link da bio ou envie 'DIAGNÓSTICO' no Direct para garantir sua vaga",
+    "topicKeywords": [
+      "diagnóstico",
+      "consultoria",
+      "gratuito",
+      "leads",
+      "mapeamento",
+      "gargalos"
+    ]
+  }
+]

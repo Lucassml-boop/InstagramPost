@@ -19,6 +19,8 @@ export async function POST(request: Request) {
       userId: user.id,
       caption: parsed.caption,
       scheduledTime: new Date(parsed.scheduledTime),
+      postType: parsed.postType,
+      mediaItems: parsed.mediaItems,
       imageUrl: parsed.imageUrl,
       imagePath: parsed.imagePath
     });

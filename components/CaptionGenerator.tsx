@@ -10,6 +10,8 @@ import { Panel } from "@/components/ui";
 
 type DraftResponse = {
   postId: string;
+  postType: PostType;
+  mediaItems: MediaItem[];
   imageUrl: string;
   imagePath: string;
   caption: string;
@@ -18,11 +20,56 @@ type DraftResponse = {
 };
 
 type OutputLanguage = "en" | "pt-BR";
+type PostType = "feed" | "story" | "carousel";
+type MediaItem = {
+  imageUrl: string;
+  imagePath: string;
+};
+type StoryCaptionMode = "image-only" | "with-caption";
+type CarouselSlideContext = {
+  id: string;
+  value: string;
+};
 
 const DEFAULT_GENERATION_TIMEOUT_MS = 240_000;
 const CLIENT_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_OLLAMA_TIMEOUT_MS ?? DEFAULT_GENERATION_TIMEOUT_MS);
 const PROGRESS_CAP = 96;
 const DEFAULT_CUSTOM_INSTRUCTIONS = "You are an expert Instagram content strategist and visual designer.";
+const DEFAULT_CAROUSEL_SLIDE_COUNT = 3;
+
+function buildDefaultCarouselContext(index: number, count: number) {
+  if (index === 0) {
+    return "Capa / Hook / Scroll Stopper. Deve parar o usuario no feed, chamar atencao, criar curiosidade e prometer valor.";
+  }
+
+  if (index === 1) {
+    return "Contexto / Problema. Mostre que voce entende a dor da pessoa. O slide 2 tambem precisa ser forte porque o Instagram pode reutiliza-lo como abertura.";
+  }
+
+  if (index === count - 1) {
+    return "CTA / Call to Action. Leve a pessoa a agir: salvar, comentar, seguir ou pedir contato.";
+  }
+
+  if (index === count - 2) {
+    return "Insight / Conclusao. Reforce a mensagem principal e sintetize o aprendizado do carrossel.";
+  }
+
+  return `Desenvolvimento / Conteudo. Entregue valor no slide ${index + 1} com dica, passo, explicacao ou tutorial.`;
+}
+
+function createSlideContexts(count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `slide-${index + 1}`,
+    value: buildDefaultCarouselContext(index, count)
+  })) satisfies CarouselSlideContext[];
+}
+
+function normalizeSlideContexts(current: CarouselSlideContext[], count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `slide-${index + 1}`,
+    value: current[index]?.value || buildDefaultCarouselContext(index, count)
+  })) satisfies CarouselSlideContext[];
+}
 
 function formatDuration(durationMs: number) {
   const totalSeconds = Math.max(0, Math.round(durationMs / 1000));
@@ -44,6 +91,12 @@ export function CaptionGenerator({
   const [activeTab, setActiveTab] = useState<"content" | "settings">("content");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
+  const [postType, setPostType] = useState<PostType>("feed");
+  const [carouselSlideCount, setCarouselSlideCount] = useState(DEFAULT_CAROUSEL_SLIDE_COUNT);
+  const [carouselSlideContexts, setCarouselSlideContexts] = useState<CarouselSlideContext[]>(
+    createSlideContexts(DEFAULT_CAROUSEL_SLIDE_COUNT)
+  );
+  const [storyCaptionMode, setStoryCaptionMode] = useState<StoryCaptionMode>("image-only");
   const [tone, setTone] = useState<"professional" | "casual" | "promotional">("professional");
   const [outputLanguage, setOutputLanguage] = useState<OutputLanguage>(initialOutputLanguage);
   const [customInstructions, setCustomInstructions] = useState(
@@ -79,6 +132,16 @@ export function CaptionGenerator({
     ? Math.min((elapsedMs / CLIENT_TIMEOUT_MS) * 100, PROGRESS_CAP)
     : 0;
   const shouldShowSlowMessage = elapsedMs >= CLIENT_TIMEOUT_MS * 0.7;
+  const shouldShowCaptionEditor = postType !== "story" || storyCaptionMode === "with-caption";
+  const effectiveCaption = shouldShowCaptionEditor ? caption : "";
+
+  useEffect(() => {
+    if (postType !== "carousel") {
+      return;
+    }
+
+    setCarouselSlideContexts((current) => normalizeSlideContexts(current, carouselSlideCount));
+  }, [carouselSlideCount, postType]);
 
   async function generatePost() {
     const startedAt = Date.now();
@@ -89,6 +152,8 @@ export function CaptionGenerator({
     setSettingsMessage(null);
     console.info("[post-generator] Starting generation request", {
       topic,
+      postType,
+      carouselSlideCount,
       tone,
       outputLanguage,
       hasCustomInstructions: Boolean(customInstructions.trim()),
@@ -104,6 +169,9 @@ export function CaptionGenerator({
         body: JSON.stringify({
           topic,
           message,
+          postType,
+          carouselSlideCount,
+          carouselSlideContexts: carouselSlideContexts.map((item) => item.value),
           tone,
           outputLanguage,
           customInstructions,
@@ -135,6 +203,7 @@ export function CaptionGenerator({
         durationMs: Date.now() - startedAt
       });
       setDraft(json);
+      setPostType(json.postType);
       setCaption(`${json.caption}\n\n${json.hashtags.join(" ")}`.trim());
     } catch (error) {
       console.error("[post-generator] Request crashed", {
@@ -162,7 +231,9 @@ export function CaptionGenerator({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId: draft.postId,
-          caption,
+          caption: effectiveCaption,
+          postType,
+          mediaItems: draft.mediaItems,
           imageUrl: draft.imageUrl,
           imagePath: draft.imagePath
         })
@@ -197,8 +268,10 @@ export function CaptionGenerator({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId: draft.postId,
-          caption,
+          caption: effectiveCaption,
           scheduledTime: new Date(scheduleTime).toISOString(),
+          postType,
+          mediaItems: draft.mediaItems,
           imageUrl: draft.imageUrl,
           imagePath: draft.imagePath
         })
@@ -312,6 +385,35 @@ export function CaptionGenerator({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-medium text-slate-700">
+                {dictionary.generator.postType}
+                <select
+                  value={postType}
+                  onChange={(event) => {
+                    const nextPostType = event.target.value as PostType;
+                    setPostType(nextPostType);
+
+                    if (nextPostType !== "carousel" && draft) {
+                      setDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              mediaItems: current.mediaItems.slice(0, 1),
+                              imageUrl: current.mediaItems[0]?.imageUrl ?? current.imageUrl,
+                              imagePath: current.mediaItems[0]?.imagePath ?? current.imagePath
+                            }
+                          : current
+                      );
+                    }
+                  }}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
+                >
+                  <option value="feed">{dictionary.generator.postTypeFeed}</option>
+                  <option value="story">{dictionary.generator.postTypeStory}</option>
+                  <option value="carousel">{dictionary.generator.postTypeCarousel}</option>
+                </select>
+              </label>
+
+              <label className="block text-sm font-medium text-slate-700">
                 {dictionary.generator.tone}
                 <select
                   value={tone}
@@ -336,6 +438,108 @@ export function CaptionGenerator({
                 />
               </label>
             </div>
+
+            {postType === "carousel" ? (
+              <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <div>
+                  <p className="text-sm font-semibold text-ink">
+                    {dictionary.generator.carouselSlides}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {dictionary.generator.carouselSlidesDescription}
+                  </p>
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                    <p className="font-semibold text-ink">
+                      {dictionary.generator.carouselDefaultStructure}
+                    </p>
+                    <p className="mt-2">{dictionary.generator.carouselDefaultStructureDescription}</p>
+                  </div>
+                </div>
+
+                <label className="block text-sm font-medium text-slate-700">
+                  {dictionary.generator.carouselSlidesCount}
+                  <select
+                    value={carouselSlideCount}
+                    onChange={(event) => setCarouselSlideCount(Number(event.target.value))}
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
+                  >
+                    {Array.from({ length: 9 }, (_, index) => index + 2).map((count) => (
+                      <option key={count} value={count}>
+                        {count}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="grid gap-4">
+                  {carouselSlideContexts.map((item, index) => (
+                    <label key={item.id} className="block text-sm font-medium text-slate-700">
+                      {dictionary.generator.carouselSlideContextLabel} {index + 1}
+                      <textarea
+                        value={item.value}
+                        onChange={(event) =>
+                          setCarouselSlideContexts((current) =>
+                            current.map((context, contextIndex) =>
+                              contextIndex === index
+                                ? { ...context, value: event.target.value }
+                                : context
+                            )
+                          )
+                        }
+                        className="mt-2 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
+                        placeholder={dictionary.generator.carouselSlideContextPlaceholder}
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCarouselSlideContexts(createSlideContexts(carouselSlideCount))}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
+                >
+                  {dictionary.generator.restoreCarouselStructure}
+                </button>
+              </div>
+            ) : null}
+
+            {postType === "story" ? (
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-ink">{dictionary.generator.storyMode}</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {dictionary.generator.storyModeDescription}
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setStoryCaptionMode("image-only")}
+                    className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      storyCaptionMode === "image-only"
+                        ? "border-ink bg-white text-ink shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-ink"
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold">
+                      {dictionary.generator.storyModeImageOnly}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStoryCaptionMode("with-caption")}
+                    className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      storyCaptionMode === "with-caption"
+                        ? "border-ink bg-white text-ink shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-ink"
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold">
+                      {dictionary.generator.storyModeWithCaption}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             <label className="block text-sm font-medium text-slate-700">
               {dictionary.generator.keywords}
@@ -477,28 +681,112 @@ export function CaptionGenerator({
 
         {draft ? (
           <div className="mt-8 space-y-4">
-            <label className="block text-sm font-medium text-slate-700">
-              {dictionary.generator.editCaption}
-              <textarea
-                value={caption}
-                onChange={(event) => setCaption(event.target.value)}
-                className="mt-2 min-h-40 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-              />
-            </label>
+            {shouldShowCaptionEditor ? (
+              <label className="block text-sm font-medium text-slate-700">
+                {dictionary.generator.editCaption}
+                <textarea
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  className="mt-2 min-h-40 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
+                />
+              </label>
+            ) : null}
 
-            <ImageUploader
-              onUploaded={({ imageUrl, imagePath }) =>
-                setDraft((current) =>
-                  current
-                    ? {
-                        ...current,
-                        imageUrl,
-                        imagePath
-                      }
-                    : current
-                )
-              }
-            />
+            <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-medium text-ink">
+                {postType === "carousel"
+                  ? dictionary.upload.carouselTitle
+                  : dictionary.upload.title}
+              </p>
+              <p className="text-sm text-slate-600">
+                {postType === "carousel"
+                  ? dictionary.upload.carouselDescription
+                  : dictionary.upload.description}
+              </p>
+
+              {draft.mediaItems.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {draft.mediaItems.map((item, index) => (
+                    <div
+                      key={`${item.imagePath}-${index}`}
+                      className="rounded-2xl border border-slate-200 bg-white p-3"
+                    >
+                      <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100">
+                        <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {postType === "carousel"
+                            ? `${dictionary.generator.postTypeCarousel} ${index + 1}`
+                            : dictionary.generator.postType}
+                        </p>
+                        <button
+                          type="button"
+                          disabled={draft.mediaItems.length === 1}
+                          onClick={() =>
+                            setDraft((current) => {
+                              if (!current) {
+                                return current;
+                              }
+
+                              const nextItems = current.mediaItems.filter(
+                                (_, itemIndex) => itemIndex !== index
+                              );
+
+                              if (nextItems.length === 0) {
+                                return current;
+                              }
+
+                              return {
+                                ...current,
+                                mediaItems: nextItems,
+                                imageUrl: nextItems[0].imageUrl,
+                                imagePath: nextItems[0].imagePath
+                              };
+                            })
+                          }
+                          className="text-sm font-semibold text-slate-600 transition hover:text-ink disabled:opacity-40"
+                        >
+                          {dictionary.generator.removeMedia}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <ImageUploader
+                multiple={postType === "carousel"}
+                maxFiles={postType === "carousel" ? Math.max(0, 10 - draft.mediaItems.length) : 1}
+                showText={false}
+                allowAiToggle
+                onUploaded={(items) =>
+                  setDraft((current) => {
+                    if (!current || items.length === 0) {
+                      return current;
+                    }
+
+                    const nextItems =
+                      postType === "carousel"
+                        ? [...current.mediaItems, ...items].slice(0, 10)
+                        : items.slice(0, 1);
+
+                    return {
+                      ...current,
+                      mediaItems: nextItems,
+                      imageUrl: nextItems[0].imageUrl,
+                      imagePath: nextItems[0].imagePath
+                    };
+                  })
+                }
+              />
+
+              {postType === "carousel" ? (
+                <p className="text-sm text-slate-600">
+                  {dictionary.generator.carouselCount}: {draft.mediaItems.length}/10
+                </p>
+              ) : null}
+            </div>
 
             <div className="flex flex-wrap gap-3">
               <button
@@ -530,7 +818,14 @@ export function CaptionGenerator({
         ) : null}
       </Panel>
 
-      <PostLayoutPreview imageUrl={draft?.imageUrl ?? null} caption={caption} />
+      <PostLayoutPreview
+        imageUrl={draft?.imageUrl ?? null}
+        mediaItems={draft?.mediaItems ?? []}
+        caption={effectiveCaption}
+        postType={postType}
+        mediaCount={draft?.mediaItems.length ?? 0}
+        showCaption={shouldShowCaptionEditor}
+      />
     </div>
   );
 }

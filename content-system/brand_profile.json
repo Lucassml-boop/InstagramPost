@@ -1,0 +1,100 @@
+{
+  "brandName": "EcomForge",
+  "editableBrief": "A EcomForge cria sistemas para empresas que vendem online e querem automatizar operacoes, integrar marketplaces e ganhar produtividade.",
+  "automationLoopEnabled": true,
+  "services": [
+    "automacoes",
+    "integracao Mercado Livre e Shopee",
+    "sistemas de controle de estoque",
+    "dashboards de vendas",
+    "automacao de respostas para leads",
+    "desenvolvimento de plataformas e e-commerces"
+  ],
+  "weeklyAgenda": {
+    "Segunda": {
+      "goal": "Mostrar autoridade ensinando algo util.",
+      "contentTypes": [
+        "tutoriais",
+        "explicacoes",
+        "dicas praticas",
+        "automacoes uteis"
+      ],
+      "formats": [
+        "Carrossel",
+        "Reels explicativo"
+      ]
+    },
+    "Terca": {
+      "goal": "Mostrar que a empresa realmente desenvolve tecnologia.",
+      "contentTypes": [
+        "mostrando desenvolvimento",
+        "arquitetura de sistemas",
+        "automacoes sendo criadas",
+        "desafios tecnicos"
+      ],
+      "formats": [
+        "Reels",
+        "Stories"
+      ]
+    },
+    "Quarta": {
+      "goal": "Gerar confianca mostrando resultados.",
+      "contentTypes": [
+        "casos de cliente",
+        "antes e depois",
+        "metricas de automacao",
+        "reducao de tempo de trabalho"
+      ],
+      "formats": [
+        "Carrossel"
+      ]
+    },
+    "Quinta": {
+      "goal": "Alcance e descoberta.",
+      "contentTypes": [
+        "curiosidades",
+        "erros comuns",
+        "tendencias de automacao",
+        "tarefas manuais que deveriam ser automatizadas"
+      ],
+      "formats": [
+        "Reels"
+      ]
+    },
+    "Sexta": {
+      "goal": "Gerar leads.",
+      "contentTypes": [
+        "apresentacao de servicos",
+        "chamada para automacao",
+        "demonstracao de solucoes"
+      ],
+      "formats": [
+        "imagem + CTA",
+        "video curto"
+      ]
+    }
+  },
+  "carouselDefaultStructure": [
+    "Capa / Hook / Scroll Stopper",
+    "Contexto / Problema",
+    "Desenvolvimento / Conteudo",
+    "Insight / Conclusao",
+    "CTA / Call To Action"
+  ],
+  "contentRules": [
+    "Os conteudos devem ser educativos.",
+    "Os conteudos devem mostrar autoridade.",
+    "Os conteudos devem atrair empresas interessadas em automacao.",
+    "Os conteudos devem gerar leads para a EcomForge.",
+    "Evitar repeticao de temas dos ultimos 60 dias."
+  ],
+  "researchQueries": [
+    "automacao e-commerce",
+    "Mercado Livre vendedores",
+    "Shopee sellers",
+    "vendas online produtividade",
+    "IA aplicada a negocios",
+    "automacao de atendimento leads",
+    "integracao estoque marketplaces"
+  ]
+}

@@ -1,6 +1,12 @@
+import { promisify } from "node:util";
+import { execFile as execFileCallback } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import puppeteer from "puppeteer";
+import { embedAiMetadata } from "@/lib/storage";
+
+const RENDER_TIMEOUT_MS = 120_000;
+const execFile = promisify(execFileCallback);
 
 function buildHtmlDocument(html: string, css: string) {
   return `<!DOCTYPE html>
@@ -12,8 +18,8 @@ function buildHtmlDocument(html: string, css: string) {
       * { box-sizing: border-box; }
       html, body {
         margin: 0;
-        width: 1080px;
-        height: 1080px;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
         background: #ffffff;
       }
@@ -22,8 +28,8 @@ function buildHtmlDocument(html: string, css: string) {
       }
       .frame {
         position: relative;
-        width: 1080px;
-        height: 1080px;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
       }
       ${css}
@@ -39,10 +45,14 @@ export async function renderPostImage(input: {
   slug: string;
   html: string;
   css: string;
+  width: number;
+  height: number;
 }) {
   const startedAt = Date.now();
   console.info("[renderer] Starting image render", {
     slug: input.slug,
+    width: input.width,
+    height: input.height,
     htmlLength: input.html.length,
     cssLength: input.css.length
   });
@@ -59,10 +69,33 @@ export async function renderPostImage(input: {
     });
 
     const page = await browser.newPage();
-    await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 1 });
-    await page.setContent(buildHtmlDocument(input.html, input.css), {
-      waitUntil: "networkidle0"
+    page.setDefaultNavigationTimeout(RENDER_TIMEOUT_MS);
+    page.setDefaultTimeout(RENDER_TIMEOUT_MS);
+
+    page.on("pageerror", (error) => {
+      console.error("[renderer] Page error", {
+        slug: input.slug,
+        message: error instanceof Error ? error.message : String(error)
+      });
     });
+
+    page.on("requestfailed", (request) => {
+      console.warn("[renderer] Request failed", {
+        slug: input.slug,
+        url: request.url(),
+        errorText: request.failure()?.errorText ?? "unknown"
+      });
+    });
+
+    await page.setViewport({ width: input.width, height: input.height, deviceScaleFactor: 1 });
+    await page.setContent(buildHtmlDocument(input.html, input.css), {
+      waitUntil: "domcontentloaded",
+      timeout: RENDER_TIMEOUT_MS
+    });
+
+    // The generated layout is self-contained, so a short settle delay is enough
+    // and avoids waiting forever for "networkidle" when the page never becomes idle.
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     console.info("[renderer] Content rendered in page", {
       slug: input.slug,
@@ -71,20 +104,15 @@ export async function renderPostImage(input: {
 
     const outputDir = path.join(process.cwd(), "public", "generated-posts");
     await mkdir(outputDir, { recursive: true });
-    const fileName = `${Date.now()}-${input.slug}.png`;
+    const fileName = `${Date.now()}-${input.slug}.jpg`;
     const absolutePath = path.join(outputDir, fileName);
     const buffer = await page.screenshot({
-      type: "png"
+      type: "jpeg",
+      quality: 90
     });
 
     await writeFile(absolutePath, buffer);
-
-    console.info("[renderer] Image saved", {
-      slug: input.slug,
-      durationMs: Date.now() - startedAt,
-      outputPath: absolutePath,
-      bytes: buffer.length
-    });
+    await embedAiMetadata(absolutePath);
 
     return {
       fileName,

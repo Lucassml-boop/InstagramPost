@@ -48,6 +48,7 @@ export default async function ScheduledPostsPage({
               <tr>
                 <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.preview}</th>
                 <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.caption}</th>
+                <th className="px-4 py-3 font-medium">{dictionary.generator.postType}</th>
                 <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.scheduledTime}</th>
                 <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.status}</th>
               </tr>
@@ -64,6 +65,13 @@ export default async function ScheduledPostsPage({
                     <p className="line-clamp-4 whitespace-pre-wrap">{post.caption}</p>
                   </td>
                   <td className="px-4 py-4 text-slate-600">
+                    {post.postType === "STORY"
+                      ? dictionary.generator.postTypeStory
+                      : post.postType === "CAROUSEL"
+                        ? dictionary.generator.postTypeCarousel
+                        : dictionary.generator.postTypeFeed}
+                  </td>
+                  <td className="px-4 py-4 text-slate-600">
                     {post.scheduledTime ? post.scheduledTime.toLocaleString() : "-"}
                   </td>
                   <td className="px-4 py-4">
@@ -75,7 +83,7 @@ export default async function ScheduledPostsPage({
               ))}
               {posts.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-10 text-center text-slate-500" colSpan={4}>
+                  <td className="px-4 py-10 text-center text-slate-500" colSpan={5}>
                     {dictionary.scheduledPage.noPosts}
                   </td>
                 </tr>

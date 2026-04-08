@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonError } from "@/lib/server-utils";
-import { saveUploadedImage } from "@/lib/storage";
+import { saveUploadedImageWithMetadata } from "@/lib/storage";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -12,12 +12,15 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
+  const markAsAiGenerated = formData.get("markAsAiGenerated") === "true";
 
   if (!(file instanceof File)) {
     return jsonError("Image file is required.");
   }
 
-  const upload = await saveUploadedImage(file);
+  const upload = await saveUploadedImageWithMetadata(file, {
+    markAsAiGenerated
+  });
 
   return NextResponse.json({
     imageUrl: upload.publicPath,

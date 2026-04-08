@@ -1,17 +1,71 @@
 import { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getAbsoluteAssetUrl, publishInstagramImage } from "@/lib/instagram";
+import {
+  getAbsoluteAssetUrl,
+  publishInstagramPost,
+  type InstagramPostType,
+  type PublishableMediaItem
+} from "@/lib/instagram";
+
+function parseStoredMediaItems(
+  mediaItems: unknown,
+  fallback: { imageUrl: string; imagePath: string }
+): PublishableMediaItem[] {
+  if (Array.isArray(mediaItems)) {
+    const parsed = mediaItems
+      .map((item) => {
+        if (!item || typeof item !== "object") {
+          return null;
+        }
+
+        const candidate = item as {
+          imageUrl?: unknown;
+          imagePath?: unknown;
+        };
+
+        if (typeof candidate.imageUrl !== "string" || typeof candidate.imagePath !== "string") {
+          return null;
+        }
+
+        return {
+          imageUrl: candidate.imageUrl,
+          imagePath: candidate.imagePath
+        } satisfies PublishableMediaItem;
+      })
+      .filter((item): item is PublishableMediaItem => Boolean(item));
+
+    if (parsed.length > 0) {
+      return parsed;
+    }
+  }
+
+  return [fallback];
+}
+
+function getStoredPostType(postType: string | null | undefined): InstagramPostType {
+  if (postType === "STORY") {
+    return "story";
+  }
+
+  if (postType === "CAROUSEL") {
+    return "carousel";
+  }
+
+  return "feed";
+}
 
 export async function createDraftPost(input: {
   userId: string;
   topic: string;
   message: string;
   tone: string;
+  postType: InstagramPostType;
   brandColors: string;
   keywords?: string;
   caption: string;
   hashtags: string[];
   htmlLayout: string;
+  mediaItems: PublishableMediaItem[];
   imageUrl: string;
   imagePath: string;
 }) {
@@ -21,11 +75,13 @@ export async function createDraftPost(input: {
       topic: input.topic,
       message: input.message,
       tone: input.tone,
+      postType: input.postType.toUpperCase() as "FEED" | "STORY" | "CAROUSEL",
       brandColors: input.brandColors,
       keywords: input.keywords,
       caption: input.caption,
       hashtags: input.hashtags.join(" "),
       htmlLayout: input.htmlLayout,
+      mediaItems: input.mediaItems,
       imageUrl: input.imageUrl,
       imagePath: input.imagePath,
       status: PostStatus.DRAFT
@@ -37,6 +93,8 @@ export async function publishPostNow(input: {
   postId: string;
   userId: string;
   caption: string;
+  postType?: InstagramPostType;
+  mediaItems?: PublishableMediaItem[];
   imageUrl?: string;
   imagePath?: string;
   requestOrigin?: string;
@@ -52,10 +110,26 @@ export async function publishPostNow(input: {
     throw new Error("Post not found.");
   }
 
-  const finalImagePath = input.imageUrl ?? post.imageUrl;
-  const imageUrl = getAbsoluteAssetUrl(finalImagePath, input.requestOrigin);
+  const fallbackMediaItem = {
+    imageUrl: input.imageUrl ?? post.imageUrl,
+    imagePath: input.imagePath ?? post.imagePath
+  };
+  const finalPostType = input.postType ?? getStoredPostType(post.postType);
+  const mediaItems = input.mediaItems?.length
+    ? input.mediaItems
+    : parseStoredMediaItems(post.mediaItems, fallbackMediaItem);
+  const normalizedMediaItems = mediaItems.map((item) => ({
+    ...item,
+    imageUrl: item.imageUrl.startsWith("http")
+      ? item.imageUrl
+      : getAbsoluteAssetUrl(item.imageUrl, input.requestOrigin)
+  }));
 
-  if (imageUrl.includes("localhost") || imageUrl.includes("127.0.0.1")) {
+  if (finalPostType === "carousel" && normalizedMediaItems.length < 2) {
+    throw new Error("Carousel posts require at least 2 images.");
+  }
+
+  if (normalizedMediaItems.some((item) => item.imageUrl.includes("localhost") || item.imageUrl.includes("127.0.0.1"))) {
     throw new Error(
       "Publishing requires a publicly reachable APP_BASE_URL or tunnel because Instagram must fetch the image_url."
     );
@@ -65,24 +139,31 @@ export async function publishPostNow(input: {
     where: { id: post.id },
     data: {
       caption: input.caption,
-      imageUrl: input.imageUrl ?? post.imageUrl,
-      imagePath: input.imagePath ?? post.imagePath,
+      postType: finalPostType.toUpperCase() as "FEED" | "STORY" | "CAROUSEL",
+      mediaItems,
+      imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
+      imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
       status: PostStatus.PUBLISHING
     }
   });
 
   try {
-    const published = await publishInstagramImage({
+    const published = await publishInstagramPost({
       userId: input.userId,
+      postType: finalPostType,
       caption: input.caption,
-      imageUrl
+      mediaItems: normalizedMediaItems
     });
 
     return prisma.post.update({
       where: { id: post.id },
       data: {
         status: PostStatus.PUBLISHED,
+        postType: finalPostType.toUpperCase() as "FEED" | "STORY" | "CAROUSEL",
+        mediaItems,
         caption: input.caption,
+        imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
+        imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
         publishedMediaId: published.mediaId,
         publishedAt: new Date()
       }
@@ -105,9 +186,14 @@ export async function schedulePost(input: {
   userId: string;
   caption: string;
   scheduledTime: Date;
+  postType?: InstagramPostType;
+  mediaItems?: PublishableMediaItem[];
   imageUrl?: string;
   imagePath?: string;
 }) {
+  const coverImageUrl = input.mediaItems?.[0]?.imageUrl ?? input.imageUrl;
+  const coverImagePath = input.mediaItems?.[0]?.imagePath ?? input.imagePath;
+
   return prisma.post.updateMany({
     where: {
       id: input.postId,
@@ -115,8 +201,10 @@ export async function schedulePost(input: {
     },
     data: {
       caption: input.caption,
-      imageUrl: input.imageUrl,
-      imagePath: input.imagePath,
+      postType: input.postType?.toUpperCase() as "FEED" | "STORY" | "CAROUSEL" | undefined,
+      mediaItems: input.mediaItems,
+      imageUrl: coverImageUrl,
+      imagePath: coverImagePath,
       scheduledTime: input.scheduledTime,
       status: PostStatus.SCHEDULED
     }

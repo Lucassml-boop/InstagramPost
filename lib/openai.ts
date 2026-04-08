@@ -12,7 +12,8 @@ const generatedPostSchema = z.object({
   caption: z.string().min(1),
   hashtags: z.array(z.string().min(1)).min(3),
   html: z.string().min(1),
-  css: z.string().min(1)
+  css: z.string().min(1),
+  styleGuide: z.string().min(1).optional()
 });
 
 type GeneratePostInput = z.infer<typeof generatePostSchema>;
@@ -104,27 +105,58 @@ function coerceGeneratedPost(raw: unknown): GeneratedPost {
   return generatedPostSchema.parse(raw);
 }
 
-function buildPrompt(input: GeneratePostInput) {
+function buildPrompt(
+  input: GeneratePostInput,
+  options?: {
+    slideIndex?: number;
+    slideCount?: number;
+    slideContext?: string;
+    styleGuide?: string;
+    requireCaption?: boolean;
+  }
+) {
   const keywords = input.keywords?.trim() ? input.keywords.trim() : "none";
   const customInstructions = input.customInstructions?.trim();
   const languageLabel = input.outputLanguage === "pt-BR" ? "Brazilian Portuguese" : "English";
+  const postFormat =
+    input.postType === "story"
+      ? "a vertical 1080x1920 Instagram Story"
+      : "a square 1080x1080 Instagram post";
+  const slideIndex = options?.slideIndex ?? 1;
+  const slideCount = options?.slideCount ?? 1;
+  const slideContext = options?.slideContext?.trim() || "No extra context provided.";
+  const styleGuide = options?.styleGuide?.trim();
+  const requireCaption = options?.requireCaption ?? true;
 
   return [
     customInstructions || "You are an expert Instagram content strategist and visual designer.",
-    "Return only valid JSON with the keys caption, hashtags, html, and css.",
+    "Return only valid JSON with the keys caption, hashtags, html, css, and styleGuide.",
     "Do not wrap the JSON in markdown or add any commentary.",
     `Write the caption and every visible piece of text inside the HTML in ${languageLabel}.`,
     "Requirements:",
-    `- caption: persuasive Instagram caption in ${languageLabel}, 2 to 4 short paragraphs, no emojis unless highly relevant`,
-    "- hashtags: array with 6 to 10 relevant Instagram hashtags",
-    "- html: semantic markup for a premium 1080x1080 promotional card inside a single root <section>",
-    "- css: complete CSS for the HTML, optimized for a square Instagram visual",
+    requireCaption
+      ? `- caption: persuasive Instagram caption in ${languageLabel}, 2 to 4 short paragraphs, no emojis unless highly relevant`
+      : "- caption: a concise caption string; if this is a supporting carousel slide, you may return the same caption logic as the first slide or a concise variant",
+    requireCaption
+      ? "- hashtags: array with 6 to 10 relevant Instagram hashtags"
+      : "- hashtags: array with 3 to 10 relevant Instagram hashtags",
+    `- html: semantic markup for ${postFormat} inside a single root <section>`,
+    `- css: complete CSS for the HTML, optimized for ${postFormat}`,
+    "- styleGuide: a compact 2 to 4 sentence description of the visual system so follow-up slides can match the same art direction",
     "- avoid external assets, web fonts, scripts, and SVG data URLs",
     "- use only the brand colors provided when possible",
+    input.postType === "carousel"
+      ? `- this is slide ${slideIndex} of ${slideCount} in an Instagram carousel`
+      : "- this is a single standalone post",
+    styleGuide
+      ? `- match this established visual direction exactly: ${styleGuide}`
+      : "- establish a distinctive but reusable visual direction that later slides can follow",
     "",
     `Topic: ${input.topic}`,
     `Message: ${input.message}`,
+    `Slide context: ${slideContext}`,
     `Tone: ${input.tone}`,
+    `Post type: ${input.postType}`,
     `Output language: ${languageLabel}`,
     `Brand colors: ${input.brandColors}`,
     `Keywords: ${keywords}`
@@ -142,7 +174,16 @@ function extractJsonPayload(content: string) {
   return trimmed;
 }
 
-export async function generateInstagramPost(input: GeneratePostInput) {
+async function requestInstagramPostGeneration(
+  input: GeneratePostInput,
+  options?: {
+    slideIndex?: number;
+    slideCount?: number;
+    slideContext?: string;
+    styleGuide?: string;
+    requireCaption?: boolean;
+  }
+) {
   const parsedInput = generatePostSchema.parse(input);
   const apiKey = requireEnv("OLLAMA_API_KEY");
   const primaryModel = process.env.OLLAMA_MODEL?.trim() || "kimi-k2.5:cloud";
@@ -150,7 +191,7 @@ export async function generateInstagramPost(input: GeneratePostInput) {
   const modelsToTry = [primaryModel, ...fallbackModels];
   const timeoutMs = getOllamaTimeoutMs();
   const requestStartedAt = Date.now();
-  const prompt = buildPrompt(parsedInput);
+  const prompt = buildPrompt(parsedInput, options);
   const attemptErrors: string[] = [];
 
   console.info("[ollama] Starting generation workflow", {
@@ -158,8 +199,11 @@ export async function generateInstagramPost(input: GeneratePostInput) {
     timeoutMs,
     topic: parsedInput.topic,
     tone: parsedInput.tone,
+    postType: parsedInput.postType,
     outputLanguage: parsedInput.outputLanguage,
     hasCustomInstructions: Boolean(parsedInput.customInstructions?.trim()),
+    slideIndex: options?.slideIndex ?? 1,
+    slideCount: options?.slideCount ?? 1,
     messageLength: parsedInput.message.length,
     brandColors: parsedInput.brandColors,
     keywordsLength: parsedInput.keywords?.length ?? 0
@@ -305,4 +349,53 @@ export async function generateInstagramPost(input: GeneratePostInput) {
   throw new Error(
     attemptErrors[attemptErrors.length - 1] ?? "Ollama generation failed unexpectedly."
   );
+}
+
+export async function generateInstagramPost(input: GeneratePostInput) {
+  return requestInstagramPostGeneration(input);
+}
+
+export async function generateInstagramCarouselPosts(input: GeneratePostInput) {
+  const parsedInput = generatePostSchema.parse(input);
+  const slideCount =
+    parsedInput.postType === "carousel" ? parsedInput.carouselSlideCount : 1;
+  const slideContexts = Array.from({ length: slideCount }, (_, index) => {
+    const raw = parsedInput.carouselSlideContexts[index]?.trim();
+    return raw || `Slide ${index + 1} should support the same campaign narrative.`;
+  });
+
+  const firstSlide = await requestInstagramPostGeneration(parsedInput, {
+    slideIndex: 1,
+    slideCount,
+    slideContext: slideContexts[0],
+    requireCaption: true
+  });
+
+  const styleGuide =
+    firstSlide.styleGuide?.trim() ||
+    "Match the first slide's composition, typography rhythm, and color balance closely.";
+  const slides: GeneratedPost[] = [firstSlide];
+
+  for (let index = 1; index < slideCount; index += 1) {
+    const slide = await requestInstagramPostGeneration(parsedInput, {
+      slideIndex: index + 1,
+      slideCount,
+      slideContext: slideContexts[index],
+      styleGuide,
+      requireCaption: false
+    });
+
+    slides.push({
+      ...slide,
+      caption: firstSlide.caption,
+      hashtags: firstSlide.hashtags,
+      styleGuide
+    });
+  }
+
+  return {
+    slides,
+    caption: firstSlide.caption,
+    hashtags: firstSlide.hashtags
+  };
 }

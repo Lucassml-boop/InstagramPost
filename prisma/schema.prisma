@@ -68,11 +68,13 @@ model Post {
   topic           String
   message         String
   tone            String
+  postType        PostType   @default(FEED)
   brandColors     String
   keywords        String?
   caption         String
   hashtags        String
   htmlLayout      String
+  mediaItems      Json?
   imageUrl        String
   imagePath       String
   status          PostStatus @default(DRAFT)
@@ -92,4 +94,10 @@ enum PostStatus {
   PUBLISHING
   PUBLISHED
   FAILED
+}
+
+enum PostType {
+  FEED
+  STORY
+  CAROUSEL
 }

@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start -p 3020",
     "lint": "eslint .",
+    "test:unit": "node --experimental-strip-types --experimental-specifier-resolution=node --test tests/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:push": "dotenv -e .env.local -- prisma db push",

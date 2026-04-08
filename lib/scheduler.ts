@@ -1,4 +1,5 @@
 import cron from "node-cron";
+import { runWeeklyContentAutomationLoop } from "@/lib/content-system";
 import { refreshInstagramAccessTokens } from "@/lib/instagram";
 import { processScheduledPosts } from "@/lib/posts";
 
@@ -27,6 +28,14 @@ export function startPostScheduler() {
       await refreshInstagramAccessTokens();
     } catch (error) {
       console.error("Instagram token refresh scheduler failed", error);
+    }
+  });
+
+  cron.schedule("0 9 * * 0", async () => {
+    try {
+      await runWeeklyContentAutomationLoop();
+    } catch (error) {
+      console.error("Weekly content generation scheduler failed", error);
     }
   });
 }
