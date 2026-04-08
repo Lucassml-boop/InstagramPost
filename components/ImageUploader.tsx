@@ -63,6 +63,14 @@ export function ImageUploader({
       }
 
       onUploaded(uploadedItems);
+    } catch (error) {
+      setError(
+        error instanceof TypeError && error.message === "Failed to fetch"
+          ? dictionary.common.serverConnectionError
+          : error instanceof Error
+            ? error.message
+            : dictionary.upload.error
+      );
     } finally {
       setUploading(false);
       event.target.value = "";

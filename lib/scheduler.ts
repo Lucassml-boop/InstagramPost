@@ -1,5 +1,8 @@
 import cron from "node-cron";
-import { runWeeklyContentAutomationLoop } from "@/lib/content-system";
+import {
+  runTopicsHistoryCleanupAutomation,
+  runWeeklyContentAutomationLoop
+} from "@/lib/content-system";
 import { refreshInstagramAccessTokens } from "@/lib/instagram";
 import { processScheduledPosts } from "@/lib/posts";
 
@@ -36,6 +39,14 @@ export function startPostScheduler() {
       await runWeeklyContentAutomationLoop();
     } catch (error) {
       console.error("Weekly content generation scheduler failed", error);
+    }
+  });
+
+  cron.schedule("0 3 * * *", async () => {
+    try {
+      await runTopicsHistoryCleanupAutomation();
+    } catch (error) {
+      console.error("Topics history cleanup scheduler failed", error);
     }
   });
 }

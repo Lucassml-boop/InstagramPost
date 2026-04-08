@@ -7,7 +7,9 @@ import {
   getUpcomingWeekKey,
   isSameOrSimilarTopic,
   normalizeTopic,
-  shouldSkipAutomationLoop
+  shouldRunTopicsHistoryCleanup,
+  shouldSkipAutomationLoop,
+  type TopicsHistoryCleanupFrequency
 } from "@/lib/content-system-utils";
 import { requireEnv } from "@/lib/env";
 
@@ -31,6 +33,9 @@ const brandProfileSchema = z.object({
   brandName: z.string().min(1),
   editableBrief: z.string().min(1),
   automationLoopEnabled: z.boolean().default(true),
+  topicsHistoryCleanupFrequency: z
+    .enum(["disabled", "daily", "weekly", "monthly"])
+    .default("monthly"),
   services: z.array(z.string().min(1)).min(1),
   weeklyAgenda: z.record(
     z.object({
@@ -351,7 +356,43 @@ export async function updateContentBrandProfile(input: unknown) {
 }
 
 export async function clearTopicsHistory() {
+  const current = await getTopicsHistory();
   await writeJsonFile(TOPICS_HISTORY_PATH, []);
+  return {
+    clearedEntries: current.length
+  };
+}
+
+export async function runMonthlyTopicsHistoryCleanup() {
+  const result = await clearTopicsHistory();
+
+  return {
+    ok: true as const,
+    ...result
+  };
+}
+
+export async function runTopicsHistoryCleanupAutomation(referenceDate = new Date()) {
+  const profile = await getBrandProfile();
+  const frequency = profile.topicsHistoryCleanupFrequency as TopicsHistoryCleanupFrequency;
+
+  if (!shouldRunTopicsHistoryCleanup(frequency, referenceDate)) {
+    return {
+      ok: true as const,
+      skipped: true as const,
+      reason: "not-scheduled-today",
+      frequency
+    };
+  }
+
+  const result = await clearTopicsHistory();
+
+  return {
+    ok: true as const,
+    skipped: false as const,
+    frequency,
+    ...result
+  };
 }
 
 export async function runWeeklyContentAutomationLoop(referenceDate = new Date()) {

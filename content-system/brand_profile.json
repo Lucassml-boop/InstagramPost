@@ -2,6 +2,7 @@
   "brandName": "EcomForge",
   "editableBrief": "A EcomForge cria sistemas para empresas que vendem online e querem automatizar operacoes, integrar marketplaces e ganhar produtividade.",
   "automationLoopEnabled": true,
+  "topicsHistoryCleanupFrequency": "monthly",
   "services": [
     "automacoes",
     "integracao Mercado Livre e Shopee",

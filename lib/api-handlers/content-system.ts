@@ -8,7 +8,7 @@ type BrandProfileDeps = {
   getContentBrandProfile: () => Promise<unknown>;
   updateContentBrandProfile: (input: unknown) => Promise<unknown>;
   getContentTopicsHistory: () => Promise<string[]>;
-  clearTopicsHistory: () => Promise<void>;
+  clearTopicsHistory: () => Promise<unknown>;
 };
 
 async function getDefaultDeps(): Promise<BrandProfileDeps> {

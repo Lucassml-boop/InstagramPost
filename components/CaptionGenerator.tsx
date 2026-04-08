@@ -36,6 +36,7 @@ const CLIENT_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_OLLAMA_TIMEOUT_MS ?? DE
 const PROGRESS_CAP = 96;
 const DEFAULT_CUSTOM_INSTRUCTIONS = "You are an expert Instagram content strategist and visual designer.";
 const DEFAULT_CAROUSEL_SLIDE_COUNT = 3;
+const CREATE_POST_STORAGE_KEY = "create-post-state-v1";
 
 function buildDefaultCarouselContext(index: number, count: number) {
   if (index === 0) {
@@ -79,6 +80,72 @@ function formatDuration(durationMs: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function isPostType(value: unknown): value is PostType {
+  return value === "feed" || value === "story" || value === "carousel";
+}
+
+function isOutputLanguage(value: unknown): value is OutputLanguage {
+  return value === "en" || value === "pt-BR";
+}
+
+function isStoryCaptionMode(value: unknown): value is StoryCaptionMode {
+  return value === "image-only" || value === "with-caption";
+}
+
+function isTone(value: unknown): value is "professional" | "casual" | "promotional" {
+  return value === "professional" || value === "casual" || value === "promotional";
+}
+
+function sanitizeDraft(value: unknown): DraftResponse | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Partial<DraftResponse>;
+
+  if (
+    typeof candidate.postId !== "string" ||
+    !isPostType(candidate.postType) ||
+    typeof candidate.imageUrl !== "string" ||
+    typeof candidate.imagePath !== "string" ||
+    typeof candidate.caption !== "string" ||
+    typeof candidate.htmlLayout !== "string" ||
+    !Array.isArray(candidate.hashtags) ||
+    !Array.isArray(candidate.mediaItems)
+  ) {
+    return null;
+  }
+
+  const mediaItems = candidate.mediaItems
+    .filter(
+      (item): item is MediaItem =>
+        Boolean(item) &&
+        typeof item === "object" &&
+        typeof item.imageUrl === "string" &&
+        typeof item.imagePath === "string"
+    )
+    .slice(0, 10);
+
+  return {
+    postId: candidate.postId,
+    postType: candidate.postType,
+    imageUrl: candidate.imageUrl,
+    imagePath: candidate.imagePath,
+    caption: candidate.caption,
+    htmlLayout: candidate.htmlLayout,
+    hashtags: candidate.hashtags.filter((tag): tag is string => typeof tag === "string"),
+    mediaItems
+  };
+}
+
+function getClientRequestErrorMessage(error: unknown, fallback: string, serverConnectionError: string) {
+  if (error instanceof TypeError && error.message === "Failed to fetch") {
+    return serverConnectionError;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function CaptionGenerator({
   initialOutputLanguage = "en",
   initialCustomInstructions = DEFAULT_CUSTOM_INSTRUCTIONS
@@ -114,6 +181,155 @@ export function CaptionGenerator({
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [hasRestoredState, setHasRestoredState] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(CREATE_POST_STORAGE_KEY);
+
+      if (!raw) {
+        setHasRestoredState(true);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+      if (typeof parsed.activeTab === "string" && (parsed.activeTab === "content" || parsed.activeTab === "settings")) {
+        setActiveTab(parsed.activeTab);
+      }
+
+      if (typeof parsed.topic === "string") {
+        setTopic(parsed.topic);
+      }
+
+      if (typeof parsed.message === "string") {
+        setMessage(parsed.message);
+      }
+
+      if (isPostType(parsed.postType)) {
+        setPostType(parsed.postType);
+      }
+
+      if (typeof parsed.carouselSlideCount === "number" && parsed.carouselSlideCount >= 2 && parsed.carouselSlideCount <= 10) {
+        setCarouselSlideCount(parsed.carouselSlideCount);
+      }
+
+      if (Array.isArray(parsed.carouselSlideContexts)) {
+        const restoredContexts = parsed.carouselSlideContexts
+          .map((item, index) => ({
+            id: `slide-${index + 1}`,
+            value: typeof item === "string" ? item : buildDefaultCarouselContext(index, DEFAULT_CAROUSEL_SLIDE_COUNT)
+          }))
+          .slice(0, 10);
+
+        if (restoredContexts.length > 0) {
+          setCarouselSlideContexts(restoredContexts);
+        }
+      }
+
+      if (isStoryCaptionMode(parsed.storyCaptionMode)) {
+        setStoryCaptionMode(parsed.storyCaptionMode);
+      }
+
+      if (isTone(parsed.tone)) {
+        setTone(parsed.tone);
+      }
+
+      if (isOutputLanguage(parsed.outputLanguage)) {
+        setOutputLanguage(parsed.outputLanguage);
+      }
+
+      if (typeof parsed.customInstructions === "string") {
+        setCustomInstructions(parsed.customInstructions || DEFAULT_CUSTOM_INSTRUCTIONS);
+      }
+
+      if (typeof parsed.brandColors === "string") {
+        setBrandColors(parsed.brandColors);
+      }
+
+      if (typeof parsed.keywords === "string") {
+        setKeywords(parsed.keywords);
+      }
+
+      if (typeof parsed.caption === "string") {
+        setCaption(parsed.caption);
+      }
+
+      if (typeof parsed.scheduleTime === "string") {
+        setScheduleTime(parsed.scheduleTime);
+      }
+
+      if (typeof parsed.error === "string") {
+        setError(parsed.error);
+      }
+
+      if (typeof parsed.settingsMessage === "string") {
+        setSettingsMessage(parsed.settingsMessage);
+      }
+
+      const restoredDraft = sanitizeDraft(parsed.draft);
+
+      if (restoredDraft) {
+        setDraft(restoredDraft);
+        setPostType(restoredDraft.postType);
+      }
+    } catch {
+      window.localStorage.removeItem(CREATE_POST_STORAGE_KEY);
+    } finally {
+      setHasRestoredState(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasRestoredState) {
+      return;
+    }
+
+    const payload = {
+      activeTab,
+      topic,
+      message,
+      postType,
+      carouselSlideCount,
+      carouselSlideContexts: carouselSlideContexts.map((item) => item.value),
+      storyCaptionMode,
+      tone,
+      outputLanguage,
+      customInstructions,
+      brandColors,
+      keywords,
+      draft,
+      caption,
+      scheduleTime,
+      error,
+      settingsMessage
+    };
+
+    window.localStorage.setItem(CREATE_POST_STORAGE_KEY, JSON.stringify(payload));
+  }, [
+    activeTab,
+    topic,
+    message,
+    postType,
+    carouselSlideCount,
+    carouselSlideContexts,
+    storyCaptionMode,
+    tone,
+    outputLanguage,
+    customInstructions,
+    brandColors,
+    keywords,
+    draft,
+    caption,
+    scheduleTime,
+    error,
+    settingsMessage,
+    hasRestoredState
+  ]);
+
+  function clearPersistedCreatePostState() {
+    window.localStorage.removeItem(CREATE_POST_STORAGE_KEY);
+  }
 
   useEffect(() => {
     if (!isGenerating || generationStartedAt === null) {
@@ -210,7 +426,13 @@ export function CaptionGenerator({
         durationMs: Date.now() - startedAt,
         error: error instanceof Error ? error.message : String(error)
       });
-      setError(error instanceof Error ? error.message : dictionary.generator.generateError);
+      setError(
+        getClientRequestErrorMessage(
+          error,
+          dictionary.generator.generateError,
+          dictionary.common.serverConnectionError
+        )
+      );
     } finally {
       setIsGenerating(false);
       setGenerationStartedAt(null);
@@ -246,8 +468,17 @@ export function CaptionGenerator({
         return;
       }
 
+      clearPersistedCreatePostState();
       router.push("/dashboard?published=1");
       router.refresh();
+    } catch (error) {
+      setError(
+        getClientRequestErrorMessage(
+          error,
+          dictionary.generator.publishError,
+          dictionary.common.serverConnectionError
+        )
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -284,8 +515,17 @@ export function CaptionGenerator({
         return;
       }
 
+      clearPersistedCreatePostState();
       router.push("/scheduled-posts?saved=1");
       router.refresh();
+    } catch (error) {
+      setError(
+        getClientRequestErrorMessage(
+          error,
+          dictionary.generator.scheduleError,
+          dictionary.common.serverConnectionError
+        )
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -327,7 +567,13 @@ export function CaptionGenerator({
 
       setSettingsMessage(dictionary.generator.settingsSaved);
     } catch (error) {
-      setError(error instanceof Error ? error.message : dictionary.generator.settingsSaveError);
+      setError(
+        getClientRequestErrorMessage(
+          error,
+          dictionary.generator.settingsSaveError,
+          dictionary.common.serverConnectionError
+        )
+      );
     } finally {
       setIsSavingSettings(false);
     }

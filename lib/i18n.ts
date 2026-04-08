@@ -14,6 +14,7 @@ type Dictionary = {
     notConnected: string;
     pending: string;
     save: string;
+    serverConnectionError: string;
   };
   language: {
     label: string;
@@ -26,6 +27,7 @@ type Dictionary = {
     createPost: string;
     scheduledPosts: string;
     contentAutomation: string;
+    automationDiagnostics: string;
   };
   login: {
     title: string;
@@ -171,6 +173,12 @@ type Dictionary = {
     editableBrief: string;
     automationLoopEnabled: string;
     automationLoopDescription: string;
+    topicsHistoryCleanupFrequency: string;
+    topicsHistoryCleanupDescription: string;
+    cleanupFrequencyDisabled: string;
+    cleanupFrequencyDaily: string;
+    cleanupFrequencyWeekly: string;
+    cleanupFrequencyMonthly: string;
     services: string;
     contentRules: string;
     researchQueries: string;
@@ -207,6 +215,30 @@ type Dictionary = {
     structure: string;
     visualIdea: string;
   };
+  automationDiagnostics: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    helpTitle: string;
+    helpDescription: string;
+    generateWeeklyTitle: string;
+    generateWeeklyDescription: string;
+    clearTopicsTitle: string;
+    clearTopicsDescription: string;
+    publishScheduledTitle: string;
+    publishScheduledDescription: string;
+    publishWeeklyPreviewTitle: string;
+    publishWeeklyPreviewDescription: string;
+    publishWeeklyPreviewDay: string;
+    publishWeeklyPreviewAllDays: string;
+    refreshTokensTitle: string;
+    refreshTokensDescription: string;
+    runAction: string;
+    running: string;
+    lastStatus: string;
+    notRunYet: string;
+    requestFailed: string;
+  };
 };
 
 const dictionaries: Record<Locale, Dictionary> = {
@@ -220,7 +252,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       connected: "Connected",
       notConnected: "Not connected",
       pending: "Pending",
-      save: "Save"
+      save: "Save",
+      serverConnectionError:
+        "Unable to reach the app server. Check whether npm run dev is still running and try again."
     },
     language: {
       label: "Language",
@@ -232,7 +266,8 @@ const dictionaries: Record<Locale, Dictionary> = {
       connectInstagram: "Connect Instagram",
       createPost: "Create Post",
       scheduledPosts: "Scheduled Posts",
-      contentAutomation: "Content Automation"
+      contentAutomation: "Content Automation",
+      automationDiagnostics: "Automation Diagnostics"
     },
     login: {
       title: "Login",
@@ -390,6 +425,13 @@ const dictionaries: Record<Locale, Dictionary> = {
       automationLoopEnabled: "Keep weekly loop active",
       automationLoopDescription:
         "When enabled, the system automatically generates the next weekly agenda on Sunday if the upcoming week has not been generated yet.",
+      topicsHistoryCleanupFrequency: "Topic history cleanup frequency",
+      topicsHistoryCleanupDescription:
+        "Choose how often the automation should clear the topic history automatically before starting fresh again.",
+      cleanupFrequencyDisabled: "Do not clean automatically",
+      cleanupFrequencyDaily: "Daily",
+      cleanupFrequencyWeekly: "Weekly",
+      cleanupFrequencyMonthly: "Monthly",
       services: "Services",
       contentRules: "Content rules",
       researchQueries: "Research queries",
@@ -431,6 +473,37 @@ const dictionaries: Record<Locale, Dictionary> = {
       noAgenda: "No weekly agenda has been generated yet.",
       structure: "Structure",
       visualIdea: "Visual idea"
+    },
+    automationDiagnostics: {
+      eyebrow: "Diagnostics",
+      title: "Automation diagnostics",
+      description:
+        "Run the cron automations manually and inspect the live response without waiting for the scheduled time.",
+      helpTitle: "How to use this page",
+      helpDescription:
+        "Each action below triggers the same backend automation used by the scheduler. Run one action at a time and review the returned JSON to confirm the workflow is behaving correctly.",
+      generateWeeklyTitle: "Generate weekly content agenda",
+      generateWeeklyDescription:
+        "Runs the weekly content planning automation and shows whether the agenda was generated or skipped.",
+      clearTopicsTitle: "Run topics history cleanup",
+      clearTopicsDescription:
+        "Runs the automatic topics history cleanup using the frequency configured in content automation settings.",
+      publishScheduledTitle: "Publish scheduled posts",
+      publishScheduledDescription:
+        "Processes posts whose scheduled time has already arrived and attempts publication immediately.",
+      publishWeeklyPreviewTitle: "Publish the whole weekly agenda now",
+      publishWeeklyPreviewDescription:
+        "Uses the current weekly agenda to generate and publish every item in sequence so you can inspect how the week would look in practice.",
+      publishWeeklyPreviewDay: "Agenda day to publish",
+      publishWeeklyPreviewAllDays: "Publish the full week",
+      refreshTokensTitle: "Refresh Instagram tokens",
+      refreshTokensDescription:
+        "Refreshes saved Instagram access tokens for connected accounts.",
+      runAction: "Run automation",
+      running: "Running...",
+      lastStatus: "Last status",
+      notRunYet: "Not run yet",
+      requestFailed: "The request failed."
     }
   },
   "pt-BR": {
@@ -443,7 +516,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       connected: "Conectado",
       notConnected: "Nao conectado",
       pending: "Pendente",
-      save: "Salvar"
+      save: "Salvar",
+      serverConnectionError:
+        "Nao foi possivel conectar ao servidor do app. Verifique se o npm run dev continua ativo e tente novamente."
     },
     language: {
       label: "Idioma",
@@ -455,7 +530,8 @@ const dictionaries: Record<Locale, Dictionary> = {
       connectInstagram: "Conectar Instagram",
       createPost: "Criar Post",
       scheduledPosts: "Posts Agendados",
-      contentAutomation: "Automacao de Conteudo"
+      contentAutomation: "Automacao de Conteudo",
+      automationDiagnostics: "Diagnostico das Automacoes"
     },
     login: {
       title: "Entrar",
@@ -613,6 +689,13 @@ const dictionaries: Record<Locale, Dictionary> = {
       automationLoopEnabled: "Manter loop semanal ativo",
       automationLoopDescription:
         "Quando ativado, o sistema gera automaticamente a proxima agenda semanal no domingo se a semana seguinte ainda nao tiver sido gerada.",
+      topicsHistoryCleanupFrequency: "Frequencia da limpeza do historico de temas",
+      topicsHistoryCleanupDescription:
+        "Escolha com que frequencia a automacao deve limpar o historico de temas automaticamente antes de recomecar do zero.",
+      cleanupFrequencyDisabled: "Nao limpar automaticamente",
+      cleanupFrequencyDaily: "Diaria",
+      cleanupFrequencyWeekly: "Semanal",
+      cleanupFrequencyMonthly: "Mensal",
       services: "Servicos",
       contentRules: "Regras de conteudo",
       researchQueries: "Consultas de pesquisa",
@@ -654,6 +737,37 @@ const dictionaries: Record<Locale, Dictionary> = {
       noAgenda: "Ainda nao existe uma agenda semanal gerada.",
       structure: "Estrutura",
       visualIdea: "Ideia visual"
+    },
+    automationDiagnostics: {
+      eyebrow: "Diagnostico",
+      title: "Diagnostico das automacoes",
+      description:
+        "Dispare os crons manualmente e inspecione a resposta em tempo real sem precisar esperar o horario agendado.",
+      helpTitle: "Como usar esta pagina",
+      helpDescription:
+        "Cada acao abaixo dispara a mesma automacao de backend usada pelo scheduler. Rode uma por vez e revise o JSON retornado para confirmar se o fluxo esta se comportando corretamente.",
+      generateWeeklyTitle: "Gerar agenda semanal de conteudo",
+      generateWeeklyDescription:
+        "Executa a automacao de planejamento semanal e mostra se a agenda foi gerada ou ignorada.",
+      clearTopicsTitle: "Executar limpeza do historico de temas",
+      clearTopicsDescription:
+        "Executa a limpeza automatica do historico de temas usando a frequencia configurada nas configuracoes da automacao.",
+      publishScheduledTitle: "Publicar posts agendados",
+      publishScheduledDescription:
+        "Processa os posts cujo horario ja chegou e tenta publicar imediatamente.",
+      publishWeeklyPreviewTitle: "Publicar a agenda semanal inteira agora",
+      publishWeeklyPreviewDescription:
+        "Usa a agenda semanal atual para gerar e publicar cada item em sequencia, assim voce consegue verificar como a semana ficaria na pratica.",
+      publishWeeklyPreviewDay: "Dia da agenda para publicar",
+      publishWeeklyPreviewAllDays: "Publicar a semana inteira",
+      refreshTokensTitle: "Atualizar tokens do Instagram",
+      refreshTokensDescription:
+        "Atualiza os tokens de acesso do Instagram das contas conectadas.",
+      runAction: "Executar automacao",
+      running: "Executando...",
+      lastStatus: "Ultimo status",
+      notRunYet: "Ainda nao executado",
+      requestFailed: "A requisicao falhou."
     }
   }
 };

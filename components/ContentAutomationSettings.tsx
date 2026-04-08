@@ -53,6 +53,7 @@ function buildProfileFromState(input: {
   brandName: string;
   editableBrief: string;
   automationLoopEnabled: boolean;
+  topicsHistoryCleanupFrequency: "disabled" | "daily" | "weekly" | "monthly";
   services: string;
   carouselDefaultStructure: string;
   contentRules: string;
@@ -63,6 +64,7 @@ function buildProfileFromState(input: {
     brandName: input.brandName.trim(),
     editableBrief: input.editableBrief.trim(),
     automationLoopEnabled: input.automationLoopEnabled,
+    topicsHistoryCleanupFrequency: input.topicsHistoryCleanupFrequency,
     services: fromTextareaValue(input.services),
     weeklyAgenda: DAY_ORDER.reduce(
       (acc, day) => {
@@ -92,6 +94,9 @@ export function ContentAutomationSettings({
   const [automationLoopEnabled, setAutomationLoopEnabled] = useState(
     initialProfile.automationLoopEnabled
   );
+  const [topicsHistoryCleanupFrequency, setTopicsHistoryCleanupFrequency] = useState<
+    "disabled" | "daily" | "weekly" | "monthly"
+  >(initialProfile.topicsHistoryCleanupFrequency);
   const [services, setServices] = useState(toTextareaValue(initialProfile.services));
   const [carouselDefaultStructure, setCarouselDefaultStructure] = useState(
     toTextareaValue(initialProfile.carouselDefaultStructure)
@@ -115,6 +120,7 @@ export function ContentAutomationSettings({
         brandName,
         editableBrief,
         automationLoopEnabled,
+        topicsHistoryCleanupFrequency,
         services,
         carouselDefaultStructure,
         contentRules,
@@ -125,12 +131,17 @@ export function ContentAutomationSettings({
       brandName,
       editableBrief,
       automationLoopEnabled,
+      topicsHistoryCleanupFrequency,
       services,
       carouselDefaultStructure,
       contentRules,
       researchQueries,
       daySettings
     ]
+  );
+  const uniqueTopicsHistory = useMemo(
+    () => Array.from(new Set(topicsHistory.map((topic) => topic.trim()).filter(Boolean))),
+    [topicsHistory]
   );
 
   function updateDay(day: DayLabel, field: "goal" | "contentTypes" | "formats", value: string) {
@@ -306,6 +317,35 @@ export function ContentAutomationSettings({
                 </span>
               </span>
             </label>
+
+            <label className="block text-sm font-medium text-slate-700">
+              <span>{dictionary.contentAutomation.topicsHistoryCleanupFrequency}</span>
+              <select
+                value={topicsHistoryCleanupFrequency}
+                onChange={(event) =>
+                  setTopicsHistoryCleanupFrequency(
+                    event.target.value as "disabled" | "daily" | "weekly" | "monthly"
+                  )
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-slate-400"
+              >
+                <option value="disabled">
+                  {dictionary.contentAutomation.cleanupFrequencyDisabled}
+                </option>
+                <option value="daily">
+                  {dictionary.contentAutomation.cleanupFrequencyDaily}
+                </option>
+                <option value="weekly">
+                  {dictionary.contentAutomation.cleanupFrequencyWeekly}
+                </option>
+                <option value="monthly">
+                  {dictionary.contentAutomation.cleanupFrequencyMonthly}
+                </option>
+              </select>
+              <span className="mt-2 block text-sm text-slate-600">
+                {dictionary.contentAutomation.topicsHistoryCleanupDescription}
+              </span>
+            </label>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
@@ -442,13 +482,13 @@ export function ContentAutomationSettings({
           </button>
         </div>
 
-        {topicsHistory.length === 0 ? (
+        {uniqueTopicsHistory.length === 0 ? (
           <p className="mt-5 text-sm text-slate-500">
             {dictionary.contentAutomation.noTopicsHistory}
           </p>
         ) : (
           <div className="mt-5 flex flex-wrap gap-2">
-            {topicsHistory.map((topic) => (
+            {uniqueTopicsHistory.map((topic) => (
               <span
                 key={topic}
                 className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600"

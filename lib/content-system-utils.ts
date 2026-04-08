@@ -1,5 +1,7 @@
 import type { ContentPlanItem } from "@/lib/content-system";
 
+export type TopicsHistoryCleanupFrequency = "disabled" | "daily" | "weekly" | "monthly";
+
 export function normalizeTopic(value: string) {
   return value
     .toLowerCase()
@@ -77,4 +79,23 @@ export function shouldSkipAutomationLoop(
     currentAgenda.length > 0 &&
     getAgendaWeekKey(currentAgenda) === getUpcomingWeekKey(referenceDate, dayLabels)
   );
+}
+
+export function shouldRunTopicsHistoryCleanup(
+  frequency: TopicsHistoryCleanupFrequency,
+  referenceDate: Date
+) {
+  if (frequency === "disabled") {
+    return false;
+  }
+
+  if (frequency === "daily") {
+    return true;
+  }
+
+  if (frequency === "weekly") {
+    return referenceDate.getDay() === 0;
+  }
+
+  return referenceDate.getDate() === 1;
 }

@@ -5,6 +5,7 @@ import {
   getUpcomingWeekKey,
   isSameOrSimilarTopic,
   normalizeTopic,
+  shouldRunTopicsHistoryCleanup,
   shouldSkipAutomationLoop
 } from "../lib/content-system-utils.ts";
 
@@ -89,4 +90,17 @@ test("shouldSkipAutomationLoop keeps running when agenda belongs to another week
   );
 
   assert.equal(shouldSkipAutomationLoop(currentAgenda, referenceDate, DAY_ORDER), false);
+});
+
+test("shouldRunTopicsHistoryCleanup respects configured frequency", () => {
+  const sunday = new Date("2026-04-05T12:00:00.000Z");
+  const monday = new Date("2026-04-06T12:00:00.000Z");
+  const firstDayOfMonth = new Date("2026-05-01T12:00:00.000Z");
+
+  assert.equal(shouldRunTopicsHistoryCleanup("disabled", sunday), false);
+  assert.equal(shouldRunTopicsHistoryCleanup("daily", monday), true);
+  assert.equal(shouldRunTopicsHistoryCleanup("weekly", sunday), true);
+  assert.equal(shouldRunTopicsHistoryCleanup("weekly", monday), false);
+  assert.equal(shouldRunTopicsHistoryCleanup("monthly", firstDayOfMonth), true);
+  assert.equal(shouldRunTopicsHistoryCleanup("monthly", monday), false);
 });

@@ -13,7 +13,8 @@ export function Sidebar() {
     { href: "/connect-instagram", label: dictionary.sidebar.connectInstagram },
     { href: "/create-post", label: dictionary.sidebar.createPost },
     { href: "/scheduled-posts", label: dictionary.sidebar.scheduledPosts },
-    { href: "/content-automation", label: dictionary.sidebar.contentAutomation }
+    { href: "/content-automation", label: dictionary.sidebar.contentAutomation },
+    { href: "/automation-diagnostics", label: dictionary.sidebar.automationDiagnostics }
   ];
 
   return (
