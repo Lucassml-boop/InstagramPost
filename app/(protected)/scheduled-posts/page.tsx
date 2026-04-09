@@ -1,10 +1,29 @@
-import Image from "next/image";
+import { constants } from "node:fs";
+import { access } from "node:fs/promises";
 import { PostStatus } from "@prisma/client";
+import { ScheduledPostsTable } from "@/components/ScheduledPostsTable";
 import { Panel, SectionTitle } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
 import { prisma } from "@/lib/prisma";
+
+async function getAssetState(imagePath: string) {
+  if (!imagePath) {
+    return "deleted" as const;
+  }
+
+  if (imagePath.startsWith("supabase://")) {
+    return "remote" as const;
+  }
+
+  try {
+    await access(imagePath, constants.F_OK);
+    return "available" as const;
+  } catch {
+    return "deleted" as const;
+  }
+}
 
 export default async function ScheduledPostsPage({
   searchParams
@@ -26,6 +45,18 @@ export default async function ScheduledPostsPage({
       createdAt: "desc"
     }
   });
+  const serializedPosts = await Promise.all(
+    posts.map(async (post) => ({
+      id: post.id,
+      caption: post.caption,
+      imageUrl: post.imageUrl,
+      postType: post.postType,
+      status: post.status as "SCHEDULED" | "PUBLISHED" | "FAILED",
+      scheduledTime: post.scheduledTime?.toISOString() ?? null,
+      publishedAt: post.publishedAt?.toISOString() ?? null,
+      assetState: await getAssetState(post.imagePath)
+    }))
+  );
 
   return (
     <div>
@@ -42,55 +73,12 @@ export default async function ScheduledPostsPage({
       ) : null}
 
       <Panel className="mt-8 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.preview}</th>
-                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.caption}</th>
-                <th className="px-4 py-3 font-medium">{dictionary.generator.postType}</th>
-                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.scheduledTime}</th>
-                <th className="px-4 py-3 font-medium">{dictionary.scheduledPage.status}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posts.map((post) => (
-                <tr key={post.id} className="border-t border-slate-100 align-top">
-                  <td className="px-4 py-4">
-                    <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-slate-100">
-                      <Image src={post.imageUrl} alt={dictionary.scheduledPage.previewAlt} fill className="object-cover" unoptimized />
-                    </div>
-                  </td>
-                  <td className="max-w-md px-4 py-4 text-slate-700">
-                    <p className="line-clamp-4 whitespace-pre-wrap">{post.caption}</p>
-                  </td>
-                  <td className="px-4 py-4 text-slate-600">
-                    {post.postType === "STORY"
-                      ? dictionary.generator.postTypeStory
-                      : post.postType === "CAROUSEL"
-                        ? dictionary.generator.postTypeCarousel
-                        : dictionary.generator.postTypeFeed}
-                  </td>
-                  <td className="px-4 py-4 text-slate-600">
-                    {post.scheduledTime ? post.scheduledTime.toLocaleString() : "-"}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                      {post.status.toLowerCase()}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {posts.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-10 text-center text-slate-500" colSpan={5}>
-                    {dictionary.scheduledPage.noPosts}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ScheduledPostsTable
+          posts={serializedPosts}
+          locale={locale}
+          dictionary={dictionary.scheduledPage}
+          generatorDictionary={dictionary.generator}
+        />
       </Panel>
     </div>
   );

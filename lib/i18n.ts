@@ -158,10 +158,28 @@ type Dictionary = {
     title: string;
     description: string;
     savedSuccess: string;
+    updatedSuccess: string;
+    updateError: string;
+    scheduleRequired: string;
     preview: string;
     caption: string;
     scheduledTime: string;
+    publishedAt: string;
     status: string;
+    fileStatus: string;
+    scheduledStatus: string;
+    publishedStatus: string;
+    failedStatus: string;
+    fileAvailable: string;
+    fileDeleted: string;
+    fileRemote: string;
+    editSchedule: string;
+    reschedule: string;
+    saving: string;
+    scheduledCount: string;
+    publishedCount: string;
+    processedCount: string;
+    previewUnavailable: string;
     noPosts: string;
     previewAlt: string;
   };
@@ -434,10 +452,28 @@ const dictionaries: Record<Locale, Dictionary> = {
       description:
         "Track content waiting to be published as well as already-posted items for your review walkthrough.",
       savedSuccess: "Scheduled post saved successfully.",
+      updatedSuccess: "Scheduled time updated successfully.",
+      updateError: "Unable to update the scheduled time.",
+      scheduleRequired: "Choose a new date and time before saving.",
       preview: "Preview",
       caption: "Caption",
       scheduledTime: "Scheduled time",
+      publishedAt: "Published at",
       status: "Status",
+      fileStatus: "File",
+      scheduledStatus: "Scheduled",
+      publishedStatus: "Posted",
+      failedStatus: "Failed",
+      fileAvailable: "Available",
+      fileDeleted: "Deleted",
+      fileRemote: "Stored remotely",
+      editSchedule: "Update date",
+      reschedule: "Reschedule",
+      saving: "Saving...",
+      scheduledCount: "Scheduled",
+      publishedCount: "Posted",
+      processedCount: "Processed",
+      previewUnavailable: "No preview",
       noPosts: "No scheduled or published posts yet.",
       previewAlt: "Post preview"
     },
@@ -726,10 +762,28 @@ const dictionaries: Record<Locale, Dictionary> = {
       description:
         "Acompanhe o conteudo aguardando publicacao, assim como os itens ja publicados, para o seu roteiro de revisao.",
       savedSuccess: "Post agendado salvo com sucesso.",
+      updatedSuccess: "Horario agendado atualizado com sucesso.",
+      updateError: "Nao foi possivel atualizar o horario agendado.",
+      scheduleRequired: "Escolha uma nova data e horario antes de salvar.",
       preview: "Previa",
       caption: "Legenda",
       scheduledTime: "Horario agendado",
+      publishedAt: "Publicado em",
       status: "Status",
+      fileStatus: "Arquivo",
+      scheduledStatus: "Agendado",
+      publishedStatus: "Publicado",
+      failedStatus: "Falhou",
+      fileAvailable: "Disponivel",
+      fileDeleted: "Excluido",
+      fileRemote: "Armazenado remotamente",
+      editSchedule: "Alterar data",
+      reschedule: "Reagendar",
+      saving: "Salvando...",
+      scheduledCount: "Agendados",
+      publishedCount: "Publicados",
+      processedCount: "Processados",
+      previewUnavailable: "Sem previa",
       noPosts: "Ainda nao ha posts agendados ou publicados.",
       previewAlt: "Previa do post"
     },

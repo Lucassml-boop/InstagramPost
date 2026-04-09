@@ -7,6 +7,7 @@ const envPath = path.join(projectRoot, ".env.local");
 const localPort = 3020;
 const localUrl = `http://127.0.0.1:${localPort}`;
 const redirectPath = "/api/auth/instagram/callback";
+const shouldSkipTunnel = process.env.SKIP_TUNNEL === "1" || process.env.SKIP_TUNNEL === "true";
 
 let shuttingDown = false;
 let nextProcess;
@@ -67,11 +68,17 @@ function cleanupAndExit(exitCode = 0) {
 }
 
 function startNext() {
-  nextProcess = spawn("node", ["./node_modules/next/dist/bin/next", "dev", "-p", String(localPort)], {
-    cwd: projectRoot,
-    env: process.env,
-    stdio: "inherit"
-  });
+  try {
+    nextProcess = spawn(process.execPath, ["./node_modules/next/dist/bin/next", "dev", "-p", String(localPort)], {
+      cwd: projectRoot,
+      env: process.env,
+      stdio: "inherit"
+    });
+  } catch (error) {
+    log(`Falha ao iniciar o Next.js: ${error instanceof Error ? error.message : String(error)}`);
+    cleanupAndExit(1);
+    return;
+  }
 
   nextProcess.on("exit", (code, signal) => {
     if (signal) {
@@ -84,15 +91,28 @@ function startNext() {
 }
 
 function startTunnel() {
-  tunnelProcess = spawn(
-    "cloudflared",
-    ["tunnel", "--url", localUrl, "--no-autoupdate"],
-    {
-      cwd: projectRoot,
-      env: process.env,
-      stdio: ["inherit", "pipe", "pipe"]
+  try {
+    tunnelProcess = spawn(
+      "cloudflared",
+      ["tunnel", "--url", localUrl, "--no-autoupdate"],
+      {
+        cwd: projectRoot,
+        env: process.env,
+        stdio: ["inherit", "pipe", "pipe"]
+      }
+    );
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+
+    if (code === "ENOENT" || code === "EPERM") {
+      log("Nao foi possivel iniciar o cloudflared neste ambiente. Iniciando a app localmente sem tunel.");
+      log("Se quiser pular essa tentativa sempre, use SKIP_TUNNEL=1 npm run dev.");
+      startNext();
+      return;
     }
-  );
+
+    throw error;
+  }
 
   let resolved = false;
   const timeout = setTimeout(() => {
@@ -126,6 +146,24 @@ function startTunnel() {
 
   tunnelProcess.stdout.on("data", handleTunnelOutput);
   tunnelProcess.stderr.on("data", handleTunnelOutput);
+  tunnelProcess.on("error", (error) => {
+    if (resolved) {
+      return;
+    }
+
+    clearTimeout(timeout);
+    resolved = true;
+
+    if (error && typeof error === "object" && "code" in error && (error.code === "ENOENT" || error.code === "EPERM")) {
+      log("Nao foi possivel iniciar o cloudflared neste ambiente. Iniciando a app localmente sem tunel.");
+      log("Se quiser pular essa tentativa sempre, use SKIP_TUNNEL=1 npm run dev.");
+      startNext();
+      return;
+    }
+
+    log(`Falha ao iniciar o tunel: ${error instanceof Error ? error.message : String(error)}`);
+    startNext();
+  });
 
   tunnelProcess.on("exit", (code) => {
     if (!resolved) {
@@ -146,4 +184,9 @@ function startTunnel() {
 process.on("SIGINT", () => cleanupAndExit(0));
 process.on("SIGTERM", () => cleanupAndExit(0));
 
-startTunnel();
+if (shouldSkipTunnel) {
+  log("SKIP_TUNNEL ativo. Iniciando a app localmente sem tunel.");
+  startNext();
+} else {
+  startTunnel();
+}
