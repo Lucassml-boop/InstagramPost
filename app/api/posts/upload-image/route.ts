@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { jsonError } from "@/lib/server-utils";
-import { getPersistedPreviewUrl, saveUploadedImageWithMetadata } from "@/lib/storage";
+import { getPersistedPreviewUrl } from "@/lib/storage";
+import { saveUploadedImageWithMetadata } from "@/lib/storage.server";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();

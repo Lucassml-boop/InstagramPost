@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { saveGeneratedImageBuffer } from "@/lib/storage";
+import { saveGeneratedImageBuffer } from "@/lib/storage.server";
 
 const RENDER_TIMEOUT_MS = 120_000;
 
