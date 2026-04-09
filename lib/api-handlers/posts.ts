@@ -27,6 +27,7 @@ type GeneratePostDeps = {
     width: number;
     height: number;
   }) => Promise<{ publicPath: string; absolutePath: string }>;
+  getPersistedPreviewUrl: (imageUrl: string) => string;
   createDraftPost: (input: {
     userId: string;
     topic: string;
@@ -38,7 +39,7 @@ type GeneratePostDeps = {
     caption: string;
     hashtags: string[];
     htmlLayout: string;
-    mediaItems: Array<{ imageUrl: string; imagePath: string }>;
+    mediaItems: Array<{ imageUrl: string; imagePath: string; previewUrl?: string }>;
     imageUrl: string;
     imagePath: string;
   }) => Promise<{ id: string; imageUrl: string; imagePath: string; htmlLayout: string }>;
@@ -51,7 +52,7 @@ type PublishPostDeps = {
     userId: string;
     caption: string;
     postType?: "feed" | "story" | "carousel";
-    mediaItems?: Array<{ imageUrl: string; imagePath: string }>;
+    mediaItems?: Array<{ imageUrl: string; imagePath: string; previewUrl?: string }>;
     imageUrl?: string;
     imagePath?: string;
     requestOrigin?: string;
@@ -59,7 +60,8 @@ type PublishPostDeps = {
 };
 
 async function getDefaultGeneratePostDeps(): Promise<GeneratePostDeps> {
-  const [{ createDraftPost }, openai, { renderPostImage }, { slugify }] = await Promise.all([
+  const [{ createDraftPost }, openai, { renderPostImage }, { getPersistedPreviewUrl, slugify }] =
+    await Promise.all([
     import("../posts.ts"),
     import("../openai.ts"),
     import("../renderer.ts"),
@@ -71,6 +73,7 @@ async function getDefaultGeneratePostDeps(): Promise<GeneratePostDeps> {
     generateInstagramPost: openai.generateInstagramPost,
     generateInstagramCarouselPosts: openai.generateInstagramCarouselPosts,
     renderPostImage,
+    getPersistedPreviewUrl,
     slugify
   };
 }
@@ -179,7 +182,8 @@ export async function handleGeneratePost(
       }),
       mediaItems: renderedImages.map((image) => ({
         imageUrl: image.publicPath,
-        imagePath: image.absolutePath
+        imagePath: image.absolutePath,
+        previewUrl: resolvedDeps.getPersistedPreviewUrl(image.publicPath)
       })),
       imageUrl: renderedImages[0].publicPath,
       imagePath: renderedImages[0].absolutePath
@@ -190,7 +194,8 @@ export async function handleGeneratePost(
       postType: parsed.postType,
       mediaItems: renderedImages.map((image) => ({
         imageUrl: image.publicPath,
-        imagePath: image.absolutePath
+        imagePath: image.absolutePath,
+        previewUrl: resolvedDeps.getPersistedPreviewUrl(image.publicPath)
       })),
       imageUrl: draft.imageUrl,
       imagePath: draft.imagePath,

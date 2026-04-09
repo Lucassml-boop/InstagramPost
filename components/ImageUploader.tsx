@@ -14,7 +14,7 @@ export function ImageUploader({
   maxFiles?: number;
   showText?: boolean;
   allowAiToggle?: boolean;
-  onUploaded: (payload: { imageUrl: string; imagePath: string }[]) => void;
+  onUploaded: (payload: { imageUrl: string; imagePath: string; previewUrl?: string }[]) => void;
 }) {
   const { dictionary } = useI18n();
   const [uploading, setUploading] = useState(false);
@@ -33,7 +33,7 @@ export function ImageUploader({
 
     try {
       const limitedFiles = typeof maxFiles === "number" ? files.slice(0, maxFiles) : files;
-      const uploadedItems: { imageUrl: string; imagePath: string }[] = [];
+      const uploadedItems: { imageUrl: string; imagePath: string; previewUrl?: string }[] = [];
 
       for (const file of limitedFiles) {
         const formData = new FormData();
@@ -49,6 +49,7 @@ export function ImageUploader({
           error?: string;
           imageUrl?: string;
           imagePath?: string;
+          previewUrl?: string;
         };
 
         if (!response.ok || !json.imageUrl || !json.imagePath) {
@@ -58,7 +59,8 @@ export function ImageUploader({
 
         uploadedItems.push({
           imageUrl: json.imageUrl,
-          imagePath: json.imagePath
+          imagePath: json.imagePath,
+          ...(json.previewUrl ? { previewUrl: json.previewUrl } : {})
         });
       }
 

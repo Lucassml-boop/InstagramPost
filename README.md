@@ -156,6 +156,11 @@ The app will then store:
 - manual uploads in `uploads/...`
 
 This avoids depending on local filesystem persistence between deploys and restarts.
+The database stores only media metadata and references such as the public `imageUrl` plus the storage locator, not the image binary itself.
+
+For the `/scheduled-posts` screen, the preview is loaded directly from the Supabase public URL. This keeps database growth predictable while letting the UI render remote thumbnails in production.
+When the asset is served from Supabase Storage, the UI now requests transformed thumbnail URLs for small previews so list pages do not download the original full-size image unnecessarily.
+The app also persists a `previewUrl` alongside each media item in the stored JSON payload, so screens can prefer a lightweight preview reference and still fall back safely to the original URL.
 
 ## Publishing Notes
 
@@ -169,6 +174,15 @@ Instagram publishing requires a publicly reachable `image_url`. If you run local
 ## Production Checklist
 
 The operational checklist for taking this project from local testing to a reliable always-on setup lives in [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
+
+## Technical Documentation
+
+The main technical references for architecture, API contracts, and database design live in:
+
+- [docs/ARCHITECTURE_AND_BUSINESS_RULES.md](docs/ARCHITECTURE_AND_BUSINESS_RULES.md)
+- [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md)
+- [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)
+- [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md)
 
 ## Review Flow
 

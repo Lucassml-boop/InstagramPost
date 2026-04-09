@@ -7,6 +7,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { PostLayoutPreview } from "@/components/PostLayoutPreview";
 import { PostScheduler } from "@/components/PostScheduler";
 import { Panel } from "@/components/ui";
+import { getOptimizedAssetUrl } from "@/lib/storage";
 
 type DraftResponse = {
   postId: string;
@@ -24,6 +25,7 @@ type PostType = "feed" | "story" | "carousel";
 type MediaItem = {
   imageUrl: string;
   imagePath: string;
+  previewUrl?: string;
 };
 type StoryCaptionMode = "image-only" | "with-caption";
 type CarouselSlideContext = {
@@ -124,6 +126,11 @@ function sanitizeDraft(value: unknown): DraftResponse | null {
         typeof item.imageUrl === "string" &&
         typeof item.imagePath === "string"
     )
+    .map((item) => ({
+      imageUrl: item.imageUrl,
+      imagePath: item.imagePath,
+      ...(typeof item.previewUrl === "string" ? { previewUrl: item.previewUrl } : {})
+    }))
     .slice(0, 10);
 
   return {
@@ -958,7 +965,19 @@ export function CaptionGenerator({
                       className="rounded-2xl border border-slate-200 bg-white p-3"
                     >
                       <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100">
-                        <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={
+                            item.previewUrl ||
+                            getOptimizedAssetUrl(item.imageUrl, {
+                              width: 320,
+                              height: 320,
+                              quality: 72,
+                              resize: "cover"
+                            })
+                          }
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">

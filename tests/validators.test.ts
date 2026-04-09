@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  deletePostsSchema,
   generatePostSchema,
   generationSettingsSchema,
   loginSchema,
@@ -80,4 +81,12 @@ test("schedulePostSchema requires ISO datetime", () => {
   });
 
   assert.equal(parsed.scheduledTime, "2026-04-10T14:30:00.000Z");
+});
+
+test("deletePostsSchema accepts multiple post ids", () => {
+  const parsed = deletePostsSchema.parse({
+    postIds: ["post_1", "post_2"]
+  });
+
+  assert.deepEqual(parsed.postIds, ["post_1", "post_2"]);
 });

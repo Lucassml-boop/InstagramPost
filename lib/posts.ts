@@ -21,6 +21,7 @@ function parseStoredMediaItems(
         const candidate = item as {
           imageUrl?: unknown;
           imagePath?: unknown;
+          previewUrl?: unknown;
         };
 
         if (typeof candidate.imageUrl !== "string" || typeof candidate.imagePath !== "string") {
@@ -29,7 +30,10 @@ function parseStoredMediaItems(
 
         return {
           imageUrl: candidate.imageUrl,
-          imagePath: candidate.imagePath
+          imagePath: candidate.imagePath,
+          ...(typeof candidate.previewUrl === "string"
+            ? { previewUrl: candidate.previewUrl }
+            : {})
         } satisfies PublishableMediaItem;
       })
       .filter((item): item is PublishableMediaItem => Boolean(item));
@@ -235,4 +239,20 @@ export async function processScheduledPosts(requestOrigin?: string) {
   }
 
   return duePosts.length;
+}
+
+export async function deleteQueuedPosts(input: {
+  userId: string;
+  postIds: string[];
+}) {
+  const result = await prisma.post.deleteMany({
+    where: {
+      userId: input.userId,
+      id: {
+        in: input.postIds
+      }
+    }
+  });
+
+  return result.count;
 }

@@ -4,7 +4,8 @@ export const postTypeSchema = z.enum(["feed", "story", "carousel"]);
 
 export const postMediaItemSchema = z.object({
   imageUrl: z.string().min(1),
-  imagePath: z.string().min(1)
+  imagePath: z.string().min(1),
+  previewUrl: z.string().min(1).optional()
 });
 
 export const loginSchema = z.object({
@@ -41,4 +42,8 @@ export const publishPostSchema = z.object({
 
 export const schedulePostSchema = publishPostSchema.extend({
   scheduledTime: z.string().datetime()
+});
+
+export const deletePostsSchema = z.object({
+  postIds: z.array(z.string().min(1)).min(1).max(100)
 });

@@ -2,7 +2,7 @@ import { createDraftPost, publishPostNow } from "@/lib/posts";
 import { getContentBrandProfile, getCurrentWeeklyAgenda } from "@/lib/content-system";
 import { generateInstagramCarouselPosts, generateInstagramPost } from "@/lib/openai";
 import { renderPostImage } from "@/lib/renderer";
-import { slugify } from "@/lib/storage";
+import { getPersistedPreviewUrl, slugify } from "@/lib/storage";
 import type { AuthUser } from "@/lib/auth";
 import type { ContentPlanItem } from "@/lib/content-system";
 import type { InstagramPostType } from "@/lib/instagram";
@@ -154,7 +154,8 @@ export async function publishWeeklyAgendaPreview(input: {
         }),
         mediaItems: renderedImages.map((image) => ({
           imageUrl: image.publicPath,
-          imagePath: image.absolutePath
+          imagePath: image.absolutePath,
+          previewUrl: getPersistedPreviewUrl(image.publicPath)
         })),
         imageUrl: renderedImages[0].publicPath,
         imagePath: renderedImages[0].absolutePath
@@ -167,7 +168,8 @@ export async function publishWeeklyAgendaPreview(input: {
         postType,
         mediaItems: renderedImages.map((image) => ({
           imageUrl: image.publicPath,
-          imagePath: image.absolutePath
+          imagePath: image.absolutePath,
+          previewUrl: getPersistedPreviewUrl(image.publicPath)
         })),
         imageUrl: renderedImages[0].publicPath,
         imagePath: renderedImages[0].absolutePath,

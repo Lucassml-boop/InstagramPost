@@ -52,6 +52,7 @@ test("handleGeneratePost generates carousel draft with rendered media", async ()
       publicPath: `/generated/${slug}.jpg`,
       absolutePath: `/tmp/${slug}.jpg`
     }),
+    getPersistedPreviewUrl: (imageUrl) => `${imageUrl}?preview=1`,
     createDraftPost: async (input) => ({
       id: "post_123",
       imageUrl: input.imageUrl,
@@ -92,6 +93,7 @@ test("handleGeneratePost maps timeout errors to 504", async () => {
     renderPostImage: async () => {
       throw new Error("Should not render.");
     },
+    getPersistedPreviewUrl: (imageUrl) => imageUrl,
     createDraftPost: async () => {
       throw new Error("Should not draft.");
     },

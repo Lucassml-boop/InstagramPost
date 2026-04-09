@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 type ScheduledPostItem = {
   id: string;
@@ -13,6 +14,16 @@ type ScheduledPostItem = {
   scheduledTime: string | null;
   publishedAt: string | null;
   assetState: "available" | "deleted" | "remote";
+};
+
+type InstagramFeedItem = {
+  id: string;
+  caption: string;
+  mediaType: string;
+  mediaUrl: string | null;
+  thumbnailUrl: string | null;
+  permalink: string | null;
+  timestamp: string | null;
 };
 
 type ScheduledPostsDictionary = {
@@ -40,6 +51,19 @@ type ScheduledPostsDictionary = {
   scheduleRequired: string;
   noPosts: string;
   previewAlt: string;
+  select: string;
+  selectAll: string;
+  deleteSelected: string;
+  deleting: string;
+  clearSelection: string;
+  deleteSuccess: string;
+  deleteError: string;
+  selectAtLeastOne: string;
+  instagramFeedTitle: string;
+  instagramFeedDescription: string;
+  instagramFeedEmpty: string;
+  instagramFeedError: string;
+  openOnInstagram: string;
 };
 
 type GeneratorDictionary = {
@@ -85,6 +109,10 @@ function formatDate(value: string | null, locale: string) {
   }
 
   return new Date(value).toLocaleString(locale);
+}
+
+function getSelectionCountLabel(count: number, dictionary: ScheduledPostsDictionary) {
+  return `${count} ${dictionary.select.toLowerCase()}`;
 }
 
 function getStatusLabel(
@@ -174,11 +202,15 @@ function PreviewCell({
 
 export function ScheduledPostsTable({
   posts,
+  instagramFeedItems,
+  instagramFeedError,
   locale,
   dictionary,
   generatorDictionary
 }: {
   posts: ScheduledPostItem[];
+  instagramFeedItems: InstagramFeedItem[];
+  instagramFeedError: string | null;
   locale: string;
   dictionary: ScheduledPostsDictionary;
   generatorDictionary: GeneratorDictionary;
@@ -190,11 +222,22 @@ export function ScheduledPostsTable({
   );
   const [scheduleValues, setScheduleValues] = useState<Record<string, string>>({});
   const [savingPostId, setSavingPostId] = useState<string | null>(null);
+  const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
 
   useEffect(() => {
     setScheduleValues(
       Object.fromEntries(posts.map((post) => [post.id, toDatetimeLocalValue(post.scheduledTime)]))
     );
+  }, [posts]);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    setSelectedPostIds((current) => current.filter((postId) => posts.some((post) => post.id === postId)));
   }, [posts]);
 
   const counts = useMemo(
@@ -205,6 +248,24 @@ export function ScheduledPostsTable({
     }),
     [posts]
   );
+  const deletablePosts = posts;
+  const allDeletableSelected =
+    deletablePosts.length > 0 &&
+    deletablePosts.every((post) => selectedPostIds.includes(post.id));
+
+  function toggleSelection(postId: string) {
+    setSelectedPostIds((current) =>
+      current.includes(postId)
+        ? current.filter((id) => id !== postId)
+        : [...current, postId]
+    );
+  }
+
+  function toggleSelectAll() {
+    setSelectedPostIds((current) =>
+      allDeletableSelected ? current.filter((id) => !deletablePosts.some((post) => post.id === id)) : deletablePosts.map((post) => post.id)
+    );
+  }
 
   function updateSchedule(post: ScheduledPostItem) {
     const value = scheduleValues[post.id];
@@ -252,8 +313,79 @@ export function ScheduledPostsTable({
     })();
   }
 
+  function deleteSelectedPosts() {
+    if (selectedPostIds.length === 0) {
+      setFeedback({ type: "error", message: dictionary.selectAtLeastOne });
+      return;
+    }
+
+    setIsDeleting(true);
+    setFeedback(null);
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/posts/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            postIds: selectedPostIds
+          })
+        });
+
+        const json = (await response.json()) as { error?: string; deletedCount?: number };
+
+        if (!response.ok) {
+          throw new Error(json.error ?? dictionary.deleteError);
+        }
+
+        setSelectedPostIds([]);
+        setFeedback({ type: "success", message: dictionary.deleteSuccess });
+        startTransition(() => {
+          router.refresh();
+        });
+      } catch (error) {
+        setFeedback({
+          type: "error",
+          message: error instanceof Error ? error.message : dictionary.deleteError
+        });
+      } finally {
+        setIsDeleting(false);
+      }
+    })();
+  }
+
   return (
     <div className="space-y-6">
+      {portalReady && selectedPostIds.length > 0
+        ? createPortal(
+            <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex justify-center px-4">
+              <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
+                <span className="whitespace-nowrap text-sm font-medium text-slate-700">
+                  {getSelectionCountLabel(selectedPostIds.length, dictionary)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPostIds([])}
+                  className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  {dictionary.clearSelection}
+                </button>
+                <button
+                  type="button"
+                  onClick={deleteSelectedPosts}
+                  disabled={isDeleting}
+                  className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isDeleting ? dictionary.deleting : dictionary.deleteSelected}
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-white/80 bg-white/80 px-5 py-4 shadow-sm">
           <p className="text-sm text-slate-500">{dictionary.scheduledCount}</p>
@@ -267,6 +399,19 @@ export function ScheduledPostsTable({
           <p className="text-sm text-slate-500">{dictionary.processedCount}</p>
           <p className="mt-2 text-3xl font-semibold text-ink">{counts.processed}</p>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <label className="flex min-w-0 max-w-full items-start gap-3 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={allDeletableSelected}
+            onChange={toggleSelectAll}
+            disabled={deletablePosts.length === 0}
+            className="mt-0.5 shrink-0"
+          />
+          <span className="min-w-0 break-words">{dictionary.selectAll}</span>
+        </label>
       </div>
 
       {feedback ? (
@@ -285,6 +430,7 @@ export function ScheduledPostsTable({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
+              <th className="px-4 py-3 font-medium">{dictionary.select}</th>
               <th className="px-4 py-3 font-medium">{dictionary.preview}</th>
               <th className="px-4 py-3 font-medium">{dictionary.caption}</th>
               <th className="px-4 py-3 font-medium">{generatorDictionary.postType}</th>
@@ -302,6 +448,14 @@ export function ScheduledPostsTable({
 
               return (
                 <tr key={post.id} className="border-t border-slate-100 align-top">
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedPostIds.includes(post.id)}
+                      onChange={() => toggleSelection(post.id)}
+                      aria-label={dictionary.select}
+                    />
+                  </td>
                   <td className="px-4 py-4">
                     <PreviewCell
                       imageUrl={post.imageUrl}
@@ -374,13 +528,81 @@ export function ScheduledPostsTable({
             })}
             {posts.length === 0 ? (
               <tr>
-                <td className="px-4 py-10 text-center text-slate-500" colSpan={8}>
+                <td className="px-4 py-10 text-center text-slate-500" colSpan={9}>
                   {dictionary.noPosts}
                 </td>
               </tr>
             ) : null}
           </tbody>
         </table>
+      </div>
+
+      <div className="space-y-4 rounded-3xl border border-white/80 bg-white/80 px-5 py-5 shadow-sm">
+        <div>
+          <h3 className="text-lg font-semibold text-ink">{dictionary.instagramFeedTitle}</h3>
+          <p className="mt-1 text-sm text-slate-500">{dictionary.instagramFeedDescription}</p>
+        </div>
+
+        {instagramFeedError ? (
+          <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            {dictionary.instagramFeedError}: {instagramFeedError}
+          </div>
+        ) : null}
+
+        {instagramFeedItems.length === 0 && !instagramFeedError ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+            {dictionary.instagramFeedEmpty}
+          </div>
+        ) : null}
+
+        {instagramFeedItems.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {instagramFeedItems.map((item) => {
+              const previewUrl = item.thumbnailUrl || item.mediaUrl;
+
+              return (
+                <article key={item.id} className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                  <div className="relative aspect-square bg-slate-100">
+                    {previewUrl ? (
+                      <Image
+                        src={normalizePreviewSrc(previewUrl)}
+                        alt={dictionary.previewAlt}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                        {dictionary.previewUnavailable}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                        {item.mediaType}
+                      </span>
+                      <span className="text-xs text-slate-400">{formatDate(item.timestamp, locale)}</span>
+                    </div>
+                    <p className="line-clamp-4 whitespace-pre-wrap text-sm text-slate-700">
+                      {item.caption || "-"}
+                    </p>
+                    {item.permalink ? (
+                      <a
+                        href={item.permalink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex rounded-2xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                      >
+                        {dictionary.openOnInstagram}
+                      </a>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );

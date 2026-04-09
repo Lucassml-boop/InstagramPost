@@ -182,6 +182,19 @@ type Dictionary = {
     previewUnavailable: string;
     noPosts: string;
     previewAlt: string;
+    select: string;
+    selectAll: string;
+    deleteSelected: string;
+    deleting: string;
+    clearSelection: string;
+    deleteSuccess: string;
+    deleteError: string;
+    selectAtLeastOne: string;
+    instagramFeedTitle: string;
+    instagramFeedDescription: string;
+    instagramFeedEmpty: string;
+    instagramFeedError: string;
+    openOnInstagram: string;
   };
   contentAutomation: {
     eyebrow: string;
@@ -475,7 +488,20 @@ const dictionaries: Record<Locale, Dictionary> = {
       processedCount: "Processed",
       previewUnavailable: "No preview",
       noPosts: "No scheduled or published posts yet.",
-      previewAlt: "Post preview"
+      previewAlt: "Post preview",
+      select: "Select",
+      selectAll: "Select all listed posts",
+      deleteSelected: "Delete selected",
+      deleting: "Deleting...",
+      clearSelection: "Clear",
+      deleteSuccess: "Selected posts deleted successfully.",
+      deleteError: "Unable to delete the selected posts.",
+      selectAtLeastOne: "Select at least one post.",
+      instagramFeedTitle: "Instagram feed",
+      instagramFeedDescription: "These are the latest items currently visible in your connected Instagram feed.",
+      instagramFeedEmpty: "No feed items were returned by Instagram yet.",
+      instagramFeedError: "Unable to load the Instagram feed",
+      openOnInstagram: "Open on Instagram"
     },
     contentAutomation: {
       eyebrow: "Automation",
@@ -785,7 +811,20 @@ const dictionaries: Record<Locale, Dictionary> = {
       processedCount: "Processados",
       previewUnavailable: "Sem previa",
       noPosts: "Ainda nao ha posts agendados ou publicados.",
-      previewAlt: "Previa do post"
+      previewAlt: "Previa do post",
+      select: "Selecionar",
+      selectAll: "Selecionar todos os posts listados",
+      deleteSelected: "Apagar selecionados",
+      deleting: "Apagando...",
+      clearSelection: "Limpar",
+      deleteSuccess: "Posts selecionados apagados com sucesso.",
+      deleteError: "Nao foi possivel apagar os posts selecionados.",
+      selectAtLeastOne: "Selecione pelo menos um post.",
+      instagramFeedTitle: "Feed do Instagram",
+      instagramFeedDescription: "Estes sao os itens mais recentes visiveis no feed da sua conta conectada.",
+      instagramFeedEmpty: "O Instagram ainda nao retornou itens do feed.",
+      instagramFeedError: "Nao foi possivel carregar o feed do Instagram",
+      openOnInstagram: "Abrir no Instagram"
     },
     contentAutomation: {
       eyebrow: "Automacao",
