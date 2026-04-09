@@ -1,12 +1,7 @@
-import { promisify } from "node:util";
-import { execFile as execFileCallback } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import puppeteer from "puppeteer";
-import { embedAiMetadata } from "@/lib/storage";
+import { saveGeneratedImageBuffer } from "@/lib/storage";
 
 const RENDER_TIMEOUT_MS = 120_000;
-const execFile = promisify(execFileCallback);
 
 function buildHtmlDocument(html: string, css: string) {
   return `<!DOCTYPE html>
@@ -102,22 +97,21 @@ export async function renderPostImage(input: {
       durationMs: Date.now() - startedAt
     });
 
-    const outputDir = path.join(process.cwd(), "public", "generated-posts");
-    await mkdir(outputDir, { recursive: true });
-    const fileName = `${Date.now()}-${input.slug}.jpg`;
-    const absolutePath = path.join(outputDir, fileName);
     const buffer = await page.screenshot({
       type: "jpeg",
       quality: 90
     });
 
-    await writeFile(absolutePath, buffer);
-    await embedAiMetadata(absolutePath);
+    const savedImage = await saveGeneratedImageBuffer({
+      bytes: Buffer.from(buffer),
+      slug: input.slug,
+      markAsAiGenerated: true
+    });
 
     return {
-      fileName,
-      absolutePath,
-      publicPath: `/generated-posts/${fileName}`
+      fileName: savedImage.fileName,
+      absolutePath: savedImage.absolutePath,
+      publicPath: savedImage.publicPath
     };
   } finally {
     await browser.close();
