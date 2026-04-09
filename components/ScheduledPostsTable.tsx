@@ -1,204 +1,27 @@
-"use client";
+export { ScheduledPostsTable } from "@/components/scheduled-posts";
+/*
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createPortal } from "react-dom";
-
-type ScheduledPostItem = {
-  id: string;
-  caption: string;
-  imageUrl: string;
-  postType: "FEED" | "STORY" | "CAROUSEL";
-  status: "SCHEDULED" | "PUBLISHED" | "FAILED";
-  scheduledTime: string | null;
-  publishedAt: string | null;
-  assetState: "available" | "deleted" | "remote";
-};
-
-type InstagramFeedItem = {
-  id: string;
-  caption: string;
-  mediaType: string;
-  mediaUrl: string | null;
-  thumbnailUrl: string | null;
-  permalink: string | null;
-  timestamp: string | null;
-};
-
-type ScheduledPostsDictionary = {
-  preview: string;
-  caption: string;
-  scheduledTime: string;
-  publishedAt: string;
-  status: string;
-  fileStatus: string;
-  scheduledStatus: string;
-  publishedStatus: string;
-  failedStatus: string;
-  fileAvailable: string;
-  fileDeleted: string;
-  fileRemote: string;
-  editSchedule: string;
-  reschedule: string;
-  saving: string;
-  scheduledCount: string;
-  publishedCount: string;
-  processedCount: string;
-  previewUnavailable: string;
-  updatedSuccess: string;
-  updateError: string;
-  scheduleRequired: string;
-  noPosts: string;
-  previewAlt: string;
-  select: string;
-  selectAll: string;
-  deleteSelected: string;
-  deleting: string;
-  clearSelection: string;
-  deleteSuccess: string;
-  deleteError: string;
-  selectAtLeastOne: string;
-  instagramFeedTitle: string;
-  instagramFeedDescription: string;
-  instagramFeedEmpty: string;
-  instagramFeedError: string;
-  openOnInstagram: string;
-};
-
-type GeneratorDictionary = {
-  postType: string;
-  postTypeFeed: string;
-  postTypeStory: string;
-  postTypeCarousel: string;
-};
-
-function normalizePreviewSrc(src: string) {
-  if (!src) {
-    return "";
-  }
-
-  if (
-    src.startsWith("http://") ||
-    src.startsWith("https://") ||
-    src.startsWith("data:") ||
-    src.startsWith("blob:") ||
-    src.startsWith("/")
-  ) {
-    return src;
-  }
-
-  return `/${src}`;
-}
-
-function toDatetimeLocalValue(value: string | null) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  const timezoneOffset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - timezoneOffset * 60_000);
-
-  return localDate.toISOString().slice(0, 16);
-}
-
-function formatDate(value: string | null, locale: string) {
-  if (!value) {
-    return "-";
-  }
-
-  return new Date(value).toLocaleString(locale);
-}
-
-function getSelectionCountLabel(count: number, dictionary: ScheduledPostsDictionary) {
-  return `${count} ${dictionary.select.toLowerCase()}`;
-}
-
-function getStatusLabel(
-  status: ScheduledPostItem["status"],
-  dictionary: ScheduledPostsDictionary
-) {
-  if (status === "PUBLISHED") {
-    return dictionary.publishedStatus;
-  }
-
-  if (status === "FAILED") {
-    return dictionary.failedStatus;
-  }
-
-  return dictionary.scheduledStatus;
-}
-
-function getAssetLabel(
-  assetState: ScheduledPostItem["assetState"],
-  dictionary: ScheduledPostsDictionary
-) {
-  if (assetState === "deleted") {
-    return dictionary.fileDeleted;
-  }
-
-  if (assetState === "remote") {
-    return dictionary.fileRemote;
-  }
-
-  return dictionary.fileAvailable;
-}
-
-function getPostTypeLabel(
-  postType: ScheduledPostItem["postType"],
-  dictionary: GeneratorDictionary
-) {
-  if (postType === "STORY") {
-    return dictionary.postTypeStory;
-  }
-
-  if (postType === "CAROUSEL") {
-    return dictionary.postTypeCarousel;
-  }
-
-  return dictionary.postTypeFeed;
-}
-
-function PreviewCell({
-  imageUrl,
-  assetState,
-  alt,
-  unavailableLabel
-}: {
-  imageUrl: string;
-  assetState: ScheduledPostItem["assetState"];
-  alt: string;
-  unavailableLabel: string;
-}) {
-  const [hasError, setHasError] = useState(assetState === "deleted");
-  const normalizedSrc = normalizePreviewSrc(imageUrl);
-
-  useEffect(() => {
-    setHasError(assetState === "deleted");
-  }, [assetState, imageUrl]);
-
-  if (hasError || !normalizedSrc) {
-    return (
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
-        {unavailableLabel}
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-slate-100">
-      <Image
-        src={normalizedSrc}
-        alt={alt}
-        fill
-        className="object-cover"
-        unoptimized
-        onError={() => setHasError(true)}
-      />
-    </div>
-  );
-}
+import { PreviewCell } from "@/components/scheduled-posts/PreviewCell";
+import { SelectionToolbar } from "@/components/scheduled-posts/SelectionToolbar";
+import { usePortalReady } from "@/hooks/usePortalReady";
+import { deletePosts, schedulePost as schedulePostRequest } from "@/services/frontend/posts";
+import type {
+  GeneratorDictionary,
+  InstagramFeedItem,
+  ScheduledPostItem,
+  ScheduledPostsDictionary
+} from "@/components/scheduled-posts/types";
+import {
+  formatDate,
+  getAssetLabel,
+  getPostTypeLabel,
+  getStatusLabel,
+  normalizePreviewSrc,
+  toDatetimeLocalValue
+} from "@/components/scheduled-posts/utils";
 
 export function ScheduledPostsTable({
   posts,
@@ -224,17 +47,13 @@ export function ScheduledPostsTable({
   const [savingPostId, setSavingPostId] = useState<string | null>(null);
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
+  const portalReady = usePortalReady();
 
   useEffect(() => {
     setScheduleValues(
       Object.fromEntries(posts.map((post) => [post.id, toDatetimeLocalValue(post.scheduledTime)]))
     );
   }, [posts]);
-
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
 
   useEffect(() => {
     setSelectedPostIds((current) => current.filter((postId) => posts.some((post) => post.id === postId)));
@@ -280,23 +99,15 @@ export function ScheduledPostsTable({
 
     void (async () => {
       try {
-        const response = await fetch("/api/posts/schedule", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            postId: post.id,
-            caption: post.caption,
-            scheduledTime: new Date(value).toISOString()
-          })
+        await schedulePostRequest({
+          postId: post.id,
+          caption: post.caption,
+          scheduledTime: new Date(value).toISOString(),
+          postType: post.postType.toLowerCase() as "feed" | "story" | "carousel",
+          mediaItems: [],
+          imageUrl: post.imageUrl,
+          imagePath: post.imagePath
         });
-
-        const json = (await response.json()) as { error?: string };
-
-        if (!response.ok) {
-          throw new Error(json.error ?? dictionary.updateError);
-        }
 
         setFeedback({ type: "success", message: dictionary.updatedSuccess });
         startTransition(() => {
@@ -324,21 +135,7 @@ export function ScheduledPostsTable({
 
     void (async () => {
       try {
-        const response = await fetch("/api/posts/delete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            postIds: selectedPostIds
-          })
-        });
-
-        const json = (await response.json()) as { error?: string; deletedCount?: number };
-
-        if (!response.ok) {
-          throw new Error(json.error ?? dictionary.deleteError);
-        }
+        await deletePosts(selectedPostIds);
 
         setSelectedPostIds([]);
         setFeedback({ type: "success", message: dictionary.deleteSuccess });
@@ -358,33 +155,14 @@ export function ScheduledPostsTable({
 
   return (
     <div className="space-y-6">
-      {portalReady && selectedPostIds.length > 0
-        ? createPortal(
-            <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex justify-center px-4">
-              <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
-                <span className="whitespace-nowrap text-sm font-medium text-slate-700">
-                  {getSelectionCountLabel(selectedPostIds.length, dictionary)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedPostIds([])}
-                  className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  {dictionary.clearSelection}
-                </button>
-                <button
-                  type="button"
-                  onClick={deleteSelectedPosts}
-                  disabled={isDeleting}
-                  className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isDeleting ? dictionary.deleting : dictionary.deleteSelected}
-                </button>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      <SelectionToolbar
+        portalReady={portalReady}
+        selectedCount={selectedPostIds.length}
+        dictionary={dictionary}
+        isDeleting={isDeleting}
+        onClear={() => setSelectedPostIds([])}
+        onDelete={deleteSelectedPosts}
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-white/80 bg-white/80 px-5 py-4 shadow-sm">
@@ -607,3 +385,4 @@ export function ScheduledPostsTable({
     </div>
   );
 }
+*/

@@ -1,5 +1,5 @@
-import { AutomationDiagnostics } from "@/components/AutomationDiagnostics";
-import { SectionTitle } from "@/components/ui";
+import { AutomationDiagnostics } from "@/components/automation-diagnostics";
+import { SectionTitle } from "@/components/shared";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
 

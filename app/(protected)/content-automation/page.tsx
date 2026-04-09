@@ -1,5 +1,5 @@
-import { ContentAutomationSettings } from "@/components/ContentAutomationSettings";
-import { SectionTitle } from "@/components/ui";
+import { ContentAutomationSettings } from "@/components/content-automation";
+import { SectionTitle } from "@/components/shared";
 import {
   getContentBrandProfile,
   getContentTopicsHistory,

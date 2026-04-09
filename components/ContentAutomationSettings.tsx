@@ -1,118 +1,5 @@
-"use client";
-
-import { useMemo, useState, useTransition } from "react";
-import { useI18n } from "@/components/I18nProvider";
-import { Panel } from "@/components/ui";
-import type { BrandProfile, ContentPlanItem } from "@/lib/content-system";
-
-type DayLabel = "Segunda" | "Terca" | "Quarta" | "Quinta" | "Sexta";
-
-type Props = {
-  initialProfile: BrandProfile;
-  initialAgenda: ContentPlanItem[];
-  initialTopicsHistory: string[];
-};
-
-const DAY_ORDER: DayLabel[] = ["Segunda", "Terca", "Quarta", "Quinta", "Sexta"];
-
-type DaySettingsState = Record<
-  DayLabel,
-  {
-    goal: string;
-    contentTypes: string;
-    formats: string;
-  }
->;
-
-function toTextareaValue(items: string[]) {
-  return items.join("\n");
-}
-
-function fromTextareaValue(value: string) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function buildDayState(profile: BrandProfile): DaySettingsState {
-  return DAY_ORDER.reduce(
-    (acc, day) => {
-      acc[day] = {
-        goal: profile.weeklyAgenda[day]?.goal ?? "",
-        contentTypes: toTextareaValue(profile.weeklyAgenda[day]?.contentTypes ?? []),
-        formats: toTextareaValue(profile.weeklyAgenda[day]?.formats ?? [])
-      };
-      return acc;
-    },
-    {} as DaySettingsState
-  );
-}
-
-function buildProfileFromState(input: {
-  brandName: string;
-  editableBrief: string;
-  automationLoopEnabled: boolean;
-  topicsHistoryCleanupFrequency: "disabled" | "daily" | "weekly" | "monthly";
-  services: string;
-  carouselDefaultStructure: string;
-  contentRules: string;
-  researchQueries: string;
-  daySettings: DaySettingsState;
-}): BrandProfile {
-  return {
-    brandName: input.brandName.trim(),
-    editableBrief: input.editableBrief.trim(),
-    automationLoopEnabled: input.automationLoopEnabled,
-    topicsHistoryCleanupFrequency: input.topicsHistoryCleanupFrequency,
-    services: fromTextareaValue(input.services),
-    weeklyAgenda: DAY_ORDER.reduce(
-      (acc, day) => {
-        acc[day] = {
-          goal: input.daySettings[day].goal.trim(),
-          contentTypes: fromTextareaValue(input.daySettings[day].contentTypes),
-          formats: fromTextareaValue(input.daySettings[day].formats)
-        };
-        return acc;
-      },
-      {} as BrandProfile["weeklyAgenda"]
-    ),
-    carouselDefaultStructure: fromTextareaValue(input.carouselDefaultStructure),
-    contentRules: fromTextareaValue(input.contentRules),
-    researchQueries: fromTextareaValue(input.researchQueries)
-  };
-}
-
-export function ContentAutomationSettings({
-  initialProfile,
-  initialAgenda,
-  initialTopicsHistory
-}: Props) {
-  const { dictionary } = useI18n();
-  const [brandName, setBrandName] = useState(initialProfile.brandName);
-  const [editableBrief, setEditableBrief] = useState(initialProfile.editableBrief);
-  const [automationLoopEnabled, setAutomationLoopEnabled] = useState(
-    initialProfile.automationLoopEnabled
-  );
-  const [topicsHistoryCleanupFrequency, setTopicsHistoryCleanupFrequency] = useState<
-    "disabled" | "daily" | "weekly" | "monthly"
-  >(initialProfile.topicsHistoryCleanupFrequency);
-  const [services, setServices] = useState(toTextareaValue(initialProfile.services));
-  const [carouselDefaultStructure, setCarouselDefaultStructure] = useState(
-    toTextareaValue(initialProfile.carouselDefaultStructure)
-  );
-  const [contentRules, setContentRules] = useState(toTextareaValue(initialProfile.contentRules));
-  const [researchQueries, setResearchQueries] = useState(
-    toTextareaValue(initialProfile.researchQueries)
-  );
-  const [daySettings, setDaySettings] = useState(buildDayState(initialProfile));
-  const [agenda, setAgenda] = useState(initialAgenda);
-  const [topicsHistory, setTopicsHistory] = useState(initialTopicsHistory);
-  const [currentTopics, setCurrentTopics] = useState<string[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, startSaving] = useTransition();
-  const [isGenerating, startGenerating] = useTransition();
+export { ContentAutomationSettings } from "@/components/content-automation";
+/*
 
   const builtProfile = useMemo(
     () =>
@@ -160,18 +47,7 @@ export function ContentAutomationSettings({
 
     startSaving(async () => {
       try {
-        const response = await fetch("/api/content-system/brand-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(builtProfile)
-        });
-
-        const json = (await response.json()) as { error?: string; profile?: BrandProfile };
-
-        if (!response.ok) {
-          setError(json.error ?? dictionary.contentAutomation.saveError);
-          return;
-        }
+        await saveBrandProfileService(builtProfile);
 
         setMessage(dictionary.contentAutomation.saveSuccess);
       } catch (requestError) {
@@ -190,40 +66,12 @@ export function ContentAutomationSettings({
 
     startGenerating(async () => {
       try {
-        const saveResponse = await fetch("/api/content-system/brand-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(builtProfile)
-        });
-
-        const savedJson = (await saveResponse.json()) as { error?: string };
-
-        if (!saveResponse.ok) {
-          setError(savedJson.error ?? dictionary.contentAutomation.saveError);
-          return;
-        }
-
-        const response = await fetch("/api/content-system/generate-weekly", {
-          method: "POST"
-        });
-
-        const json = (await response.json()) as {
-          error?: string;
-          agenda?: ContentPlanItem[];
-          currentTopics?: string[];
-        };
-
-        if (!response.ok) {
-          setError(json.error ?? dictionary.contentAutomation.generateError);
-          return;
-        }
+        await saveBrandProfileService(builtProfile);
+        const json = await generateWeeklyAgendaService();
 
         setAgenda(json.agenda ?? []);
         setCurrentTopics(json.currentTopics ?? []);
-        const topicsHistoryResponse = await fetch("/api/content-system/topics-history");
-        const topicsHistoryJson = (await topicsHistoryResponse.json()) as {
-          topicsHistory?: string[];
-        };
+        const topicsHistoryJson = await fetchTopicsHistoryService();
         setTopicsHistory(topicsHistoryJson.topicsHistory ?? []);
         setMessage(dictionary.contentAutomation.generateSuccess);
       } catch (requestError) {
@@ -242,16 +90,7 @@ export function ContentAutomationSettings({
 
     startSaving(async () => {
       try {
-        const response = await fetch("/api/content-system/topics-history", {
-          method: "DELETE"
-        });
-
-        const json = (await response.json()) as { error?: string; topicsHistory?: string[] };
-
-        if (!response.ok) {
-          setError(json.error ?? dictionary.contentAutomation.clearTopicsHistoryError);
-          return;
-        }
+        const json = await clearTopicsHistoryService();
 
         setTopicsHistory(json.topicsHistory ?? []);
         setMessage(dictionary.contentAutomation.clearTopicsHistorySuccess);
@@ -676,3 +515,4 @@ export function ContentAutomationSettings({
     </div>
   );
 }
+*/

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { InstagramAccountCard } from "@/components/InstagramAccountCard";
-import { Panel, SectionTitle } from "@/components/ui";
+import { InstagramAccountCard } from "@/components/dashboard";
+import { Panel, SectionTitle } from "@/components/shared";
 import { destroySession, getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";

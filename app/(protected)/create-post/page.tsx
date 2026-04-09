@@ -1,5 +1,5 @@
-import { CaptionGenerator } from "@/components/CaptionGenerator";
-import { SectionTitle } from "@/components/ui";
+import { CaptionGenerator } from "@/components/create-post";
+import { SectionTitle } from "@/components/shared";
 import { getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";

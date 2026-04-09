@@ -1,8 +1,8 @@
 import { constants } from "node:fs";
 import { access } from "node:fs/promises";
 import { PostStatus } from "@prisma/client";
-import { ScheduledPostsTable } from "@/components/ScheduledPostsTable";
-import { Panel, SectionTitle } from "@/components/ui";
+import { ScheduledPostsTable } from "@/components/scheduled-posts";
+import { Panel, SectionTitle } from "@/components/shared";
 import { getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
@@ -87,6 +87,7 @@ export default async function ScheduledPostsPage({
         quality: 70,
         resize: "cover"
       }),
+      imagePath: post.imagePath,
       postType: post.postType,
       status: post.status as "SCHEDULED" | "PUBLISHED" | "FAILED",
       scheduledTime: post.scheduledTime?.toISOString() ?? null,

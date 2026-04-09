@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/Sidebar";
-import { PageShell } from "@/components/ui";
+import { Sidebar } from "@/components/layout";
+import { PageShell } from "@/components/shared";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function ProtectedLayout({

@@ -1,5 +1,5 @@
-import { ConnectInstagramButton } from "@/components/ConnectInstagramButton";
-import { Panel, SectionTitle } from "@/components/ui";
+import { ConnectInstagramButton } from "@/components/connect-instagram";
+import { Panel, SectionTitle } from "@/components/shared";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
 
