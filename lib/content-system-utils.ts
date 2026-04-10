@@ -13,10 +13,7 @@ export function normalizeTopic(value: string) {
 }
 
 export function getAgendaWeekKey(agenda: ContentPlanItem[]) {
-  return agenda
-    .map((item) => item.date)
-    .sort()
-    .join("|");
+  return Array.from(new Set(agenda.map((item) => item.date))).sort().join("|");
 }
 
 export function getUpcomingWeekKey(referenceDate: Date, dayLabels: readonly string[]) {

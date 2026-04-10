@@ -4,13 +4,16 @@ import { useMemo, useState, useTransition } from "react";
 import {
   clearTopicsHistory as clearTopicsHistoryService,
   fetchTopicsHistory as fetchTopicsHistoryService,
+  generateAutomaticPostIdea as generateAutomaticPostIdeaService,
   generateWeeklyAgenda as generateWeeklyAgendaService,
   saveBrandProfile as saveBrandProfileService
 } from "@/services/frontend/content-system";
 import type { DayLabel, Props } from "@/components/content-automation/types";
 import {
   buildDayState,
+  buildPresetsState,
   buildProfileFromState,
+  fromTextareaValue,
   toTextareaValue
 } from "@/components/content-automation/utils";
 
@@ -45,6 +48,7 @@ export function useContentAutomation(input: {
   const [researchQueries, setResearchQueries] = useState(
     toTextareaValue(input.initialProfile.researchQueries)
   );
+  const [presets, setPresets] = useState(buildPresetsState(input.initialProfile));
   const [daySettings, setDaySettings] = useState(buildDayState(input.initialProfile));
   const [agenda, setAgenda] = useState(input.initialAgenda);
   const [topicsHistory, setTopicsHistory] = useState(input.initialTopicsHistory);
@@ -53,6 +57,7 @@ export function useContentAutomation(input: {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, startSaving] = useTransition();
   const [isGenerating, startGenerating] = useTransition();
+  const [autoFillKey, setAutoFillKey] = useState<string | null>(null);
 
   const builtProfile = useMemo(
     () =>
@@ -65,7 +70,8 @@ export function useContentAutomation(input: {
         carouselDefaultStructure,
         contentRules,
         researchQueries,
-        daySettings
+        daySettings,
+        presets
       }),
     [
       brandName,
@@ -76,7 +82,8 @@ export function useContentAutomation(input: {
       carouselDefaultStructure,
       contentRules,
       researchQueries,
-      daySettings
+      daySettings,
+      presets
     ]
   );
 
@@ -85,14 +92,142 @@ export function useContentAutomation(input: {
     [topicsHistory]
   );
 
-  function updateDay(day: DayLabel, field: "goal" | "contentTypes" | "formats", value: string) {
+  function updateDay(day: DayLabel, field: "postsPerDay" | "postTimes", value: string) {
+    setDaySettings((current) => {
+      const nextValue =
+        field === "postsPerDay" ? Math.max(1, Number.parseInt(value, 10) || 1).toString() : value;
+      const nextPostsPerDay =
+        field === "postsPerDay"
+          ? Math.max(1, Number.parseInt(value, 10) || 1)
+          : Math.max(1, Number.parseInt(current[day].postsPerDay, 10) || 1);
+      const existingIdeas = current[day].postIdeas;
+      const nextIdeas = Array.from({ length: nextPostsPerDay }, (_, index) => ({
+        goal: existingIdeas[index]?.goal ?? "",
+        contentTypes: existingIdeas[index]?.contentTypes ?? "",
+        formats: existingIdeas[index]?.formats ?? ""
+      }));
+
+      return {
+        ...current,
+        [day]: {
+          ...current[day],
+          [field]: nextValue,
+          postIdeas: nextIdeas
+        }
+      };
+    });
+  }
+
+  function updateDayPostIdea(
+    day: DayLabel,
+    postIndex: number,
+    field: "goal" | "contentTypes" | "formats",
+    value: string
+  ) {
     setDaySettings((current) => ({
       ...current,
       [day]: {
         ...current[day],
-        [field]: value
+        postIdeas: current[day].postIdeas.map((idea, index) =>
+          index === postIndex
+            ? {
+                ...idea,
+                [field]: value
+              }
+            : idea
+        )
       }
     }));
+  }
+
+  function updateDayPostTime(day: DayLabel, postIndex: number, value: string) {
+    setDaySettings((current) => {
+      const nextTimes = fromTextareaValue(current[day].postTimes);
+      const normalizedTimes = Array.from(
+        { length: Math.max(nextTimes.length, current[day].postIdeas.length, postIndex + 1) },
+        (_, index) => nextTimes[index] ?? ""
+      );
+
+      normalizedTimes[postIndex] = value.trim();
+
+      return {
+        ...current,
+        [day]: {
+          ...current[day],
+          postTimes: normalizedTimes.join("\n")
+        }
+      };
+    });
+  }
+
+  function updatePreset(
+    field: keyof typeof presets,
+    value: string
+  ) {
+    setPresets((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  async function generateAutomaticPostIdea(day: DayLabel, postIndex: number) {
+    setMessage(null);
+    setError(null);
+    const requestKey = `${day}-${postIndex}`;
+    setAutoFillKey(requestKey);
+
+    try {
+      const json = await generateAutomaticPostIdeaService({
+        profile: builtProfile,
+        day,
+        postIndex
+      });
+
+      if (!json.idea) {
+        throw new Error(input.dictionary.generateError);
+      }
+
+      setDaySettings((current) => ({
+        ...current,
+        [day]: {
+          ...current[day],
+          postIdeas: current[day].postIdeas.map((idea, index) =>
+            index === postIndex
+              ? {
+                  ...idea,
+                  goal: json.idea?.goal ?? "",
+                  contentTypes: (json.idea?.contentTypes ?? []).join("\n"),
+                  formats: (json.idea?.formats ?? []).join("\n")
+                }
+              : idea
+          )
+        }
+      }));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : input.dictionary.generateError
+      );
+    } finally {
+      setAutoFillKey((current) => (current === requestKey ? null : current));
+    }
+  }
+
+  function toggleDay(day: DayLabel, enabled: boolean) {
+    setDaySettings((current) => ({
+      ...current,
+      [day]: {
+        ...current[day],
+        enabled
+      }
+    }));
+  }
+
+  function setAllDaysEnabled(enabled: boolean) {
+    setDaySettings((current) =>
+      Object.fromEntries(
+        Object.entries(current).map(([day, config]) => [day, { ...config, enabled }])
+      ) as typeof current
+    );
   }
 
   function saveSettings() {
@@ -169,16 +304,26 @@ export function useContentAutomation(input: {
     setContentRules,
     researchQueries,
     setResearchQueries,
+    presets,
+    updatePreset,
+    builtProfile,
     daySettings,
     agenda,
     topicsHistory,
     currentTopics,
     message,
     error,
+    setError,
     isSaving,
     isGenerating,
+    autoFillKey,
     uniqueTopicsHistory,
     updateDay,
+    updateDayPostIdea,
+    updateDayPostTime,
+    generateAutomaticPostIdea,
+    toggleDay,
+    setAllDaysEnabled,
     saveSettings,
     generateWeeklyAgenda,
     clearTopicsHistory

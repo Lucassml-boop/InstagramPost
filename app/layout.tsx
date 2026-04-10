@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { I18nProvider } from "@/components/I18nProvider";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { SettingsShortcutButton } from "@/components/SettingsShortcutButton";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
 import "./globals.css";
 
@@ -18,11 +18,11 @@ export default async function RootLayout({
   const locale = await getLocaleFromCookies();
 
   return (
-    <html lang={locale}>
-      <body>
+    <html lang={locale} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <I18nProvider locale={locale}>
           <div className="mx-auto mb-4 flex max-w-7xl justify-end px-4 pt-4 sm:px-6">
-            <LanguageSwitcher />
+            <SettingsShortcutButton />
           </div>
           {children}
         </I18nProvider>

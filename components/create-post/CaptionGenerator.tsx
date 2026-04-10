@@ -1,17 +1,18 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 import { Panel } from "@/components/shared";
 import { useCaptionGenerator } from "@/hooks/useCaptionGenerator";
 import { CLIENT_TIMEOUT_MS, DEFAULT_CUSTOM_INSTRUCTIONS } from "./constants";
 import { GenerationProgress } from "./GenerationProgress";
-import { GeneratorTabs } from "./GeneratorTabs";
 import { MediaManager } from "./MediaManager";
 import { PostLayoutPreview } from "./PostLayoutPreview";
 import { PostScheduler } from "./PostScheduler";
 import type { OutputLanguage, PostType } from "./types";
 import { createSlideContexts } from "./utils";
+import { generateCreatePostInputs as generateCreatePostInputsService } from "@/services/frontend/posts";
 
 export function CaptionGenerator({
   initialOutputLanguage = "en",
@@ -22,9 +23,9 @@ export function CaptionGenerator({
 }) {
   const router = useRouter();
   const { dictionary } = useI18n();
+  const [autoFieldKey, setAutoFieldKey] = useState<string | null>(null);
+  const [isAutoGeneratingAll, startAutoGeneratingAll] = useTransition();
   const {
-    activeTab,
-    setActiveTab,
     topic,
     setTopic,
     message,
@@ -40,9 +41,7 @@ export function CaptionGenerator({
     tone,
     setTone,
     outputLanguage,
-    setOutputLanguage,
     customInstructions,
-    setCustomInstructions,
     brandColors,
     setBrandColors,
     keywords,
@@ -54,10 +53,9 @@ export function CaptionGenerator({
     scheduleTime,
     setScheduleTime,
     error,
-    settingsMessage,
+    setError,
     isGenerating,
     isPublishing,
-    isSavingSettings,
     progressValue,
     elapsedMs,
     shouldShowSlowMessage,
@@ -65,8 +63,7 @@ export function CaptionGenerator({
     effectiveCaption,
     generatePost,
     publishNow,
-    schedulePost,
-    saveGenerationSettings
+    schedulePost
   } = useCaptionGenerator({
     initialOutputLanguage,
     initialCustomInstructions,
@@ -95,36 +92,112 @@ export function CaptionGenerator({
     }
   });
 
+  function renderAutoButton(key: string, onClick: () => Promise<void>) {
+    const isLoading = autoFieldKey === key;
+
+    return (
+      <button
+        type="button"
+        disabled={isLoading}
+        onClick={() => {
+          void onClick();
+        }}
+        className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isLoading ? dictionary.generator.autoGeneratingField : dictionary.generator.autoGenerateField}
+      </button>
+    );
+  }
+
+  async function generateCreatePostInputs(field?: "topic" | "message" | "keywords" | "brandColors" | "carouselSlideContexts") {
+    const requestKey = field ?? "all";
+    setAutoFieldKey(requestKey);
+    setError(null);
+
+    try {
+      const json = await generateCreatePostInputsService({
+        current: {
+          topic,
+          message,
+          postType,
+          tone,
+          brandColors,
+          keywords,
+          carouselSlideCount,
+          carouselSlideContexts: carouselSlideContexts.map((item) => item.value),
+          outputLanguage,
+          customInstructions
+        }
+      });
+
+      if (!field || field === "topic") {
+        setTopic(json.topic ?? topic);
+      }
+      if (!field || field === "message") {
+        setMessage(json.message ?? message);
+      }
+      if (!field || field === "keywords") {
+        setKeywords(json.keywords ?? keywords);
+      }
+      if (!field || field === "brandColors") {
+        setBrandColors(json.brandColors ?? brandColors);
+      }
+      if ((!field || field === "carouselSlideContexts") && postType === "carousel") {
+        const nextContexts = json.carouselSlideContexts ?? carouselSlideContexts.map((item) => item.value);
+        setCarouselSlideContexts(createSlideContexts(carouselSlideCount).map((item, index) => ({
+          ...item,
+          value: nextContexts[index] ?? ""
+        })));
+      }
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : dictionary.generator.generateError
+      );
+    } finally {
+      setAutoFieldKey((current) => (current === requestKey ? null : current));
+    }
+  }
+
+  function generateAllCreatePostInputs() {
+    startAutoGeneratingAll(async () => {
+      await generateCreatePostInputs();
+    });
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
       <Panel className="p-6">
-        <GeneratorTabs
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          contentLabel={dictionary.generator.contentTab}
-          settingsLabel={dictionary.generator.settingsTab}
-        />
-
-        {activeTab === "content" ? (
-          <div className="grid gap-4">
+        <div className="grid gap-4">
             <label className="block text-sm font-medium text-slate-700">
-              {dictionary.generator.topic}
+              <div className="flex items-center justify-between gap-3">
+                <span>{dictionary.generator.topic}</span>
+                {renderAutoButton("topic", () => generateCreatePostInputs("topic"))}
+              </div>
               <input
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
                 placeholder={dictionary.generator.topicPlaceholder}
               />
+              <span className="mt-2 block text-xs text-slate-500">
+                {dictionary.generator.autoGenerateHint}
+              </span>
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              {dictionary.generator.message}
+              <div className="flex items-center justify-between gap-3">
+                <span>{dictionary.generator.message}</span>
+                {renderAutoButton("message", () => generateCreatePostInputs("message"))}
+              </div>
               <textarea
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 className="mt-2 min-h-28 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
                 placeholder={dictionary.generator.messagePlaceholder}
               />
+              <span className="mt-2 block text-xs text-slate-500">
+                {dictionary.generator.autoGenerateHint}
+              </span>
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -172,15 +245,21 @@ export function CaptionGenerator({
                 </select>
               </label>
 
-              <label className="block text-sm font-medium text-slate-700">
-                {dictionary.generator.brandColors}
-                <input
-                  value={brandColors}
-                  onChange={(event) => setBrandColors(event.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
-                  placeholder="#0f172a, #ea580c, #f8fafc"
-                />
-              </label>
+            <label className="block text-sm font-medium text-slate-700">
+              <div className="flex items-center justify-between gap-3">
+                <span>{dictionary.generator.brandColors}</span>
+                {renderAutoButton("brandColors", () => generateCreatePostInputs("brandColors"))}
+              </div>
+              <input
+                value={brandColors}
+                onChange={(event) => setBrandColors(event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
+                placeholder="#0f172a, #ea580c, #f8fafc"
+              />
+              <span className="mt-2 block text-xs text-slate-500">
+                {dictionary.generator.autoGenerateHint}
+              </span>
+            </label>
             </div>
 
             {postType === "carousel" ? (
@@ -239,6 +318,12 @@ export function CaptionGenerator({
                   ))}
                 </div>
 
+                <div className="flex justify-end">
+                  {renderAutoButton("carouselSlideContexts", () =>
+                    generateCreatePostInputs("carouselSlideContexts")
+                  )}
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setCarouselSlideContexts(createSlideContexts(carouselSlideCount))}
@@ -288,100 +373,43 @@ export function CaptionGenerator({
             ) : null}
 
             <label className="block text-sm font-medium text-slate-700">
-              {dictionary.generator.keywords}
+              <div className="flex items-center justify-between gap-3">
+                <span>{dictionary.generator.keywords}</span>
+                {renderAutoButton("keywords", () => generateCreatePostInputs("keywords"))}
+              </div>
               <input
                 value={keywords}
                 onChange={(event) => setKeywords(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
                 placeholder={dictionary.generator.keywordsPlaceholder}
               />
+              <span className="mt-2 block text-xs text-slate-500">
+                {dictionary.generator.autoGenerateHint}
+              </span>
             </label>
-          </div>
-        ) : (
-          <div className="grid gap-5">
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm font-semibold text-ink">{dictionary.generator.outputLanguage}</p>
-              <p className="mt-1 text-sm text-slate-600">
-                {dictionary.generator.outputLanguageDescription}
-              </p>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setOutputLanguage("en")}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
-                    outputLanguage === "en"
-                      ? "border-ink bg-white text-ink shadow-sm"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-ink"
-                  }`}
-                >
-                  <span className="block text-sm font-semibold">
-                    {dictionary.generator.outputLanguageEnglish}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setOutputLanguage("pt-BR")}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
-                    outputLanguage === "pt-BR"
-                      ? "border-ink bg-white text-ink shadow-sm"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-ink"
-                  }`}
-                >
-                  <span className="block text-sm font-semibold">
-                    {dictionary.generator.outputLanguagePtBR}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <label className="block rounded-3xl border border-slate-200 bg-white p-5 text-sm font-medium text-slate-700">
-              {dictionary.generator.customInstructions}
-              <p className="mt-1 text-sm font-normal text-slate-600">
-                {dictionary.generator.customInstructionsDescription}
-              </p>
-              <textarea
-                value={customInstructions}
-                onChange={(event) => setCustomInstructions(event.target.value)}
-                className="mt-4 min-h-40 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none focus:border-slate-400"
-                placeholder={dictionary.generator.customInstructionsPlaceholder}
-              />
-              <button
-                type="button"
-                onClick={() => setCustomInstructions(DEFAULT_CUSTOM_INSTRUCTIONS)}
-                className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
-              >
-                {dictionary.generator.restoreDefaultInstructions}
-              </button>
-            </label>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={saveGenerationSettings}
-                disabled={isSavingSettings}
-                className="rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-              >
-                {isSavingSettings ? dictionary.generator.generating : dictionary.common.save}
-              </button>
-
-              {settingsMessage ? (
-                <p className="text-sm text-emerald-700">{settingsMessage}</p>
-              ) : null}
-            </div>
-          </div>
-        )}
+        </div>
 
         <div className="mt-6">
-          <button
-            type="button"
-            onClick={generatePost}
-            disabled={isGenerating}
-            className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-          >
-            {isGenerating ? dictionary.generator.generating : dictionary.generator.generate}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={generateAllCreatePostInputs}
+              disabled={isAutoGeneratingAll}
+              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-60"
+            >
+              {isAutoGeneratingAll
+                ? dictionary.generator.autoGeneratingField
+                : dictionary.generator.autoGenerateAllFields}
+            </button>
+            <button
+              type="button"
+              onClick={generatePost}
+              disabled={isGenerating}
+              className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+            >
+              {isGenerating ? dictionary.generator.generating : dictionary.generator.generate}
+            </button>
+          </div>
         </div>
 
         {isGenerating ? (

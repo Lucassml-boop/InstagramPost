@@ -14,6 +14,7 @@ const DAY_ORDER = ["Segunda", "Terca", "Quarta", "Quinta", "Sexta"] as const;
 type ContentPlanItem = {
   date: string;
   day: string;
+  time: string;
   goal: string;
   type: string;
   format: string;
@@ -29,6 +30,7 @@ function createAgenda(dates: string[], themes: string[]): ContentPlanItem[] {
   return dates.map((date, index) => ({
     date,
     day: DAY_ORDER[index] ?? "Segunda",
+    time: "09:00",
     goal: "goal",
     type: "type",
     format: "format",
@@ -43,6 +45,20 @@ function createAgenda(dates: string[], themes: string[]): ContentPlanItem[] {
 
 test("normalizeTopic removes accents and punctuation", () => {
   assert.equal(normalizeTopic("Integração Mercado Livre!"), "integracao mercado livre");
+});
+
+test("shouldSkipAutomationLoop tolerates multiple posts on the same day", () => {
+  const referenceDate = new Date("2026-04-08T12:00:00.000Z");
+  const nextWeekDates = getUpcomingWeekKey(referenceDate, DAY_ORDER).split("|");
+  const currentAgenda = [
+    ...createAgenda(nextWeekDates, ["Tema 1", "Tema 2", "Tema 3", "Tema 4", "Tema 5"]),
+    {
+      ...createAgenda([nextWeekDates[0]], ["Tema extra"])[0],
+      time: "15:00"
+    }
+  ];
+
+  assert.equal(shouldSkipAutomationLoop(currentAgenda, referenceDate, DAY_ORDER), true);
 });
 
 test("isSameOrSimilarTopic detects similar subjects", () => {

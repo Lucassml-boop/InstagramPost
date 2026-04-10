@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { jsonError } from "../server-utils.ts";
+import type { BrandProfile } from "../content-system.ts";
 import { generatePostSchema, publishPostSchema } from "../validators.ts";
 
 type AuthUser = {
@@ -9,17 +10,18 @@ type AuthUser = {
 type GeneratePostInput = z.infer<typeof generatePostSchema>;
 
 type GeneratePostDeps = {
-  generateInstagramPost: (input: GeneratePostInput) => Promise<{
+  generateInstagramPost: (input: GeneratePostInput, automationContext?: { brandProfile?: BrandProfile | null }) => Promise<{
     caption: string;
     hashtags: string[];
     html: string;
     css: string;
   }>;
-  generateInstagramCarouselPosts: (input: GeneratePostInput) => Promise<{
+  generateInstagramCarouselPosts: (input: GeneratePostInput, automationContext?: { brandProfile?: BrandProfile | null }) => Promise<{
     caption: string;
     hashtags: string[];
     slides: Array<{ html: string; css: string }>;
   }>;
+  getContentBrandProfile?: () => Promise<BrandProfile>;
   renderPostImage: (input: {
     slug: string;
     html: string;
@@ -60,18 +62,20 @@ type PublishPostDeps = {
 };
 
 async function getDefaultGeneratePostDeps(): Promise<GeneratePostDeps> {
-  const [{ createDraftPost }, openai, { renderPostImage }, { getPersistedPreviewUrl, slugify }] =
+  const [{ createDraftPost }, openai, { renderPostImage }, { getPersistedPreviewUrl, slugify }, contentSystem] =
     await Promise.all([
     import("../posts.ts"),
     import("../openai.ts"),
     import("../renderer.ts"),
-    import("../storage.ts")
+    import("../storage.ts"),
+    import("../content-system.ts")
   ]);
 
   return {
     createDraftPost,
     generateInstagramPost: openai.generateInstagramPost,
     generateInstagramCarouselPosts: openai.generateInstagramCarouselPosts,
+    getContentBrandProfile: contentSystem.getContentBrandProfile,
     renderPostImage,
     getPersistedPreviewUrl,
     slugify
@@ -114,6 +118,9 @@ export async function handleGeneratePost(
     const resolvedDeps = deps ?? (await getDefaultGeneratePostDeps());
 
     const parsed = generatePostSchema.parse(await request.json());
+    const brandProfile = resolvedDeps.getContentBrandProfile
+      ? await resolvedDeps.getContentBrandProfile()
+      : null;
     console.info("[api/posts/generate] Payload parsed", {
       userId: user.id,
       topic: parsed.topic,
@@ -130,7 +137,7 @@ export async function handleGeneratePost(
     phaseStartedAt.ai = Date.now();
     const generatedCarousel =
       parsed.postType === "carousel"
-        ? await resolvedDeps.generateInstagramCarouselPosts(parsed)
+        ? await resolvedDeps.generateInstagramCarouselPosts(parsed, { brandProfile })
         : null;
     const generated = generatedCarousel
       ? {
@@ -139,7 +146,7 @@ export async function handleGeneratePost(
           html: generatedCarousel.slides[0].html,
           css: generatedCarousel.slides[0].css
         }
-      : await resolvedDeps.generateInstagramPost(parsed);
+      : await resolvedDeps.generateInstagramPost(parsed, { brandProfile });
 
     console.info("[api/posts/generate] Text and layout generated", {
       userId: user.id,

@@ -102,3 +102,35 @@ export async function uploadImage(file: File, markAsAiGenerated: boolean) {
     }
   >(response, "Upload failed.");
 }
+
+export async function generateCreatePostInputs(input: {
+  current: {
+    topic: string;
+    message: string;
+    postType: PostType;
+    tone: "professional" | "casual" | "promotional";
+    brandColors: string;
+    keywords: string;
+    carouselSlideCount: number;
+    carouselSlideContexts: string[];
+    outputLanguage: OutputLanguage;
+    customInstructions: string;
+  };
+}) {
+  const response = await fetch("/api/posts/generate-inputs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+
+  return parseJsonOrThrow<
+    {
+      topic?: string;
+      message?: string;
+      keywords?: string;
+      brandColors?: string;
+      carouselSlideContexts?: string[];
+      error?: string;
+    }
+  >(response, "Unable to generate create-post inputs.");
+}

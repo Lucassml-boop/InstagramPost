@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireEnv } from "@/lib/env";
 import { generatePostSchema } from "@/lib/validators";
+import type { BrandProfile } from "@/lib/content-system";
 
 const ollamaResponseSchema = z.object({
   message: z.object({
@@ -18,6 +19,9 @@ const generatedPostSchema = z.object({
 
 type GeneratePostInput = z.infer<typeof generatePostSchema>;
 type GeneratedPost = z.infer<typeof generatedPostSchema>;
+type AutomationContext = {
+  brandProfile?: BrandProfile | null;
+};
 
 const DEFAULT_OLLAMA_TIMEOUT_MS = 480_000;
 
@@ -113,7 +117,8 @@ function buildPrompt(
     slideContext?: string;
     styleGuide?: string;
     requireCaption?: boolean;
-  }
+  },
+  automationContext?: AutomationContext
 ) {
   const keywords = input.keywords?.trim() ? input.keywords.trim() : "none";
   const customInstructions = input.customInstructions?.trim();
@@ -159,8 +164,34 @@ function buildPrompt(
     `Post type: ${input.postType}`,
     `Output language: ${languageLabel}`,
     `Brand colors: ${input.brandColors}`,
-    `Keywords: ${keywords}`
-  ].join("\n");
+    `Keywords: ${keywords}`,
+    automationContext?.brandProfile
+      ? `Brand positioning context: ${automationContext.brandProfile.editableBrief}`
+      : null,
+    automationContext?.brandProfile
+      ? `Brand services context: ${automationContext.brandProfile.services.join(", ")}`
+      : null,
+    automationContext?.brandProfile
+      ? `Editorial rules context: ${automationContext.brandProfile.contentRules.join(" | ")}`
+      : null,
+    automationContext?.brandProfile
+      ? `Preferred research context: ${automationContext.brandProfile.researchQueries.join(" | ")}`
+      : null,
+    automationContext?.brandProfile
+      ? `Preferred carousel structure: ${automationContext.brandProfile.carouselDefaultStructure.join(" -> ")}`
+      : null,
+    automationContext?.brandProfile
+      ? `Goal presets to stay aligned with: ${(automationContext.brandProfile.goalPresets ?? []).join(" | ")}`
+      : null,
+    automationContext?.brandProfile
+      ? `Content type presets to stay aligned with: ${(automationContext.brandProfile.contentTypePresets ?? []).join(" | ")}`
+      : null,
+    automationContext?.brandProfile
+      ? `Format presets to stay aligned with: ${(automationContext.brandProfile.formatPresets ?? []).join(" | ")}`
+      : null
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function extractJsonPayload(content: string) {
@@ -182,7 +213,8 @@ async function requestInstagramPostGeneration(
     slideContext?: string;
     styleGuide?: string;
     requireCaption?: boolean;
-  }
+  },
+  automationContext?: AutomationContext
 ) {
   const parsedInput = generatePostSchema.parse(input);
   const apiKey = requireEnv("OLLAMA_API_KEY");
@@ -191,7 +223,7 @@ async function requestInstagramPostGeneration(
   const modelsToTry = [primaryModel, ...fallbackModels];
   const timeoutMs = getOllamaTimeoutMs();
   const requestStartedAt = Date.now();
-  const prompt = buildPrompt(parsedInput, options);
+  const prompt = buildPrompt(parsedInput, options, automationContext);
   const attemptErrors: string[] = [];
 
   console.info("[ollama] Starting generation workflow", {
@@ -351,11 +383,17 @@ async function requestInstagramPostGeneration(
   );
 }
 
-export async function generateInstagramPost(input: GeneratePostInput) {
-  return requestInstagramPostGeneration(input);
+export async function generateInstagramPost(
+  input: GeneratePostInput,
+  automationContext?: AutomationContext
+) {
+  return requestInstagramPostGeneration(input, undefined, automationContext);
 }
 
-export async function generateInstagramCarouselPosts(input: GeneratePostInput) {
+export async function generateInstagramCarouselPosts(
+  input: GeneratePostInput,
+  automationContext?: AutomationContext
+) {
   const parsedInput = generatePostSchema.parse(input);
   const slideCount =
     parsedInput.postType === "carousel" ? parsedInput.carouselSlideCount : 1;
@@ -369,7 +407,7 @@ export async function generateInstagramCarouselPosts(input: GeneratePostInput) {
     slideCount,
     slideContext: slideContexts[0],
     requireCaption: true
-  });
+  }, automationContext);
 
   const styleGuide =
     firstSlide.styleGuide?.trim() ||
@@ -383,7 +421,7 @@ export async function generateInstagramCarouselPosts(input: GeneratePostInput) {
       slideContext: slideContexts[index],
       styleGuide,
       requireCaption: false
-    });
+    }, automationContext);
 
     slides.push({
       ...slide,

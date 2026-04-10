@@ -1,5 +1,5 @@
 import { parseJsonOrThrow, parseJsonResponse } from "@/lib/client/http";
-import type { BrandProfile, ContentPlanItem } from "@/lib/content-system";
+import type { AutomaticPostIdea, BrandProfile, ContentPlanItem } from "@/lib/content-system";
 
 export async function saveBrandProfile(profile: BrandProfile) {
   const response = await fetch("/api/content-system/brand-profile", {
@@ -26,6 +26,77 @@ export async function generateWeeklyAgenda() {
       error?: string;
     }
   >(response, "Unable to generate the weekly content agenda.");
+}
+
+export async function generateAutomaticPostIdea(input: {
+  profile: BrandProfile;
+  day: string;
+  postIndex: number;
+}) {
+  const response = await fetch("/api/content-system/generate-post-idea", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+
+  return parseJsonOrThrow<{ idea?: AutomaticPostIdea; error?: string }>(
+    response,
+    "Unable to generate automatic post idea."
+  );
+}
+
+export async function generateAutomaticSetting(input: {
+  profile: BrandProfile;
+  target:
+    | "brandName"
+    | "editableBrief"
+    | "services"
+    | "contentRules"
+    | "researchQueries"
+    | "carouselDefaultStructure"
+    | "goalPresets"
+    | "contentTypePresets"
+    | "formatPresets"
+    | "customInstructions";
+  currentValue: string;
+}) {
+  const response = await fetch("/api/content-system/generate-setting", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+
+  return parseJsonOrThrow<{ value?: string; error?: string }>(
+    response,
+    "Unable to generate automatic setting."
+  );
+}
+
+export async function generateAutomaticSettingsBundle(input: {
+  profile: BrandProfile;
+  customInstructions: string;
+}) {
+  const response = await fetch("/api/content-system/generate-settings-bundle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+
+  return parseJsonOrThrow<
+    {
+      brandName?: string;
+      editableBrief?: string;
+      services?: string;
+      contentRules?: string;
+      researchQueries?: string;
+      carouselDefaultStructure?: string;
+      goalPresets?: string;
+      contentTypePresets?: string;
+      formatPresets?: string;
+      customInstructions?: string;
+      error?: string;
+    }
+  >(response, "Unable to generate automatic settings bundle.");
 }
 
 export async function fetchTopicsHistory() {

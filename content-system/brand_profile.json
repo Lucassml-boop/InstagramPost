@@ -13,6 +13,7 @@
   ],
   "weeklyAgenda": {
     "Segunda": {
+      "enabled": true,
       "goal": "Mostrar autoridade ensinando algo util.",
       "contentTypes": [
         "tutoriais",
@@ -23,9 +24,45 @@
       "formats": [
         "Carrossel",
         "Reels explicativo"
+      ],
+      "postsPerDay": 2,
+      "postTimes": [
+        "09:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "Mostrar autoridade ensinando algo util.",
+          "contentTypes": [
+            "tutoriais",
+            "explicacoes",
+            "dicas praticas",
+            "automacoes uteis"
+          ],
+          "formats": [
+            "Carrossel",
+            "Reels explicativo"
+          ]
+        },
+        {
+          "goal": "Estabelecer credibilidade através de evidências tangíveis de transformação operacional, demonstrando como a automação inteligente traduz-se em ganhos reais de produtividade e receita, enquanto posiciona a EcomForge como parceira estratégica capaz de executar implementações complexas que geram ROI mensurável.",
+          "contentTypes": [
+            "Narrativa de transformação operacional detalhada - apresentando o percurso de um cliente específico (setor genérico mas realista, como moda ou eletrônicos) desde os gargalos manuais até a operação automatizada, destacando métricas como horas economizadas, erros reduzidos e velocidade de processamento de pedidos.",
+            "Análise comparativa de dados e métricas de desempenho - exibindo dashboards reais ou simulados que contrastam indicadores-chave (taxa de erro, tempo de resposta ao cliente, sincronização de estoque) entre processos manuais e automatizados, com ênfase em números específicos que ressoam com dores do público-alvo.",
+            "Depoimento estruturado em formato de entrevista profissional - transcrito ou adaptado de clientes reais, organizado em perguntas estratégicas sobre desafios enfrentados, processo de implementação dos sistemas EcomForge e resultados alcançados em diferentes frentes (atendimento, logística, análise de dados).",
+            "Insights táticos sobre tomada de decisão baseada em dados - extrações de aprendizados práticos sobre como o acesso a dashboards em tempo real modificou o comportamento estratégico da empresa cliente, permitindo ajustes rápidos de precificação e estoque que impactaram diretamente no faturamento.",
+            "Elementos de prova social contextualizada - screenshots de conversas, sistemas em funcionamento ou gráficos de crescimento que atestam a veracidade dos resultados apresentados, reforçando a confiabilidade da narrativa sem parecer autopromocional agressivo."
+          ],
+          "formats": [
+            "Carousel documental 'Antes & Depois da Automação' - sequência de slides que alternam entre prints de planilhas caóticas/processos manuais e interfaces limpas dos sistemas EcomForge, com legendas explicativas sobre cada transformação específica e call-to-action no último slide para consultoria diagnóstica gratuita.",
+            "Reels narrativo com storytelling de transformação - vídeo curto (60-90s) utilizando o formato 'day in the life' comparativo, mostrando o operador antes (estressado, copiando dados manualmente) e depois (analisando estratégias no dashboard), com texto em tela destacando números específicos de economia de tempo.",
+            "Infográfico animado em Stories (com destaque permanente) - série de 3-5 stories utilizando recursos interativos (enquetes 'Você sabia?', caixas de perguntas) para apresentar os dados do case de forma fragmentada e engajadora, com link swipe-up ou sticker de link para landing page de cases de sucesso.",
+            "Post single-image 'Dashboard da Semana' - imagem estética e profissional de um dashboard real (ou mockup fiel) com destaque para métricas específicas de eficiência operacional, acompanhada de legenda longa que narra o contexto por trás daqueles números e como sistemas integrados possibilitaram aquela visibilidade."
+          ]
+        }
       ]
     },
     "Terca": {
+      "enabled": true,
       "goal": "Mostrar que a empresa realmente desenvolve tecnologia.",
       "contentTypes": [
         "mostrando desenvolvimento",
@@ -36,9 +73,29 @@
       "formats": [
         "Reels",
         "Stories"
+      ],
+      "postsPerDay": 1,
+      "postTimes": [
+        "11:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "Mostrar que a empresa realmente desenvolve tecnologia.",
+          "contentTypes": [
+            "mostrando desenvolvimento",
+            "arquitetura de sistemas",
+            "automacoes sendo criadas",
+            "desafios tecnicos"
+          ],
+          "formats": [
+            "Reels",
+            "Stories"
+          ]
+        }
       ]
     },
     "Quarta": {
+      "enabled": true,
       "goal": "Gerar confianca mostrando resultados.",
       "contentTypes": [
         "casos de cliente",
@@ -48,9 +105,28 @@
       ],
       "formats": [
         "Carrossel"
+      ],
+      "postsPerDay": 1,
+      "postTimes": [
+        "14:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "Gerar confianca mostrando resultados.",
+          "contentTypes": [
+            "casos de cliente",
+            "antes e depois",
+            "metricas de automacao",
+            "reducao de tempo de trabalho"
+          ],
+          "formats": [
+            "Carrossel"
+          ]
+        }
       ]
     },
     "Quinta": {
+      "enabled": true,
       "goal": "Alcance e descoberta.",
       "contentTypes": [
         "curiosidades",
@@ -60,18 +136,109 @@
       ],
       "formats": [
         "Reels"
+      ],
+      "postsPerDay": 1,
+      "postTimes": [
+        "16:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "Alcance e descoberta.",
+          "contentTypes": [
+            "curiosidades",
+            "erros comuns",
+            "tendencias de automacao",
+            "tarefas manuais que deveriam ser automatizadas"
+          ],
+          "formats": [
+            "Reels"
+          ]
+        }
       ]
     },
     "Sexta": {
-      "goal": "Gerar leads.",
+      "enabled": true,
+      "goal": "Posicionar a EcomForge como arquiteta de liberdade operacional para gestores de e-commerce, demonstrando como automações inteligentes eliminam a cultura de 'sextas-feiras eternas' presas às operações manuais, enquanto captura leads qualificados através da promessa tangível de recuperação de tempo pessoal via infraestrutura tecnológica robusta.",
       "contentTypes": [
-        "apresentacao de servicos",
-        "chamada para automacao",
-        "demonstracao de solucoes"
+        "Análise comparativa detalhada entre rotinas de fechamento semanal manuais versus automatizadas, mapeando especificamente os gargalos operacionais (como reconciliação cruzada de estoque entre Mercado Livre e Shopee, atualização de status de pedidos e comunicação com transportadoras) que consomem em média 6-8 horas extras de sexta-feira e como triggers inteligentes eliminam essas tarefas repetitivas.",
+        "Framework educativo prático intitulado 'Protocolo de Desconexão de Fim de Semana', ensinando três pilares de automação essenciais (sincronização bidirecional de saldo em marketplaces, respostas automáticas contextualizadas para FAQs de pós-venda e geração automática de relatórios de performance enviados por e-mail) que permitem ao gestor monitorar sua operação via mobile sem necessidade de intervenção manual urgente.",
+        "Micro-estudo de caso narrativo baseado em arquétipos de clientes reais (setor de moda ou eletrônicos), demonstrando como a implementação de automações de reposição de estoque e comunicação logística pré-weekend reduziu em 90% o tempo de gestão aos sábados, incluindo dados simulados de produtividade e bem-estar que reforçam a autoridade técnica da marca sem soar promocional demais.",
+        "Gatilho de recalculação de valor oculto convidando o seguidor a estimar quantas horas de vida pessoal perdeu no último mês gerenciando planilhas manualmente, direcionando para uma ferramenta gratuita de diagnóstico de maturidade em automação ou para agendamento de consultoria estratégica de 15 minutos, funcionando como isca de lead generation de alta conversão."
       ],
       "formats": [
-        "imagem + CTA",
-        "video curto"
+        "Carrossel sequencial de 5 slides no estilo 'Antes vs Depois' com transição visual suave, onde os slides 1-2 ilustram o cenário caótico de múltiplas abas abertas e planilhas Excel às 20h de sexta-feira, e os slides 3-5 revelam o fluxo integrado da EcomForge com screenshots estilizados de dashboards unificados e ícones animados indicando sincronização automática entre plataformas, incluindo CTA no último slide para 'Calcular seu tempo perdido'.",
+        "Reels de 45-60 segundos utilizando storytelling visual do arco narrativo 'Do Caos à Tranquilidade', começando com montagem rápida de notificações de pedidos piscando no celular (som de notificação sobreposto), transicionando para cenas de alguém fechando o laptop com satisfação às 18h enquanto o sistema trabalha sozinho, com legendas educativas em destaque explicando cada ponto de automação (ex: 'Estoque atualizado sozinho às 19h') e texto final convidando para o link na bio.",
+        "Post estático no formato infográfico dividido verticalmente em duas colunas contrastantes com design limpo: esquerda intitulada 'Sexta-feira sem automação' com lista visual de 8 tarefas manuais em vermelho/alaranjado, e direita 'Sexta-feira com EcomForge' com apenas 3 itens de aprovação estratégica em verde/azul corporativo, utilizando tipografia sans-serif de alta legibilidade para consumo rápido no feed durante o deslocamento matinal.",
+        "Sequência de Stories interativos em 4 frames: primeiro frame com enquete binária 'Você já conseguiu sair cedo na sexta-feira esse mês?', segundo frame com breve explicação textual sobre como dashboards mobile permitem monitoramento sem presença física, terceiro frame demonstrando swipe-up ou sticker de link para 'Diagnóstico de Automação Gratuita', e quarto frame com depoimento em texto de cliente satisfeito sobre trabalho aos finais de semana."
+      ],
+      "postsPerDay": 2,
+      "postTimes": [
+        "07:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "Posicionar a EcomForge como arquiteta de liberdade operacional para gestores de e-commerce, demonstrando como automações inteligentes eliminam a cultura de 'sextas-feiras eternas' presas às operações manuais, enquanto captura leads qualificados através da promessa tangível de recuperação de tempo pessoal via infraestrutura tecnológica robusta.",
+          "contentTypes": [
+            "Análise comparativa detalhada entre rotinas de fechamento semanal manuais versus automatizadas, mapeando especificamente os gargalos operacionais (como reconciliação cruzada de estoque entre Mercado Livre e Shopee, atualização de status de pedidos e comunicação com transportadoras) que consomem em média 6-8 horas extras de sexta-feira e como triggers inteligentes eliminam essas tarefas repetitivas.",
+            "Framework educativo prático intitulado 'Protocolo de Desconexão de Fim de Semana', ensinando três pilares de automação essenciais (sincronização bidirecional de saldo em marketplaces, respostas automáticas contextualizadas para FAQs de pós-venda e geração automática de relatórios de performance enviados por e-mail) que permitem ao gestor monitorar sua operação via mobile sem necessidade de intervenção manual urgente.",
+            "Micro-estudo de caso narrativo baseado em arquétipos de clientes reais (setor de moda ou eletrônicos), demonstrando como a implementação de automações de reposição de estoque e comunicação logística pré-weekend reduziu em 90% o tempo de gestão aos sábados, incluindo dados simulados de produtividade e bem-estar que reforçam a autoridade técnica da marca sem soar promocional demais.",
+            "Gatilho de recalculação de valor oculto convidando o seguidor a estimar quantas horas de vida pessoal perdeu no último mês gerenciando planilhas manualmente, direcionando para uma ferramenta gratuita de diagnóstico de maturidade em automação ou para agendamento de consultoria estratégica de 15 minutos, funcionando como isca de lead generation de alta conversão."
+          ],
+          "formats": [
+            "Carrossel sequencial de 5 slides no estilo 'Antes vs Depois' com transição visual suave, onde os slides 1-2 ilustram o cenário caótico de múltiplas abas abertas e planilhas Excel às 20h de sexta-feira, e os slides 3-5 revelam o fluxo integrado da EcomForge com screenshots estilizados de dashboards unificados e ícones animados indicando sincronização automática entre plataformas, incluindo CTA no último slide para 'Calcular seu tempo perdido'.",
+            "Reels de 45-60 segundos utilizando storytelling visual do arco narrativo 'Do Caos à Tranquilidade', começando com montagem rápida de notificações de pedidos piscando no celular (som de notificação sobreposto), transicionando para cenas de alguém fechando o laptop com satisfação às 18h enquanto o sistema trabalha sozinho, com legendas educativas em destaque explicando cada ponto de automação (ex: 'Estoque atualizado sozinho às 19h') e texto final convidando para o link na bio.",
+            "Post estático no formato infográfico dividido verticalmente em duas colunas contrastantes com design limpo: esquerda intitulada 'Sexta-feira sem automação' com lista visual de 8 tarefas manuais em vermelho/alaranjado, e direita 'Sexta-feira com EcomForge' com apenas 3 itens de aprovação estratégica em verde/azul corporativo, utilizando tipografia sans-serif de alta legibilidade para consumo rápido no feed durante o deslocamento matinal.",
+            "Sequência de Stories interativos em 4 frames: primeiro frame com enquete binária 'Você já conseguiu sair cedo na sexta-feira esse mês?', segundo frame com breve explicação textual sobre como dashboards mobile permitem monitoramento sem presença física, terceiro frame demonstrando swipe-up ou sticker de link para 'Diagnóstico de Automação Gratuita', e quarto frame com depoimento em texto de cliente satisfeito sobre trabalho aos finais de semana."
+          ]
+        },
+        {
+          "goal": "Gerar confianca mostrando resultados.",
+          "contentTypes": [
+            "explicacoes aplicado a integracao Mercado Livre e Shopee com foco em decisao, clareza operacional e ganho de produtividade",
+            "dicas praticas aplicado a integracao Mercado Livre e Shopee com foco em decisao, clareza operacional e ganho de produtividade",
+            "erros comuns aplicado a integracao Mercado Livre e Shopee com foco em decisao, clareza operacional e ganho de produtividade",
+            "casos de cliente"
+          ],
+          "formats": [
+            "Reels explicativo com abordagem mais consultiva, exemplo realista e CTA conectado ao servico",
+            "Reels com abordagem mais consultiva, exemplo realista e CTA conectado ao servico",
+            "Stories com abordagem mais consultiva, exemplo realista e CTA conectado ao servico"
+          ]
+        }
+      ]
+    },
+    "Sabado": {
+      "enabled": true,
+      "goal": "",
+      "contentTypes": [],
+      "formats": [],
+      "postsPerDay": 1,
+      "postTimes": [
+        "09:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "",
+          "contentTypes": [],
+          "formats": []
+        }
+      ]
+    },
+    "Domingo": {
+      "enabled": true,
+      "goal": "",
+      "contentTypes": [],
+      "formats": [],
+      "postsPerDay": 1,
+      "postTimes": [
+        "09:00"
+      ],
+      "postIdeas": [
+        {
+          "goal": "",
+          "contentTypes": [],
+          "formats": []
+        }
       ]
     }
   },
@@ -97,5 +264,28 @@
     "IA aplicada a negocios",
     "automacao de atendimento leads",
     "integracao estoque marketplaces"
+  ],
+  "goalPresets": [
+    "Mostrar autoridade ensinando algo util.",
+    "Gerar confianca mostrando resultados.",
+    "Gerar leads com um CTA claro.",
+    "Aumentar alcance com um tema mais descobrivel.",
+    "teste"
+  ],
+  "contentTypePresets": [
+    "tutoriais",
+    "explicacoes",
+    "dicas praticas",
+    "erros comuns",
+    "casos de cliente",
+    "automacoes uteis"
+  ],
+  "formatPresets": [
+    "Carrossel",
+    "Reels explicativo",
+    "Reels",
+    "Stories",
+    "Imagem com CTA",
+    "Video curto"
   ]
 }

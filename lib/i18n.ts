@@ -126,6 +126,10 @@ type Dictionary = {
     generateError: string;
     publishError: string;
     scheduleError: string;
+    autoGenerateField: string;
+    autoGeneratingField: string;
+    autoGenerateAllFields: string;
+    autoGenerateHint: string;
   };
   upload: {
     title: string;
@@ -217,13 +221,42 @@ type Dictionary = {
     listHint: string;
     howItWorksTitle: string;
     howItWorksDescription: string;
+    agendaTab: string;
+    settingsTab: string;
     scheduleLabel: string;
     scheduleDescription: string;
     weeklyAgendaTitle: string;
     weeklyAgendaDescription: string;
+    enableAllDays: string;
+    disableAllDays: string;
+    dayEnabled: string;
+    showMoreDay: string;
+    showLessDay: string;
+    dayPostsSummary: string;
+    dayDisabledSummary: string;
+    noDayGoal: string;
     dayGoal: string;
     dayTypes: string;
     dayFormats: string;
+    postsPerDay: string;
+    postTimes: string;
+    postTimesHint: string;
+    presetLibraryTitle: string;
+    presetLibraryDescription: string;
+    goalPresets: string;
+    contentTypePresets: string;
+    formatPresets: string;
+    savedPresetsHint: string;
+    autoGenerateField: string;
+    autoGenerateHint: string;
+    autoGeneratingField: string;
+    autoGenerateSectionHint: string;
+    autoGenerateAll: string;
+    chooseSavedPreset: string;
+    noSavedPresets: string;
+    singlePostLabel: string;
+    multiplePostsLabel: string;
+    postLabel: string;
     saveButton: string;
     saving: string;
     saveSuccess: string;
@@ -429,7 +462,12 @@ const dictionaries: Record<Locale, Dictionary> = {
       scheduleTimeRequired: "Choose a schedule time before saving.",
       generateError: "Unable to generate post.",
       publishError: "Unable to publish.",
-      scheduleError: "Unable to schedule."
+      scheduleError: "Unable to schedule.",
+      autoGenerateField: "Automatic",
+      autoGeneratingField: "Generating...",
+      autoGenerateAllFields: "Automatic all",
+      autoGenerateHint:
+        "Uses the saved strategy and your current inputs as a base so the result stays coherent."
     },
     upload: {
       title: "Upload custom image",
@@ -528,15 +566,49 @@ const dictionaries: Record<Locale, Dictionary> = {
       howItWorksTitle: "How this automation works",
       howItWorksDescription:
         "The agent uses this configuration as its operating brief. You can keep the default EcomForge positioning or rewrite everything to match another business. Repetition control now uses a compact topics history instead of storing full posts.",
+      agendaTab: "Agenda",
+      settingsTab: "Settings",
       scheduleLabel: "Weekly schedule",
       scheduleDescription:
-        "Every Sunday the system researches current topics, checks the last 60 days of history, and generates the next Monday-to-Friday plan.",
+        "Every Sunday the system researches current topics, checks the last 60 days of history, and generates the next plan based on the active days and times configured here.",
       weeklyAgendaTitle: "Weekly agenda rules",
       weeklyAgendaDescription:
-        "Define the goal, content angles, and preferred formats for each weekday. The AI will follow this structure when building the next weekly plan.",
+        "Define the goal, content angles, preferred formats, active days, daily posting volume, and schedule times. The AI will follow this structure when building the next weekly plan.",
+      enableAllDays: "Enable all days",
+      disableAllDays: "Disable all days",
+      dayEnabled: "Use this day",
+      showMoreDay: "Show more",
+      showLessDay: "Show less",
+      dayPostsSummary: "posts scheduled",
+      dayDisabledSummary: "Day disabled",
+      noDayGoal: "No goal defined yet.",
       dayGoal: "Goal",
       dayTypes: "Content types",
       dayFormats: "Formats",
+      postsPerDay: "Posts per day",
+      postTimes: "Post times",
+      postTimesHint:
+        "Use one time per line in HH:mm. If you add fewer times than the quantity, the remaining slots will be filled automatically.",
+      presetLibraryTitle: "Saved presets",
+      presetLibraryDescription:
+        "Save reusable goals, content types, and formats here. Each post can choose a saved preset or stay automatic.",
+      goalPresets: "Goal presets",
+      contentTypePresets: "Content type presets",
+      formatPresets: "Format presets",
+      savedPresetsHint:
+        "Use one line per preset. In each post card, click a saved option or leave the field empty for AI to define it automatically.",
+      autoGenerateField: "Automatic",
+      autoGenerateHint:
+        "Use the + button and choose Automatic if you want the system to generate this automatically for this post.",
+      autoGeneratingField: "Generating...",
+      autoGenerateSectionHint:
+        "Use Automatic to regenerate this field with AI while preserving the current intent as a base.",
+      autoGenerateAll: "Automatic all",
+      chooseSavedPreset: "Choose from saved presets",
+      noSavedPresets: "No saved presets yet. Add them in the settings tab.",
+      singlePostLabel: "post",
+      multiplePostsLabel: "posts",
+      postLabel: "Post",
       saveButton: "Save settings",
       saving: "Saving...",
       saveSuccess: "Content automation settings saved successfully.",
@@ -752,7 +824,12 @@ const dictionaries: Record<Locale, Dictionary> = {
       scheduleTimeRequired: "Escolha um horario antes de salvar.",
       generateError: "Nao foi possivel gerar o post.",
       publishError: "Nao foi possivel publicar.",
-      scheduleError: "Nao foi possivel agendar."
+      scheduleError: "Nao foi possivel agendar.",
+      autoGenerateField: "Automatico",
+      autoGeneratingField: "Gerando...",
+      autoGenerateAllFields: "Automatico geral",
+      autoGenerateHint:
+        "Usa a estrategia salva e o que ja estiver preenchido como base para manter coerencia no resultado."
     },
     upload: {
       title: "Enviar imagem personalizada",
@@ -851,15 +928,49 @@ const dictionaries: Record<Locale, Dictionary> = {
       howItWorksTitle: "Como essa automacao funciona",
       howItWorksDescription:
         "O agente usa esta configuracao como briefing operacional. Voce pode manter o posicionamento padrao da EcomForge ou reescrever tudo para outra empresa. O controle de repeticao agora usa um historico compacto de temas em vez de salvar posts completos.",
+      agendaTab: "Agenda",
+      settingsTab: "Configuracoes",
       scheduleLabel: "Agenda semanal",
       scheduleDescription:
-        "Todo domingo o sistema pesquisa temas atuais, verifica o historico dos ultimos 60 dias e gera o planejamento de segunda a sexta.",
+        "Todo domingo o sistema pesquisa temas atuais, verifica o historico dos ultimos 60 dias e gera o proximo planejamento com base nos dias e horarios ativos configurados aqui.",
       weeklyAgendaTitle: "Regras da agenda semanal",
       weeklyAgendaDescription:
-        "Defina o objetivo, os angulos de conteudo e os formatos preferidos de cada dia da semana. A IA segue essa estrutura ao montar o proximo planejamento.",
+        "Defina o objetivo, os angulos de conteudo, os formatos preferidos, os dias ativos, a quantidade de posts por dia e os horarios de publicacao. A IA segue essa estrutura ao montar o proximo planejamento.",
+      enableAllDays: "Ativar todos os dias",
+      disableAllDays: "Desativar todos os dias",
+      dayEnabled: "Usar este dia",
+      showMoreDay: "Mostrar mais",
+      showLessDay: "Mostrar menos",
+      dayPostsSummary: "posts no dia",
+      dayDisabledSummary: "Dia desativado",
+      noDayGoal: "Nenhum objetivo definido ainda.",
       dayGoal: "Objetivo",
       dayTypes: "Tipos de conteudo",
       dayFormats: "Formatos",
+      postsPerDay: "Posts por dia",
+      postTimes: "Horarios dos posts",
+      postTimesHint:
+        "Use um horario por linha no formato HH:mm. Se informar menos horarios do que a quantidade, os demais slots serao preenchidos automaticamente.",
+      presetLibraryTitle: "Presets salvos",
+      presetLibraryDescription:
+        "Salve aqui objetivos, tipos de conteudo e formatos reutilizaveis. Em cada post, voce pode escolher um preset salvo ou deixar automatico.",
+      goalPresets: "Presets de objetivo",
+      contentTypePresets: "Presets de tipos de conteudo",
+      formatPresets: "Presets de formatos",
+      savedPresetsHint:
+        "Use uma linha por preset. Em cada card de post, clique em uma opcao salva ou deixe o campo vazio para a IA definir automaticamente.",
+      autoGenerateField: "Automatico",
+      autoGenerateHint:
+        "Use o botao + e escolha Automatico se quiser que o sistema gere isso automaticamente para este post.",
+      autoGeneratingField: "Gerando...",
+      autoGenerateSectionHint:
+        "Use Automatico para regenerar este campo com IA, preservando a intencao atual como base.",
+      autoGenerateAll: "Automatico geral",
+      chooseSavedPreset: "Escolher dos presets salvos",
+      noSavedPresets: "Ainda nao existem presets salvos. Adicione-os na aba de configuracoes.",
+      singlePostLabel: "post",
+      multiplePostsLabel: "posts",
+      postLabel: "Post",
       saveButton: "Salvar configuracoes",
       saving: "Salvando...",
       saveSuccess: "Configuracoes da automacao salvas com sucesso.",
