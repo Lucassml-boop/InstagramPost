@@ -110,6 +110,7 @@ type Dictionary = {
     removeMedia: string;
     carouselCount: string;
     brandColors: string;
+    brandColorsHint: string;
     keywords: string;
     keywordsPlaceholder: string;
     generate: string;
@@ -447,6 +448,8 @@ const dictionaries: Record<Locale, Dictionary> = {
       removeMedia: "Remove",
       carouselCount: "Carousel items",
       brandColors: "Brand colors",
+      brandColorsHint:
+        "This field is preserved outside the automatic fill. Save palettes here to keep your brand identity and quickly reuse colors after changes.",
       keywords: "Optional keywords",
       keywordsPlaceholder: "clean beauty, launch, limited offer",
       generate: "Generate Post",
@@ -809,6 +812,8 @@ const dictionaries: Record<Locale, Dictionary> = {
       removeMedia: "Remover",
       carouselCount: "Itens do carrossel",
       brandColors: "Cores da marca",
+      brandColorsHint:
+        "Este campo fica fora do preenchimento automatico. Salve as paletas aqui para manter a identidade da marca e poder reutilizar as cores depois de trocar.",
       keywords: "Palavras-chave opcionais",
       keywordsPlaceholder: "beleza limpa, lancamento, oferta limitada",
       generate: "Gerar Post",

@@ -37,6 +37,7 @@ export type CreatePostPersistedState = {
   outputLanguage: OutputLanguage;
   customInstructions: string;
   brandColors: string;
+  brandColorsHistory: string[];
   keywords: string;
   draft: DraftResponse | null;
   caption: string;

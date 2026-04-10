@@ -44,6 +44,7 @@ export function CaptionGenerator({
     customInstructions,
     brandColors,
     setBrandColors,
+    brandColorsHistory,
     keywords,
     setKeywords,
     draft,
@@ -61,6 +62,7 @@ export function CaptionGenerator({
     shouldShowSlowMessage,
     shouldShowCaptionEditor,
     effectiveCaption,
+    saveBrandColorsToHistory,
     generatePost,
     publishNow,
     schedulePost
@@ -109,7 +111,9 @@ export function CaptionGenerator({
     );
   }
 
-  async function generateCreatePostInputs(field?: "topic" | "message" | "keywords" | "brandColors" | "carouselSlideContexts") {
+  async function generateCreatePostInputs(
+    field?: "topic" | "message" | "keywords" | "carouselSlideContexts"
+  ) {
     const requestKey = field ?? "all";
     setAutoFieldKey(requestKey);
     setError(null);
@@ -138,9 +142,6 @@ export function CaptionGenerator({
       }
       if (!field || field === "keywords") {
         setKeywords(json.keywords ?? keywords);
-      }
-      if (!field || field === "brandColors") {
-        setBrandColors(json.brandColors ?? brandColors);
       }
       if ((!field || field === "carouselSlideContexts") && postType === "carousel") {
         const nextContexts = json.carouselSlideContexts ?? carouselSlideContexts.map((item) => item.value);
@@ -248,17 +249,44 @@ export function CaptionGenerator({
             <label className="block text-sm font-medium text-slate-700">
               <div className="flex items-center justify-between gap-3">
                 <span>{dictionary.generator.brandColors}</span>
-                {renderAutoButton("brandColors", () => generateCreatePostInputs("brandColors"))}
+                <button
+                  type="button"
+                  onClick={() => saveBrandColorsToHistory()}
+                  className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
+                >
+                  {dictionary.common.save}
+                </button>
               </div>
               <input
                 value={brandColors}
                 onChange={(event) => setBrandColors(event.target.value)}
+                onBlur={() => saveBrandColorsToHistory()}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-slate-400"
                 placeholder="#0f172a, #ea580c, #f8fafc"
               />
               <span className="mt-2 block text-xs text-slate-500">
-                {dictionary.generator.autoGenerateHint}
+                {dictionary.generator.brandColorsHint}
               </span>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {brandColorsHistory.map((palette) => {
+                  const isActive = palette === brandColors;
+
+                  return (
+                    <button
+                      key={palette}
+                      type="button"
+                      onClick={() => setBrandColors(palette)}
+                      className={`rounded-full border px-3 py-1.5 text-left text-xs transition ${
+                        isActive
+                          ? "border-ink bg-ink text-white"
+                          : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-ink"
+                      }`}
+                    >
+                      {palette}
+                    </button>
+                  );
+                })}
+              </div>
             </label>
             </div>
 

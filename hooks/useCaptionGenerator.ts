@@ -51,6 +51,7 @@ export function useCaptionGenerator(input: {
   onPublished: () => void;
   onScheduled: () => void;
 }) {
+  const defaultBrandColors = "#101828, #d62976, #feda75";
   const [activeTab, setActiveTab] = useState<"content" | "settings">("content");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
@@ -67,7 +68,8 @@ export function useCaptionGenerator(input: {
   const [customInstructions, setCustomInstructions] = useState(
     input.initialCustomInstructions || DEFAULT_CUSTOM_INSTRUCTIONS
   );
-  const [brandColors, setBrandColors] = useState("#101828, #d62976, #feda75");
+  const [brandColors, setBrandColors] = useState(defaultBrandColors);
+  const [brandColorsHistory, setBrandColorsHistory] = useState<string[]>([defaultBrandColors]);
   const [keywords, setKeywords] = useState("");
   const [draft, setDraft] = useState<DraftResponse | null>(null);
   const [caption, setCaption] = useState("");
@@ -95,6 +97,7 @@ export function useCaptionGenerator(input: {
         setOutputLanguage,
         setCustomInstructions,
         setBrandColors,
+        setBrandColorsHistory,
         setKeywords,
         setCaption,
         setScheduleTime,
@@ -126,6 +129,7 @@ export function useCaptionGenerator(input: {
       outputLanguage,
       customInstructions,
       brandColors,
+      brandColorsHistory,
       keywords,
       draft,
       caption,
@@ -147,6 +151,7 @@ export function useCaptionGenerator(input: {
     outputLanguage,
     customInstructions,
     brandColors,
+    brandColorsHistory,
     keywords,
     draft,
     caption,
@@ -155,6 +160,28 @@ export function useCaptionGenerator(input: {
     settingsMessage,
     hasRestoredState
   ]);
+
+  function normalizeBrandColorsValue(value: string) {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  function saveBrandColorsToHistory(value = brandColors) {
+    const normalized = normalizeBrandColorsValue(value);
+
+    if (!normalized) {
+      return;
+    }
+
+    setBrandColors((current) => normalizeBrandColorsValue(current) || current);
+    setBrandColorsHistory((current) => {
+      const next = [normalized, ...current.filter((item) => item !== normalized)];
+      return next.slice(0, 12);
+    });
+  }
 
   useEffect(() => {
     if (!isGenerating || generationStartedAt === null) {
@@ -197,6 +224,7 @@ export function useCaptionGenerator(input: {
     setSettingsMessage(null);
 
     try {
+      saveBrandColorsToHistory();
       const { response, json } = await generatePostService({
         topic,
         message,
@@ -356,6 +384,8 @@ export function useCaptionGenerator(input: {
     setCustomInstructions,
     brandColors,
     setBrandColors,
+    brandColorsHistory,
+    setBrandColorsHistory,
     keywords,
     setKeywords,
     draft,
@@ -375,6 +405,7 @@ export function useCaptionGenerator(input: {
     shouldShowSlowMessage,
     shouldShowCaptionEditor,
     effectiveCaption,
+    saveBrandColorsToHistory,
     generatePost,
     publishNow,
     schedulePost,

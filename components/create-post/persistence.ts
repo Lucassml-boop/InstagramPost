@@ -1,4 +1,7 @@
-import { CREATE_POST_STORAGE_KEY } from "./constants";
+import {
+  CREATE_POST_BRAND_COLORS_HISTORY_KEY,
+  CREATE_POST_STORAGE_KEY
+} from "./constants";
 import {
   isOutputLanguage,
   isPostType,
@@ -29,6 +32,7 @@ type RestoreHandlers = {
   setOutputLanguage: (value: OutputLanguage) => void;
   setCustomInstructions: (value: string) => void;
   setBrandColors: (value: string) => void;
+  setBrandColorsHistory: (value: string[]) => void;
   setKeywords: (value: string) => void;
   setCaption: (value: string) => void;
   setScheduleTime: (value: string) => void;
@@ -39,6 +43,21 @@ type RestoreHandlers = {
 
 export function restoreCreatePostState(handlers: RestoreHandlers) {
   const raw = window.localStorage.getItem(CREATE_POST_STORAGE_KEY);
+  const rawBrandColorsHistory = window.localStorage.getItem(CREATE_POST_BRAND_COLORS_HISTORY_KEY);
+
+  if (rawBrandColorsHistory) {
+    try {
+      const parsedBrandColorsHistory = JSON.parse(rawBrandColorsHistory) as unknown;
+
+      if (Array.isArray(parsedBrandColorsHistory)) {
+        handlers.setBrandColorsHistory(
+          parsedBrandColorsHistory.filter((value): value is string => typeof value === "string")
+        );
+      }
+    } catch {
+      window.localStorage.removeItem(CREATE_POST_BRAND_COLORS_HISTORY_KEY);
+    }
+  }
 
   if (!raw) {
     return;
@@ -98,6 +117,12 @@ export function restoreCreatePostState(handlers: RestoreHandlers) {
     handlers.setBrandColors(parsed.brandColors);
   }
 
+  if (Array.isArray(parsed.brandColorsHistory)) {
+    handlers.setBrandColorsHistory(
+      parsed.brandColorsHistory.filter((value): value is string => typeof value === "string")
+    );
+  }
+
   if (typeof parsed.keywords === "string") {
     handlers.setKeywords(parsed.keywords);
   }
@@ -127,6 +152,10 @@ export function restoreCreatePostState(handlers: RestoreHandlers) {
 
 export function persistCreatePostState(state: CreatePostPersistedState) {
   window.localStorage.setItem(CREATE_POST_STORAGE_KEY, JSON.stringify(state));
+  window.localStorage.setItem(
+    CREATE_POST_BRAND_COLORS_HISTORY_KEY,
+    JSON.stringify(state.brandColorsHistory)
+  );
 }
 
 export function clearCreatePostState() {

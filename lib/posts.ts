@@ -135,7 +135,7 @@ export async function publishPostNow(input: {
 
   if (normalizedMediaItems.some((item) => item.imageUrl.includes("localhost") || item.imageUrl.includes("127.0.0.1"))) {
     throw new Error(
-      "Publishing requires a publicly reachable APP_BASE_URL or tunnel because Instagram must fetch the image_url."
+      "Nao foi possivel publicar no Instagram porque a imagem ainda esta apontando para localhost. O Instagram precisa de uma URL publica para baixar a imagem, entao use um APP_BASE_URL publico ou um tunel ativo."
     );
   }
 

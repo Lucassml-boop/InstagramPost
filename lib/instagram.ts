@@ -478,6 +478,7 @@ export async function getInstagramAccessToken(userId: string) {
 
 async function assertImageUrlIsReachable(imageUrl: string) {
   let imageProbeResponse: Response | null = null;
+  let lastProbeError: unknown = null;
 
   try {
     imageProbeResponse = await fetch(imageUrl, {
@@ -485,29 +486,49 @@ async function assertImageUrlIsReachable(imageUrl: string) {
       redirect: "follow",
       cache: "no-store"
     });
-  } catch {
+  } catch (error) {
+    lastProbeError = error;
     imageProbeResponse = null;
   }
 
   if (!imageProbeResponse || !imageProbeResponse.ok) {
-    imageProbeResponse = await fetch(imageUrl, {
-      method: "GET",
-      redirect: "follow",
-      cache: "no-store"
-    });
+    try {
+      imageProbeResponse = await fetch(imageUrl, {
+        method: "GET",
+        redirect: "follow",
+        cache: "no-store"
+      });
+    } catch (error) {
+      lastProbeError = error;
+      imageProbeResponse = null;
+    }
+  }
+
+  if (!imageProbeResponse) {
+    throw new Error(
+      [
+        "Nao foi possivel publicar no Instagram porque a imagem do post nao esta acessivel por uma URL publica.",
+        "O Instagram precisa conseguir abrir essa imagem pela internet antes de publicar.",
+        "Verifique se o APP_BASE_URL aponta para um dominio ou tunel publico ativo e se esse link funciona fora da sua maquina.",
+        `URL da imagem: ${imageUrl}`,
+        lastProbeError instanceof Error ? `Detalhe tecnico: ${lastProbeError.message}` : null
+      ]
+        .filter(Boolean)
+        .join(" ")
+    );
   }
 
   const imageContentType = imageProbeResponse.headers.get("content-type");
 
   if (!imageProbeResponse.ok) {
     throw new Error(
-      `The public image URL is not reachable (${imageProbeResponse.status}) and Instagram cannot fetch it.`
+      `Nao foi possivel publicar no Instagram porque a imagem do post respondeu com status ${imageProbeResponse.status} na URL publica. Verifique se o dominio ou tunel publico esta ativo e se a imagem abre normalmente fora da sua maquina.`
     );
   }
 
   if (!imageContentType?.startsWith("image/")) {
     throw new Error(
-      `The public image URL returned content-type ${imageContentType ?? "unknown"} instead of an image.`
+      `Nao foi possivel publicar no Instagram porque a URL publica do post nao retornou uma imagem valida. O servidor respondeu com content-type ${imageContentType ?? "desconhecido"}.`
     );
   }
 }
