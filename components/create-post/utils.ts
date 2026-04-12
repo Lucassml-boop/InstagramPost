@@ -1,4 +1,8 @@
-import { DEFAULT_CAROUSEL_SLIDE_COUNT } from "./constants";
+import {
+  CAROUSEL_EXTRA_TIMEOUT_PER_SLIDE_MS,
+  CLIENT_TIMEOUT_BASE_MS,
+  DEFAULT_CAROUSEL_SLIDE_COUNT
+} from "./constants";
 import type {
   CarouselSlideContext,
   DraftResponse,
@@ -49,6 +53,14 @@ export function formatDuration(durationMs: number) {
   const seconds = totalSeconds % 60;
 
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+export function getClientGenerationTimeoutMs(postType: PostType, carouselSlideCount: number) {
+  if (postType !== "carousel") {
+    return CLIENT_TIMEOUT_BASE_MS;
+  }
+
+  return CLIENT_TIMEOUT_BASE_MS + carouselSlideCount * CAROUSEL_EXTRA_TIMEOUT_PER_SLIDE_MS;
 }
 
 export function isPostType(value: unknown): value is PostType {

@@ -53,16 +53,16 @@ export function getOptimizedAssetUrl(publicUrl: string, options: AssetTransformO
     return publicUrl;
   }
 
-  return buildSupabaseTransformedUrl(publicUrl, options) ?? publicUrl;
+  const transformedUrl = buildSupabaseTransformedUrl(publicUrl, options);
+
+  // Some Supabase projects or buckets do not have the image transformation
+  // endpoint available consistently. Falling back to the public object URL
+  // keeps previews working instead of rendering broken images.
+  return transformedUrl ? publicUrl : publicUrl;
 }
 
 export function getPersistedPreviewUrl(publicUrl: string) {
-  return getOptimizedAssetUrl(publicUrl, {
-    width: 320,
-    height: 320,
-    quality: 72,
-    resize: "cover"
-  });
+  return publicUrl;
 }
 
 function sanitizeFileName(name: string) {

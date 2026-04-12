@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getClientRequestErrorMessage } from "@/lib/client/http";
 import {
-  CLIENT_TIMEOUT_MS,
   DEFAULT_CAROUSEL_SLIDE_COUNT,
   DEFAULT_CUSTOM_INSTRUCTIONS,
   PROGRESS_CAP
@@ -24,6 +23,7 @@ import type {
 } from "@/components/create-post/types";
 import {
   createSlideContexts,
+  getClientGenerationTimeoutMs,
   normalizeSlideContexts
 } from "@/components/create-post/utils";
 import {
@@ -46,6 +46,9 @@ export function useCaptionGenerator(input: {
       settingsSaved: string;
       scheduleTimeRequired: string;
       generationSlow: string;
+      cancelGeneration: string;
+      generationCanceled: string;
+      clearGeneratedPost: string;
     };
   };
   onPublished: () => void;
@@ -82,6 +85,7 @@ export function useCaptionGenerator(input: {
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [hasRestoredState, setHasRestoredState] = useState(false);
+  const generationAbortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     try {
@@ -161,6 +165,13 @@ export function useCaptionGenerator(input: {
     hasRestoredState
   ]);
 
+  useEffect(() => {
+    return () => {
+      generationAbortControllerRef.current?.abort();
+      generationAbortControllerRef.current = null;
+    };
+  }, []);
+
   function normalizeBrandColorsValue(value: string) {
     return value
       .split(",")
@@ -204,10 +215,12 @@ export function useCaptionGenerator(input: {
     setCarouselSlideContexts((current) => normalizeSlideContexts(current, carouselSlideCount));
   }, [carouselSlideCount, postType]);
 
+  const clientTimeoutMs = getClientGenerationTimeoutMs(postType, carouselSlideCount);
+
   const progressValue = isGenerating
-    ? Math.min((elapsedMs / CLIENT_TIMEOUT_MS) * 100, PROGRESS_CAP)
+    ? Math.min((elapsedMs / clientTimeoutMs) * 100, PROGRESS_CAP)
     : 0;
-  const shouldShowSlowMessage = elapsedMs >= CLIENT_TIMEOUT_MS * 0.7;
+  const shouldShowSlowMessage = elapsedMs >= clientTimeoutMs * 0.7;
   const shouldShowCaptionEditor = postType !== "story" || storyCaptionMode === "with-caption";
   const effectiveCaption = shouldShowCaptionEditor ? caption : "";
 
@@ -215,8 +228,27 @@ export function useCaptionGenerator(input: {
     clearCreatePostState();
   }
 
+  function clearGeneratedPost() {
+    setDraft(null);
+    setCaption("");
+    setScheduleTime("");
+    setError(null);
+    setSettingsMessage(null);
+  }
+
+  function cancelGeneration() {
+    generationAbortControllerRef.current?.abort();
+    generationAbortControllerRef.current = null;
+    setIsGenerating(false);
+    setGenerationStartedAt(null);
+    setError(input.dictionary.generator.generationCanceled);
+  }
+
   async function generatePost() {
     const startedAt = Date.now();
+    const controller = new AbortController();
+
+    generationAbortControllerRef.current = controller;
 
     setIsGenerating(true);
     setGenerationStartedAt(startedAt);
@@ -235,7 +267,8 @@ export function useCaptionGenerator(input: {
         outputLanguage,
         customInstructions,
         brandColors,
-        keywords
+        keywords,
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -247,6 +280,10 @@ export function useCaptionGenerator(input: {
       setPostType(json.postType);
       setCaption(`${json.caption}\n\n${json.hashtags.join(" ")}`.trim());
     } catch (requestError) {
+      if (requestError instanceof Error && requestError.name === "AbortError") {
+        return;
+      }
+
       setError(
         getClientRequestErrorMessage(
           requestError,
@@ -255,8 +292,11 @@ export function useCaptionGenerator(input: {
         )
       );
     } finally {
-      setIsGenerating(false);
-      setGenerationStartedAt(null);
+      if (generationAbortControllerRef.current === controller) {
+        generationAbortControllerRef.current = null;
+        setIsGenerating(false);
+        setGenerationStartedAt(null);
+      }
     }
   }
 
@@ -402,11 +442,14 @@ export function useCaptionGenerator(input: {
     isSavingSettings,
     progressValue,
     elapsedMs,
+    clientTimeoutMs,
     shouldShowSlowMessage,
     shouldShowCaptionEditor,
     effectiveCaption,
     saveBrandColorsToHistory,
     generatePost,
+    cancelGeneration,
+    clearGeneratedPost,
     publishNow,
     schedulePost,
     saveGenerationSettings

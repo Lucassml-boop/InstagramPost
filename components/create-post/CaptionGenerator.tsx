@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 import { Panel } from "@/components/shared";
 import { useCaptionGenerator } from "@/hooks/useCaptionGenerator";
-import { CLIENT_TIMEOUT_MS, DEFAULT_CUSTOM_INSTRUCTIONS } from "./constants";
+import { DEFAULT_CUSTOM_INSTRUCTIONS } from "./constants";
 import { GenerationProgress } from "./GenerationProgress";
 import { MediaManager } from "./MediaManager";
 import { PostLayoutPreview } from "./PostLayoutPreview";
 import { PostScheduler } from "./PostScheduler";
 import type { OutputLanguage, PostType } from "./types";
-import { createSlideContexts } from "./utils";
+import { createSlideContexts, formatDuration } from "./utils";
 import { generateCreatePostInputs as generateCreatePostInputsService } from "@/services/frontend/posts";
 
 export function CaptionGenerator({
@@ -59,11 +59,14 @@ export function CaptionGenerator({
     isPublishing,
     progressValue,
     elapsedMs,
+    clientTimeoutMs,
     shouldShowSlowMessage,
     shouldShowCaptionEditor,
     effectiveCaption,
     saveBrandColorsToHistory,
     generatePost,
+    cancelGeneration,
+    clearGeneratedPost,
     publishNow,
     schedulePost
   } = useCaptionGenerator({
@@ -81,7 +84,10 @@ export function CaptionGenerator({
         settingsSaveError: dictionary.generator.settingsSaveError,
         settingsSaved: dictionary.generator.settingsSaved,
         scheduleTimeRequired: dictionary.generator.scheduleTimeRequired,
-        generationSlow: dictionary.generator.generationSlow
+        generationSlow: dictionary.generator.generationSlow,
+        cancelGeneration: dictionary.generator.cancelGeneration,
+        generationCanceled: dictionary.generator.generationCanceled,
+        clearGeneratedPost: dictionary.generator.clearGeneratedPost
       }
     },
     onPublished: () => {
@@ -419,24 +425,36 @@ export function CaptionGenerator({
 
         <div className="mt-6">
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={generateAllCreatePostInputs}
-              disabled={isAutoGeneratingAll}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-60"
-            >
-              {isAutoGeneratingAll
-                ? dictionary.generator.autoGeneratingField
-                : dictionary.generator.autoGenerateAllFields}
-            </button>
-            <button
-              type="button"
-              onClick={generatePost}
-              disabled={isGenerating}
-              className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-            >
-              {isGenerating ? dictionary.generator.generating : dictionary.generator.generate}
-            </button>
+            {!isGenerating ? (
+              <>
+                <button
+                  type="button"
+                  onClick={generateAllCreatePostInputs}
+                  disabled={isAutoGeneratingAll}
+                  className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-60"
+                >
+                  {isAutoGeneratingAll
+                    ? dictionary.generator.autoGeneratingField
+                    : dictionary.generator.autoGenerateAllFields}
+                </button>
+                <button
+                  type="button"
+                  onClick={generatePost}
+                  disabled={isGenerating}
+                  className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {isGenerating ? dictionary.generator.generating : dictionary.generator.generate}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={cancelGeneration}
+                className="rounded-full border border-red-300 bg-red-50 px-6 py-3 text-sm font-semibold text-red-700 transition hover:border-red-400 hover:bg-red-100"
+              >
+                {dictionary.generator.cancelGeneration}
+              </button>
+            )}
           </div>
         </div>
 
@@ -444,9 +462,12 @@ export function CaptionGenerator({
           <GenerationProgress
             progressValue={progressValue}
             elapsedMs={elapsedMs}
-            clientTimeoutMs={CLIENT_TIMEOUT_MS}
+            clientTimeoutMs={clientTimeoutMs}
             title={dictionary.generator.generationProgress}
-            estimate={dictionary.generator.generationEstimate}
+            estimate={dictionary.generator.generationEstimate(
+              formatDuration(clientTimeoutMs),
+              postType === "carousel" ? carouselSlideCount : null
+            )}
             elapsedLabel={dictionary.generator.generationElapsed}
             slowMessage={shouldShowSlowMessage ? dictionary.generator.generationSlow : null}
           />
@@ -486,6 +507,14 @@ export function CaptionGenerator({
             />
 
             <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={clearGeneratedPost}
+                disabled={isPublishing}
+                className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-60"
+              >
+                {dictionary.generator.clearGeneratedPost}
+              </button>
               <button
                 type="button"
                 onClick={publishNow}

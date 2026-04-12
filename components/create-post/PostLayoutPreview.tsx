@@ -14,7 +14,7 @@ export function PostLayoutPreview({
   showCaption = true
 }: {
   imageUrl: string | null;
-  mediaItems?: { imageUrl: string; imagePath: string }[];
+  mediaItems?: { imageUrl: string; imagePath: string; previewUrl?: string }[];
   caption: string;
   postType: "feed" | "story" | "carousel";
   mediaCount: number;
@@ -28,11 +28,28 @@ export function PostLayoutPreview({
   const [currentIndex, setCurrentIndex] = useState(0);
   const resolvedMediaItems =
     mediaItems.length > 0 ? mediaItems : imageUrl ? [{ imageUrl, imagePath: imageUrl }] : [];
-  const currentImageUrl = resolvedMediaItems[currentIndex]?.imageUrl ?? imageUrl;
+  const currentMediaItem = resolvedMediaItems[currentIndex];
+  const currentImageUrl = currentMediaItem?.imageUrl ?? imageUrl;
 
   useEffect(() => {
     setCurrentIndex(0);
   }, [postType, resolvedMediaItems.length, imageUrl]);
+
+  function handleDownloadCurrent() {
+    if (!currentImageUrl) {
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    const extension = currentImageUrl.split(".").pop()?.split("?")[0] || "jpg";
+    const suffix = postType === "carousel" ? `-${currentIndex + 1}` : "";
+
+    anchor.href = currentMediaItem?.previewUrl || currentImageUrl;
+    anchor.download = `instagram-post-${postType}${suffix}.${extension}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }
 
   return (
     <Panel className="p-5">
@@ -98,6 +115,19 @@ export function PostLayoutPreview({
             className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-40"
           >
             {dictionary.preview.next}
+          </button>
+        </div>
+      ) : null}
+      {currentImageUrl ? (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleDownloadCurrent}
+            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
+          >
+            {postType === "carousel"
+              ? dictionary.preview.downloadCurrentSlide
+              : dictionary.preview.downloadPost}
           </button>
         </div>
       ) : null}

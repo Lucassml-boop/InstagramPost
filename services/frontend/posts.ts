@@ -17,11 +17,24 @@ export async function generatePost(input: {
   customInstructions: string;
   brandColors: string;
   keywords: string;
+  signal?: AbortSignal;
 }) {
   const response = await fetch("/api/posts/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input)
+    body: JSON.stringify({
+      topic: input.topic,
+      message: input.message,
+      postType: input.postType,
+      carouselSlideCount: input.carouselSlideCount,
+      carouselSlideContexts: input.carouselSlideContexts,
+      tone: input.tone,
+      outputLanguage: input.outputLanguage,
+      customInstructions: input.customInstructions,
+      brandColors: input.brandColors,
+      keywords: input.keywords
+    }),
+    signal: input.signal
   });
 
   return {

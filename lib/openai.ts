@@ -24,6 +24,7 @@ type AutomationContext = {
 };
 
 const DEFAULT_OLLAMA_TIMEOUT_MS = 480_000;
+const CAROUSEL_EXTRA_TIMEOUT_PER_SLIDE_MS = 240_000;
 
 function getOllamaTimeoutMs() {
   const rawValue = process.env.OLLAMA_TIMEOUT_MS?.trim();
@@ -43,6 +44,16 @@ function getOllamaTimeoutMs() {
   }
 
   return parsed;
+}
+
+export function getOllamaTimeoutForInput(input: GeneratePostInput) {
+  const baseTimeoutMs = getOllamaTimeoutMs();
+
+  if (input.postType !== "carousel") {
+    return baseTimeoutMs;
+  }
+
+  return baseTimeoutMs + input.carouselSlideCount * CAROUSEL_EXTRA_TIMEOUT_PER_SLIDE_MS;
 }
 
 function normalizeHashtag(tag: string) {
@@ -221,7 +232,7 @@ async function requestInstagramPostGeneration(
   const primaryModel = process.env.OLLAMA_MODEL?.trim() || "kimi-k2.5:cloud";
   const fallbackModels = getFallbackModels(primaryModel);
   const modelsToTry = [primaryModel, ...fallbackModels];
-  const timeoutMs = getOllamaTimeoutMs();
+  const timeoutMs = getOllamaTimeoutForInput(parsedInput);
   const requestStartedAt = Date.now();
   const prompt = buildPrompt(parsedInput, options, automationContext);
   const attemptErrors: string[] = [];

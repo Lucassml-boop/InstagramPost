@@ -1,7 +1,35 @@
-import puppeteer from "puppeteer";
 import { saveGeneratedImageBuffer } from "@/lib/storage.server";
 
 const RENDER_TIMEOUT_MS = 120_000;
+
+async function launchRendererBrowser() {
+  try {
+    const [{ default: chromium }, { default: puppeteer }] = await Promise.all([
+      import("@sparticuz/chromium"),
+      import("puppeteer-core")
+    ]);
+
+    const executablePath = await chromium.executablePath();
+
+    return puppeteer.launch({
+      executablePath,
+      args: chromium.args,
+      headless: true
+    });
+  } catch (error) {
+    console.warn("[renderer] Falling back to local Puppeteer browser", {
+      error: error instanceof Error ? error.message : String(error),
+      vercel: process.env.VERCEL ?? null
+    });
+  }
+
+  const { default: puppeteer } = await import("puppeteer");
+
+  return puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
+}
 
 function buildHtmlDocument(html: string, css: string) {
   return `<!DOCTYPE html>
@@ -52,10 +80,7 @@ export async function renderPostImage(input: {
     cssLength: input.css.length
   });
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
+  const browser = await launchRendererBrowser();
 
   try {
     console.info("[renderer] Browser launched", {

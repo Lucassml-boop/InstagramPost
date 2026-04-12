@@ -116,9 +116,12 @@ type Dictionary = {
     generate: string;
     generating: string;
     generationProgress: string;
-    generationEstimate: string;
+    generationEstimate: (formattedTimeout: string, carouselSlideCount: number | null) => string;
     generationElapsed: string;
     generationSlow: string;
+    cancelGeneration: string;
+    generationCanceled: string;
+    clearGeneratedPost: string;
     editCaption: string;
     publishNow: string;
     publishing: string;
@@ -148,6 +151,8 @@ type Dictionary = {
     noCaption: string;
     previous: string;
     next: string;
+    downloadPost: string;
+    downloadCurrentSlide: string;
   };
   scheduler: {
     label: string;
@@ -455,9 +460,15 @@ const dictionaries: Record<Locale, Dictionary> = {
       generate: "Generate Post",
       generating: "Generating...",
       generationProgress: "Generating your post",
-      generationEstimate: "This usually takes up to a few minutes while AI writes and renders the image.",
+      generationEstimate: (formattedTimeout, carouselSlideCount) =>
+        carouselSlideCount
+          ? `Estimated limit: about ${formattedTimeout} total for this carousel, with 4 extra minutes added per slide.`
+          : `Estimated limit: about ${formattedTimeout} total while AI writes and renders the image.`,
       generationElapsed: "Elapsed",
       generationSlow: "Still working. If it gets close to the limit, we will surface a timeout instead of silently hanging.",
+      cancelGeneration: "Cancel generation",
+      generationCanceled: "Generation canceled.",
+      clearGeneratedPost: "Clear current post",
       editCaption: "Edit caption",
       publishNow: "Publish Now",
       publishing: "Publishing...",
@@ -489,7 +500,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       empty: "Generate a post to preview it here",
       noCaption: "No caption yet.",
       previous: "Previous",
-      next: "Next"
+      next: "Next",
+      downloadPost: "Download post",
+      downloadCurrentSlide: "Download current slide"
     },
     scheduler: {
       label: "Schedule time"
@@ -819,9 +832,15 @@ const dictionaries: Record<Locale, Dictionary> = {
       generate: "Gerar Post",
       generating: "Gerando...",
       generationProgress: "Gerando seu post",
-      generationEstimate: "Isso pode levar alguns minutos enquanto a IA escreve e renderiza a imagem.",
+      generationEstimate: (formattedTimeout, carouselSlideCount) =>
+        carouselSlideCount
+          ? `Limite estimado: cerca de ${formattedTimeout} no total para este carrossel, com 4 minutos extras adicionados por slide.`
+          : `Limite estimado: cerca de ${formattedTimeout} no total enquanto a IA escreve e renderiza a imagem.`,
       generationElapsed: "Tempo decorrido",
       generationSlow: "Ainda estamos processando. Se chegar perto do limite, vamos mostrar timeout em vez de parecer travado.",
+      cancelGeneration: "Cancelar geracao",
+      generationCanceled: "Geracao cancelada.",
+      clearGeneratedPost: "Limpar post atual",
       editCaption: "Editar legenda",
       publishNow: "Publicar agora",
       publishing: "Publicando...",
@@ -853,7 +872,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       empty: "Gere um post para visualizar a previa aqui",
       noCaption: "Ainda nao ha legenda.",
       previous: "Anterior",
-      next: "Proximo"
+      next: "Proximo",
+      downloadPost: "Baixar post",
+      downloadCurrentSlide: "Baixar slide atual"
     },
     scheduler: {
       label: "Horario do agendamento"

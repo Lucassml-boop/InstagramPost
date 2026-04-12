@@ -130,6 +130,17 @@ async function saveToLocalDisk(input: {
   fileName: string;
   storagePath: string;
 }) {
+  if (process.env.VERCEL === "1") {
+    throw new Error(
+      [
+        "Nao foi possivel salvar a imagem gerada no deploy porque o filesystem da Vercel e somente leitura para esse fluxo.",
+        "Para gerar posts em producao, configure um storage duravel no projeto.",
+        "Defina estas variaveis na Vercel: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e, se quiser outro bucket, SUPABASE_STORAGE_BUCKET.",
+        "Depois disso, o app vai salvar as imagens em um bucket publico do Supabase em vez de tentar usar /public/generated-posts."
+      ].join(" ")
+    );
+  }
+
   const absolutePath = path.join(process.cwd(), "public", input.storagePath);
   const parentDir = path.dirname(absolutePath);
 
