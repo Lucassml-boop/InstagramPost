@@ -45,6 +45,12 @@ type GeneratePostDeps = {
     imageUrl: string;
     imagePath: string;
   }) => Promise<{ id: string; imageUrl: string; imagePath: string; htmlLayout: string }>;
+  findSimilarManualPost?: (input: {
+    userId: string;
+    topic: string;
+    message: string;
+    keywords?: string;
+  }) => Promise<{ id: string; createdAt: Date } | null>;
   slugify: (value: string) => string;
 };
 
@@ -62,7 +68,7 @@ type PublishPostDeps = {
 };
 
 async function getDefaultGeneratePostDeps(): Promise<GeneratePostDeps> {
-  const [{ createDraftPost }, openai, { renderPostImage }, { getPersistedPreviewUrl, slugify }, contentSystem] =
+  const [{ createDraftPost, findSimilarManualPost }, openai, { renderPostImage }, { getPersistedPreviewUrl, slugify }, contentSystem] =
     await Promise.all([
     import("../posts.ts"),
     import("../openai.ts"),
@@ -73,6 +79,7 @@ async function getDefaultGeneratePostDeps(): Promise<GeneratePostDeps> {
 
   return {
     createDraftPost,
+    findSimilarManualPost,
     generateInstagramPost: openai.generateInstagramPost,
     generateInstagramCarouselPosts: openai.generateInstagramCarouselPosts,
     getContentBrandProfile: contentSystem.getContentBrandProfile,
@@ -133,6 +140,21 @@ export async function handleGeneratePost(
       hasKeywords: Boolean(parsed.keywords?.trim()),
       brandColors: parsed.brandColors
     });
+
+    const similarPost = resolvedDeps.findSimilarManualPost
+      ? await resolvedDeps.findSimilarManualPost({
+          userId: user.id,
+          topic: parsed.topic,
+          message: parsed.message,
+          keywords: parsed.keywords
+        })
+      : null;
+
+    if (similarPost) {
+      throw new Error(
+        "Ja existe um post manual muito parecido salvo anteriormente. Ajuste Produto ou tema, Promocao ou mensagem, ou Palavras-chave opcionais antes de gerar novamente."
+      );
+    }
 
     phaseStartedAt.ai = Date.now();
     const generatedCarousel =

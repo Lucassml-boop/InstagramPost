@@ -25,14 +25,14 @@ export function PreviewCell({
 
   if (hasError || !normalizedSrc) {
     return (
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-center text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 sm:h-20 sm:w-20">
         {unavailableLabel}
       </div>
     );
   }
 
   return (
-    <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-slate-100">
+    <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-slate-100 sm:h-20 sm:w-20">
       <Image
         src={normalizedSrc}
         alt={alt}

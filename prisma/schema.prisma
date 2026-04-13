@@ -78,6 +78,7 @@ model Post {
   imageUrl        String
   imagePath       String
   status          PostStatus @default(DRAFT)
+  publicationState PublicationState?
   scheduledTime   DateTime?
   publishedMediaId String?
   publishedAt     DateTime?
@@ -100,4 +101,10 @@ enum PostType {
   FEED
   STORY
   CAROUSEL
+}
+
+enum PublicationState {
+  PUBLISHED
+  ARCHIVED
+  DELETED
 }

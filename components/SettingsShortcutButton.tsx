@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 
 export function SettingsShortcutButton() {
+  const router = useRouter();
   const { dictionary } = useI18n();
 
   return (
     <Link
       href="/settings"
+      prefetch
+      onMouseEnter={() => router.prefetch("/settings")}
+      onFocus={() => router.prefetch("/settings")}
       aria-label={dictionary.contentAutomation.settingsTab}
       title={dictionary.contentAutomation.settingsTab}
       className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:border-slate-400 hover:text-ink"

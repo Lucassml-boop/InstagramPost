@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { decryptValue, encryptValue, hashSensitiveValue, hashToken, randomToken } from "@/lib/crypto";
@@ -113,7 +114,7 @@ export async function createSession(user: AuthUser) {
   };
 }
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
@@ -142,7 +143,7 @@ export async function getCurrentUser() {
       session.user.preferredOutputLanguage === "pt-BR" ? "pt-BR" : "en",
     preferredCustomInstructions: session.user.preferredCustomInstructions
   } satisfies AuthUser;
-}
+});
 
 export async function destroySession() {
   const cookieStore = await cookies();

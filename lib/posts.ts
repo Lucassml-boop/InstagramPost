@@ -1,5 +1,6 @@
 import { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isSameOrSimilarTopic, normalizeTopic } from "@/lib/content-system-utils";
 import {
   getAbsoluteAssetUrl,
   publishInstagramPost,
@@ -58,6 +59,82 @@ function getStoredPostType(postType: string | null | undefined): InstagramPostTy
   return "feed";
 }
 
+function normalizeManualField(value: string | null | undefined) {
+  return normalizeTopic(value ?? "");
+}
+
+function hasKeywordOverlap(candidateKeywords: string, existingKeywords: string) {
+  const candidateSet = new Set(
+    candidateKeywords
+      .split(" ")
+      .map((item) => item.trim())
+      .filter((item) => item.length >= 3)
+  );
+  const existingSet = new Set(
+    existingKeywords
+      .split(" ")
+      .map((item) => item.trim())
+      .filter((item) => item.length >= 3)
+  );
+
+  let overlap = 0;
+
+  for (const keyword of candidateSet) {
+    if (existingSet.has(keyword)) {
+      overlap += 1;
+    }
+  }
+
+  return overlap >= 2;
+}
+
+export async function findSimilarManualPost(input: {
+  userId: string;
+  topic: string;
+  message: string;
+  keywords?: string;
+}) {
+  const candidateTopic = normalizeManualField(input.topic);
+  const candidateMessage = normalizeManualField(input.message);
+  const candidateKeywords = normalizeManualField(input.keywords);
+
+  const posts = await prisma.post.findMany({
+    where: {
+      userId: input.userId
+    },
+    select: {
+      id: true,
+      topic: true,
+      message: true,
+      keywords: true,
+      createdAt: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    take: 100
+  });
+
+  return (
+    posts.find((post) => {
+      const existingTopic = normalizeManualField(post.topic);
+      const existingMessage = normalizeManualField(post.message);
+      const existingKeywords = normalizeManualField(post.keywords);
+      const sameTopic = isSameOrSimilarTopic(candidateTopic, existingTopic);
+      const sameMessage =
+        candidateMessage === existingMessage ||
+        isSameOrSimilarTopic(candidateMessage, existingMessage);
+      const sameKeywords =
+        candidateKeywords.length > 0 &&
+        existingKeywords.length > 0 &&
+        (candidateKeywords === existingKeywords ||
+          hasKeywordOverlap(candidateKeywords, existingKeywords));
+
+      return sameTopic && (sameMessage || sameKeywords);
+    }) ?? null
+  );
+}
+
 export async function createDraftPost(input: {
   userId: string;
   topic: string;
@@ -88,7 +165,8 @@ export async function createDraftPost(input: {
       mediaItems: input.mediaItems,
       imageUrl: input.imageUrl,
       imagePath: input.imagePath,
-      status: PostStatus.DRAFT
+      status: PostStatus.DRAFT,
+      publicationState: null
     }
   });
 }
@@ -147,7 +225,8 @@ export async function publishPostNow(input: {
       mediaItems,
       imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
       imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
-      status: PostStatus.PUBLISHING
+      status: PostStatus.PUBLISHING,
+      publicationState: null
     }
   });
 
@@ -168,6 +247,7 @@ export async function publishPostNow(input: {
         caption: input.caption,
         imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
         imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
+        publicationState: "PUBLISHED",
         publishedMediaId: published.mediaId,
         publishedAt: new Date()
       }
@@ -177,7 +257,8 @@ export async function publishPostNow(input: {
       where: { id: post.id },
       data: {
         status: PostStatus.FAILED,
-        caption: input.caption
+        caption: input.caption,
+        publicationState: null
       }
     });
 
@@ -210,7 +291,8 @@ export async function schedulePost(input: {
       imageUrl: coverImageUrl,
       imagePath: coverImagePath,
       scheduledTime: input.scheduledTime,
-      status: PostStatus.SCHEDULED
+      status: PostStatus.SCHEDULED,
+      publicationState: null
     }
   });
 }

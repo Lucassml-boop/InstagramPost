@@ -180,6 +180,9 @@ type Dictionary = {
     scheduledStatus: string;
     publishedStatus: string;
     failedStatus: string;
+    publicationStatePublished: string;
+    publicationStateArchived: string;
+    publicationStateDeleted: string;
     fileAvailable: string;
     fileDeleted: string;
     fileRemote: string;
@@ -531,6 +534,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       scheduledStatus: "Scheduled",
       publishedStatus: "Posted",
       failedStatus: "Failed",
+      publicationStatePublished: "Still published",
+      publicationStateArchived: "Archived",
+      publicationStateDeleted: "Deleted",
       fileAvailable: "Available",
       fileDeleted: "Deleted",
       fileRemote: "Stored remotely",
@@ -903,6 +909,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       scheduledStatus: "Agendado",
       publishedStatus: "Publicado",
       failedStatus: "Falhou",
+      publicationStatePublished: "Ainda publicado",
+      publicationStateArchived: "Arquivado",
+      publicationStateDeleted: "Excluido",
       fileAvailable: "Disponivel",
       fileDeleted: "Excluido",
       fileRemote: "Armazenado remotamente",

@@ -2,6 +2,7 @@ import { constants } from "node:fs";
 import { access } from "node:fs/promises";
 import { PostStatus } from "@prisma/client";
 import { ScheduledPostsTable } from "@/components/scheduled-posts";
+import type { ScheduledPostItem } from "@/components/scheduled-posts/types";
 import { Panel, SectionTitle } from "@/components/shared";
 import { getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
@@ -77,8 +78,8 @@ export default async function ScheduledPostsPage({
       createdAt: "desc"
     }
   });
-  const serializedPosts = await Promise.all(
-    posts.map(async (post) => ({
+  const serializedPosts: ScheduledPostItem[] = await Promise.all(
+    posts.map(async (post): Promise<ScheduledPostItem> => ({
       id: post.id,
       caption: post.caption,
       imageUrl: getOptimizedAssetUrl(getStoredPreviewUrl(post.mediaItems, post.imageUrl), {
@@ -90,41 +91,56 @@ export default async function ScheduledPostsPage({
       imagePath: post.imagePath,
       postType: post.postType,
       status: post.status as "SCHEDULED" | "PUBLISHED" | "FAILED",
+      publicationState:
+        post.publicationState === "ARCHIVED"
+          ? "ARCHIVED"
+          : post.publicationState === "DELETED"
+            ? "DELETED"
+            : post.status === PostStatus.PUBLISHED
+              ? "PUBLISHED"
+              : null,
       scheduledTime: post.scheduledTime?.toISOString() ?? null,
       publishedAt: post.publishedAt?.toISOString() ?? null,
       assetState: await getAssetState(post.imagePath, post.imageUrl)
     }))
   );
+  const scheduledPageDictionary = dictionary.scheduledPage;
+  const generatorTableDictionary = {
+    postType: dictionary.generator.postType,
+    postTypeFeed: dictionary.generator.postTypeFeed,
+    postTypeStory: dictionary.generator.postTypeStory,
+    postTypeCarousel: dictionary.generator.postTypeCarousel
+  };
 
   try {
     instagramFeedItems = await fetchInstagramFeedMedia(user!.id, 12);
   } catch (error) {
     instagramFeedError =
-      error instanceof Error ? error.message : dictionary.scheduledPage.instagramFeedError;
+      error instanceof Error ? error.message : scheduledPageDictionary.instagramFeedError;
   }
 
   return (
-    <div>
+    <div className="min-w-0">
       <SectionTitle
-        eyebrow={dictionary.scheduledPage.eyebrow}
-        title={dictionary.scheduledPage.title}
-        description={dictionary.scheduledPage.description}
+        eyebrow={scheduledPageDictionary.eyebrow}
+        title={scheduledPageDictionary.title}
+        description={scheduledPageDictionary.description}
       />
 
       {params.saved ? (
         <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {dictionary.scheduledPage.savedSuccess}
+          {scheduledPageDictionary.savedSuccess}
         </div>
       ) : null}
 
-      <Panel className="mt-8 overflow-hidden">
+      <Panel className="mt-8 min-w-0 overflow-hidden">
         <ScheduledPostsTable
           posts={serializedPosts}
           instagramFeedItems={instagramFeedItems}
           instagramFeedError={instagramFeedError}
           locale={locale}
-          dictionary={dictionary.scheduledPage}
-          generatorDictionary={dictionary.generator}
+          dictionary={scheduledPageDictionary}
+          generatorDictionary={generatorTableDictionary}
         />
       </Panel>
     </div>

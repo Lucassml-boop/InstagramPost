@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { LoginForm } from "@/components/auth";
+import { DelayedLoginForm } from "@/components/auth";
 import { PageShell } from "@/components/shared";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -13,7 +13,7 @@ export default async function LoginPage() {
   return (
     <PageShell>
       <div className="flex min-h-[calc(100vh-5.5rem)] items-center justify-center">
-        <LoginForm />
+        <DelayedLoginForm />
       </div>
     </PageShell>
   );

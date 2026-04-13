@@ -2,20 +2,33 @@
 
 import { clsx } from "clsx";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 
 export function Sidebar() {
   const currentPath = usePathname();
+  const router = useRouter();
   const { dictionary } = useI18n();
-  const navigation = [
-    { href: "/dashboard", label: dictionary.sidebar.dashboard },
-    { href: "/connect-instagram", label: dictionary.sidebar.connectInstagram },
-    { href: "/create-post", label: dictionary.sidebar.createPost },
-    { href: "/scheduled-posts", label: dictionary.sidebar.scheduledPosts },
-    { href: "/content-automation", label: dictionary.sidebar.contentAutomation },
-    { href: "/automation-diagnostics", label: dictionary.sidebar.automationDiagnostics }
-  ];
+  const navigation = useMemo(
+    () => [
+      { href: "/dashboard", label: dictionary.sidebar.dashboard },
+      { href: "/connect-instagram", label: dictionary.sidebar.connectInstagram },
+      { href: "/create-post", label: dictionary.sidebar.createPost },
+      { href: "/scheduled-posts", label: dictionary.sidebar.scheduledPosts },
+      { href: "/content-automation", label: dictionary.sidebar.contentAutomation },
+      { href: "/automation-diagnostics", label: dictionary.sidebar.automationDiagnostics }
+    ],
+    [dictionary]
+  );
+
+  useEffect(() => {
+    for (const item of navigation) {
+      if (item.href !== currentPath) {
+        router.prefetch(item.href);
+      }
+    }
+  }, [currentPath, navigation, router]);
 
   return (
     <aside className="panel h-fit p-5">
@@ -31,6 +44,9 @@ export function Sidebar() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch
+            onMouseEnter={() => router.prefetch(item.href)}
+            onFocus={() => router.prefetch(item.href)}
             className={clsx(
               "block rounded-2xl px-4 py-3 text-sm font-medium transition",
               currentPath === item.href

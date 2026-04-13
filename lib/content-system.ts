@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { cache } from "react";
 import { z } from "zod";
 import {
   buildTopicsHistoryEntries,
@@ -183,9 +184,7 @@ async function getBrandProfile() {
   return brandProfileSchema.parse(raw);
 }
 
-export async function getContentBrandProfile() {
-  return getBrandProfile();
-}
+export const getContentBrandProfile = cache(async () => getBrandProfile());
 
 async function getContentHistory() {
   const raw = await readJsonFile<unknown>(CONTENT_HISTORY_PATH, []);
@@ -1367,14 +1366,12 @@ export async function generateWeeklyContentPlan(referenceDate = new Date()) {
   };
 }
 
-export async function getCurrentWeeklyAgenda() {
+export const getCurrentWeeklyAgenda = cache(async () => {
   const agenda = await readJsonFile<unknown[]>(AGENDA_PATH, []);
   return normalizeStoredAgenda(agenda) as ContentPlanItem[];
-}
+});
 
-export async function getContentTopicsHistory() {
-  return getTopicsHistory();
-}
+export const getContentTopicsHistory = cache(async () => getTopicsHistory());
 
 export async function updateContentBrandProfile(input: unknown) {
   const parsed = brandProfileSchema.parse(input);

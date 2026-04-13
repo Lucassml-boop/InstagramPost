@@ -61,6 +61,25 @@ export function getStatusLabel(
   return dictionary.scheduledStatus;
 }
 
+export function getPublicationStateLabel(
+  publicationState: ScheduledPostItem["publicationState"],
+  dictionary: ScheduledPostsDictionary
+) {
+  if (!publicationState) {
+    return null;
+  }
+
+  if (publicationState === "ARCHIVED") {
+    return dictionary.publicationStateArchived;
+  }
+
+  if (publicationState === "DELETED") {
+    return dictionary.publicationStateDeleted;
+  }
+
+  return dictionary.publicationStatePublished;
+}
+
 export function getAssetLabel(
   assetState: ScheduledPostItem["assetState"],
   dictionary: ScheduledPostsDictionary

@@ -5,6 +5,7 @@ export type ScheduledPostItem = {
   imagePath: string;
   postType: "FEED" | "STORY" | "CAROUSEL";
   status: "SCHEDULED" | "PUBLISHED" | "FAILED";
+  publicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
   scheduledTime: string | null;
   publishedAt: string | null;
   assetState: "available" | "deleted" | "remote";
@@ -30,6 +31,9 @@ export type ScheduledPostsDictionary = {
   scheduledStatus: string;
   publishedStatus: string;
   failedStatus: string;
+  publicationStatePublished: string;
+  publicationStateArchived: string;
+  publicationStateDeleted: string;
   fileAvailable: string;
   fileDeleted: string;
   fileRemote: string;

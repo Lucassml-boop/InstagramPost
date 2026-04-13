@@ -14,6 +14,7 @@ import {
   formatDate,
   getAssetLabel,
   getPostTypeLabel,
+  getPublicationStateLabel,
   getStatusLabel,
   normalizePreviewSrc
 } from "./utils";
@@ -111,29 +112,51 @@ export function ScheduledPostsTable({
         </div>
       ) : null}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
+      <div className="-mx-3 overflow-x-auto px-3 pb-2 sm:-mx-4 sm:px-4 lg:-mx-5 lg:px-5">
+        <div className="mb-3 flex items-center justify-between gap-3 text-xs text-slate-400">
+          <span>Deslize para o lado para ver todas as colunas.</span>
+        </div>
+        <table className="w-full min-w-[780px] text-left text-xs sm:min-w-[860px] sm:text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-3 font-medium">{dictionary.select}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.preview}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.caption}</th>
-              <th className="px-4 py-3 font-medium">{generatorDictionary.postType}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.scheduledTime}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.publishedAt}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.status}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.fileStatus}</th>
-              <th className="px-4 py-3 font-medium">{dictionary.editSchedule}</th>
+              <th className="w-10 px-2 py-2.5 font-medium sm:w-12 sm:px-3 sm:py-3">
+                {dictionary.select}
+              </th>
+              <th className="w-20 px-2 py-2.5 font-medium sm:w-24 sm:px-3 sm:py-3">
+                {dictionary.preview}
+              </th>
+              <th className="min-w-[180px] px-2 py-2.5 font-medium sm:min-w-[220px] sm:px-3 sm:py-3">
+                {dictionary.caption}
+              </th>
+              <th className="w-24 px-2 py-2.5 font-medium sm:w-28 sm:px-3 sm:py-3">
+                {generatorDictionary.postType}
+              </th>
+              <th className="min-w-[170px] px-2 py-2.5 font-medium sm:min-w-[200px] sm:px-3 sm:py-3">
+                {dictionary.scheduledTime}
+              </th>
+              <th className="w-32 px-2 py-2.5 font-medium sm:w-36 sm:px-3 sm:py-3">
+                {dictionary.publishedAt}
+              </th>
+              <th className="w-24 px-2 py-2.5 font-medium sm:w-28 sm:px-3 sm:py-3">
+                {dictionary.status}
+              </th>
+              <th className="w-24 px-2 py-2.5 font-medium sm:w-28 sm:px-3 sm:py-3">
+                {dictionary.fileStatus}
+              </th>
+              <th className="w-28 px-2 py-2.5 font-medium sm:w-32 sm:px-3 sm:py-3">
+                {dictionary.editSchedule}
+              </th>
             </tr>
           </thead>
           <tbody>
             {posts.map((post) => {
               const isEditable = post.status !== "PUBLISHED";
               const isSavingThisPost = savingPostId === post.id;
+              const publicationStateLabel = getPublicationStateLabel(post.publicationState, dictionary);
 
               return (
                 <tr key={post.id} className="border-t border-slate-100 align-top">
-                  <td className="px-4 py-4">
+                  <td className="px-2 py-2.5 sm:px-3 sm:py-3">
                     <input
                       type="checkbox"
                       checked={selectedPostIds.includes(post.id)}
@@ -141,7 +164,7 @@ export function ScheduledPostsTable({
                       aria-label={dictionary.select}
                     />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-2 py-2.5 sm:px-3 sm:py-3">
                     <PreviewCell
                       imageUrl={post.imageUrl}
                       assetState={post.assetState}
@@ -149,13 +172,15 @@ export function ScheduledPostsTable({
                       unavailableLabel={dictionary.previewUnavailable}
                     />
                   </td>
-                  <td className="max-w-md px-4 py-4 text-slate-700">
-                    <p className="line-clamp-4 whitespace-pre-wrap">{post.caption}</p>
+                  <td className="max-w-[220px] px-2 py-2.5 text-slate-700 sm:max-w-[260px] sm:px-3 sm:py-3">
+                    <p className="line-clamp-2 whitespace-pre-wrap break-words sm:line-clamp-3">
+                      {post.caption}
+                    </p>
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
+                  <td className="px-2 py-2.5 text-slate-600 sm:px-3 sm:py-3">
                     {getPostTypeLabel(post.postType, generatorDictionary)}
                   </td>
-                  <td className="min-w-[220px] px-4 py-4 text-slate-600">
+                  <td className="min-w-[170px] px-2 py-2.5 text-slate-600 sm:min-w-[200px] sm:px-3 sm:py-3">
                     {isEditable ? (
                       <div className="space-y-2">
                         <input
@@ -167,7 +192,7 @@ export function ScheduledPostsTable({
                               [post.id]: event.target.value
                             }))
                           }
-                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-slate-400"
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700 outline-none transition focus:border-slate-400 sm:px-3 sm:text-sm"
                         />
                         <p className="text-xs text-slate-400">
                           {formatDate(post.scheduledTime, locale)}
@@ -177,26 +202,33 @@ export function ScheduledPostsTable({
                       formatDate(post.scheduledTime, locale)
                     )}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
+                  <td className="px-2 py-2.5 text-slate-600 sm:px-3 sm:py-3">
                     {formatDate(post.publishedAt, locale)}
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                      {getStatusLabel(post.status, dictionary)}
-                    </span>
+                  <td className="px-2 py-2.5 sm:px-3 sm:py-3">
+                    <div className="space-y-1">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:px-3 sm:text-xs sm:tracking-[0.16em]">
+                        {getStatusLabel(post.status, dictionary)}
+                      </span>
+                      {publicationStateLabel ? (
+                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 sm:text-[11px]">
+                          {publicationStateLabel}
+                        </p>
+                      ) : null}
+                    </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                  <td className="px-2 py-2.5 sm:px-3 sm:py-3">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:px-3 sm:text-xs sm:tracking-[0.16em]">
                       {getAssetLabel(post.assetState, dictionary)}
                     </span>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-2 py-2.5 sm:px-3 sm:py-3">
                     {isEditable ? (
                       <button
                         type="button"
                         onClick={() => updateSchedule(post)}
                         disabled={isSavingThisPost}
-                        className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-2xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-sm"
                       >
                         {isSavingThisPost
                           ? dictionary.saving
@@ -213,7 +245,7 @@ export function ScheduledPostsTable({
             })}
             {posts.length === 0 ? (
               <tr>
-                <td className="px-4 py-10 text-center text-slate-500" colSpan={9}>
+                <td className="px-2 py-10 text-center text-slate-500 sm:px-3" colSpan={9}>
                   {dictionary.noPosts}
                 </td>
               </tr>
