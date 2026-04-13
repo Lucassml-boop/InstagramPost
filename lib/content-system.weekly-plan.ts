@@ -1,0 +1,165 @@
+import {
+  buildTopicsHistoryEntries,
+  isSameOrSimilarTopic,
+  normalizeTopic
+} from "@/lib/content-system-utils";
+import {
+  AGENDA_PATH,
+  CONTENT_HISTORY_PATH,
+  TOPICS_HISTORY_PATH,
+  TOPICS_PATH
+} from "./content-system.constants.ts";
+import { requestWeeklyAgenda } from "./content-system.requests.ts";
+import { buildWeekSlots, getDayConfig, type WeekSlot } from "./content-system.schedule.ts";
+import type { BrandProfile } from "./content-system.schemas.ts";
+import {
+  getBrandProfile,
+  getContentHistory,
+  getTopicsHistory,
+  writeJsonFile
+} from "./content-system.storage.ts";
+
+function extractGoogleNewsTitles(xml: string) {
+  return [...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)]
+    .map((match) => match[1])
+    .filter((title) => title && title !== "Google News")
+    .slice(0, 5);
+}
+
+async function fetchCurrentTopics(queries: string[]) {
+  const topics = new Set<string>();
+  for (const query of queries) {
+    try {
+      const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+      for (const title of extractGoogleNewsTitles(await response.text())) {
+        topics.add(title);
+      }
+    } catch {
+      continue;
+    }
+  }
+  const topicList = Array.from(topics).slice(0, 20);
+  await writeJsonFile(TOPICS_PATH, topicList);
+  return topicList;
+}
+
+function buildWeeklyPrompt(input: {
+  brandProfile: BrandProfile;
+  weekSlots: WeekSlot[];
+  currentTopics: string[];
+  recentTopics: string[];
+}) {
+  const weeklyAgenda = input.weekSlots
+    .map((slot) => {
+      const config = getDayConfig(input.brandProfile, slot.label);
+      return [
+        `Dia: ${slot.label} (${slot.date})`,
+        `Horario: ${slot.time}`,
+        `Postagem: ${slot.slotIndex} de ${slot.postsPerDay}`,
+        `Objetivo: ${slot.goal}`,
+        `Tipos: ${slot.contentTypes.join(", ")}`,
+        `Formatos: ${slot.formats.join(", ")}`
+      ].join("\n");
+    })
+    .join("\n\n");
+  return [
+    "Você é um agente especialista em marketing digital, social media e automação de conteúdo.",
+    "Seu objetivo é gerar automaticamente conteúdos para Instagram para a próxima semana.",
+    "Retorne somente JSON válido, sem markdown, com um array chamado week.",
+    "Cada item de week deve conter: date, day, time, goal, type, format, theme, structure, caption, visualIdea, cta, topicKeywords.",
+    "As strings devem vir em português do Brasil.",
+    "A estrutura deve seguir o cronograma semanal da marca e a ordem exata dos slots informados.",
+    "Se houver mais de um post no mesmo dia, cada item precisa ter um tema claramente diferente dos demais daquele dia.",
+    "Evite repetir temas dos últimos 60 dias e também evite assuntos muito semelhantes.",
+    "Use topicKeywords como assuntos curtos e reutilizáveis para o histórico anti-repetição.",
+    "Priorize temas atuais ligados a automação, e-commerce, Mercado Livre, Shopee, IA aplicada a negócios e produtividade empresarial.",
+    "",
+    `Marca: ${input.brandProfile.brandName}`,
+    `Brief editável: ${input.brandProfile.editableBrief}`,
+    `Serviços: ${input.brandProfile.services.join(", ")}`,
+    `Estrutura padrão de carrossel: ${input.brandProfile.carouselDefaultStructure.join(" -> ")}`,
+    `Regras: ${input.brandProfile.contentRules.join(" | ")}`,
+    "",
+    "Agenda semanal obrigatória:",
+    weeklyAgenda,
+    "",
+    `Temas atuais encontrados: ${input.currentTopics.join(" | ") || "Nenhum tema atual encontrado."}`,
+    `Assuntos recentes a evitar: ${input.recentTopics.join(" | ") || "Nenhum."}`,
+    "",
+    "Saída esperada por item:",
+    "- theme: tema do post",
+    "- type: tipo de conteúdo",
+    "- format: formato sugerido",
+    "- structure: lista de seções/slides",
+    "- caption: legenda completa",
+    "- visualIdea: ideia visual do post",
+    "- cta: chamada para ação",
+    "- topicKeywords: 3 a 6 palavras-chave curtas para o histórico"
+  ].join("\n");
+}
+
+export async function generateWeeklyContentPlan(referenceDate = new Date()) {
+  const brandProfile = await getBrandProfile();
+  const weekSlots = buildWeekSlots(brandProfile, referenceDate);
+  if (weekSlots.length === 0) {
+    throw new Error("At least one active day with a valid post schedule is required.");
+  }
+  const contentHistory = await getContentHistory();
+  const topicsHistory = await getTopicsHistory();
+  const currentTopics = await fetchCurrentTopics(brandProfile.researchQueries);
+  const generatedAgenda = await requestWeeklyAgenda(
+    buildWeeklyPrompt({
+      brandProfile,
+      weekSlots,
+      currentTopics,
+      recentTopics: topicsHistory.slice(-120)
+    }),
+    weekSlots.length
+  );
+  const agenda = generatedAgenda.map((item, index) => ({
+    ...item,
+    date: weekSlots[index]?.date ?? item.date,
+    day: weekSlots[index]?.label ?? item.day,
+    time: weekSlots[index]?.time ?? item.time
+  }));
+  const normalizedTopicHistory = topicsHistory.map(normalizeTopic).filter(Boolean);
+  const generatedTopics = new Set<string>();
+  const dedupedAgenda = agenda.filter((item) => {
+    const normalizedTheme = normalizeTopic(item.theme);
+    const normalizedEntries = buildTopicsHistoryEntries([item]);
+    const hasInternalDuplicate =
+      generatedTopics.has(normalizedTheme) ||
+      Array.from(generatedTopics).some((entry) =>
+        normalizedEntries.some((topic) => isSameOrSimilarTopic(topic, entry))
+      );
+    if (hasInternalDuplicate) {
+      return false;
+    }
+    generatedTopics.add(normalizedTheme);
+    normalizedEntries.forEach((entry) => generatedTopics.add(entry));
+    return !normalizedTopicHistory.some(
+      (historyEntry) =>
+        isSameOrSimilarTopic(normalizedTheme, historyEntry) ||
+        normalizedEntries.some((entry) => isSameOrSimilarTopic(entry, historyEntry))
+    );
+  });
+  if (dedupedAgenda.length !== agenda.length) {
+    throw new Error("Weekly agenda generation produced repeated themes. Try again.");
+  }
+  await writeJsonFile(AGENDA_PATH, dedupedAgenda);
+  await writeJsonFile(CONTENT_HISTORY_PATH, [
+    ...contentHistory,
+    ...dedupedAgenda.map((item) => ({ date: item.date, day: item.day, theme: item.theme }))
+  ]);
+  await writeJsonFile(
+    TOPICS_HISTORY_PATH,
+    Array.from(
+      new Set([...topicsHistory.map(normalizeTopic), ...buildTopicsHistoryEntries(dedupedAgenda)])
+    ).slice(-300)
+  );
+  return { agenda: dedupedAgenda, currentTopics, brandProfile };
+}
