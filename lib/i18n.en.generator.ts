@@ -1,0 +1,128 @@
+export const enGeneratorDictionary = {
+generator: {
+  contentTab: "Content",
+  settingsTab: "Settings",
+  topic: "Product or topic",
+  topicPlaceholder: "Spring skincare launch",
+  message: "Promotion or message",
+  messagePlaceholder:
+    "Promote the limited-time launch offer and highlight natural ingredients.",
+  postType: "Post type",
+  postTypeFeed: "Feed",
+  postTypeStory: "Story",
+  postTypeCarousel: "Carousel",
+  carouselSlides: "Carousel planning",
+  carouselSlidesDescription: "Choose how many slides to generate and optionally describe the purpose of each one. If left blank, AI will infer the narrative.",
+  carouselSlidesCount: "Number of slides",
+  carouselSlideContextLabel: "Slide context",
+  carouselSlideContextPlaceholder: "Optional. Example: social proof, feature highlight, pricing, CTA.",
+  carouselDefaultStructure: "Default carousel structure",
+  carouselDefaultStructureDescription: "1 Hook cover, 2 problem/context, middle slides for value, penultimate slide for insight, final slide for CTA. You can edit any of these contexts.",
+  restoreCarouselStructure: "Restore carousel structure",
+  storyMode: "Story format",
+  storyModeImageOnly: "Image only",
+  storyModeWithCaption: "Image + caption",
+  storyModeDescription: "Choose whether this story should be published only as an image or keep a caption in your workflow.",
+  tone: "Tone",
+  toneProfessional: "Professional",
+  toneCasual: "Casual",
+  tonePromotional: "Promotional",
+  outputLanguage: "Output language",
+  outputLanguageDescription: "Choose the language used in the caption and in the text rendered inside the generated post image.",
+  outputLanguageEnglish: "English",
+  outputLanguagePtBR: "Portuguese (Brazil)",
+  briefingMode: "Briefing setup",
+  briefingModeDescription: "Choose whether you want to build the briefing from key business points or write the complete prompt manually.",
+  briefingModeGuided: "Guided briefing",
+  briefingModeGuidedDescription: "Fill in the most important strategic points and let the app assemble the final briefing.",
+  briefingModePrompt: "Full prompt",
+  briefingModePromptDescription: "Write the full instruction manually when you want maximum control over the briefing.",
+  guidedBriefingTitle: "Guided briefing form",
+  guidedBriefingDescription: "Use these 10 points to give the AI a stronger strategic context before it writes content or visuals.",
+  guidedBriefingPreview: "Generated briefing preview",
+  guidedBriefingPreviewDescription: "This is the final briefing that will be sent to the AI while guided mode is active.",
+  restoreGuidedBriefing: "Clear guided briefing",
+  briefingBusinessSummary: "Business summary",
+  briefingTargetAudience: "Target audience",
+  briefingMainObjective: "Main objective",
+  briefingProductsOrServices: "Products or services",
+  briefingBrandVoice: "Brand voice",
+  briefingDifferentiators: "Differentiators",
+  briefingPainPoints: "Pain points to address",
+  briefingContentPillars: "Content pillars",
+  briefingCtaPreference: "Preferred CTA",
+  briefingRestrictions: "Restrictions and rules",
+  customInstructions: "Prompt formula",
+  customInstructionsDescription: "Customize the base instruction sent to the AI. You can keep the default formula or rewrite it to match your brand voice.",
+  customInstructionsPlaceholder: "You are an expert Instagram content strategist and visual designer.",
+  restoreDefaultInstructions: "Restore default formula",
+  settingsSaved: "Settings saved successfully.",
+  settingsSaveError: "Unable to save settings.",
+  removeMedia: "Remove",
+  carouselCount: "Carousel items",
+  brandColors: "Brand colors",
+  brandColorsHint:
+    "This field is preserved outside the automatic fill. Save palettes here to keep your brand identity and quickly reuse colors after changes.",
+  keywords: "Optional keywords",
+  keywordsPlaceholder: "clean beauty, launch, limited offer",
+  generate: "Generate Post",
+  generating: "Generating...",
+  generationProgress: "Generating your post",
+  generationEstimate: (formattedTimeout, carouselSlideCount) =>
+    carouselSlideCount
+      ? `Estimated limit: about ${formattedTimeout} total for this carousel, with 4 extra minutes added per slide.`
+      : `Estimated limit: about ${formattedTimeout} total while AI writes and renders the image.`,
+  generationElapsed: "Elapsed",
+  generationSlow: "Still working. If it gets close to the limit, we will surface a timeout instead of silently hanging.",
+  cancelGeneration: "Cancel generation",
+  generationCanceled: "Generation canceled.",
+  clearGeneratedPost: "Clear current post",
+  editCaption: "Edit caption",
+  publishNow: "Publish Now",
+  publishing: "Publishing...",
+  saveSchedule: "Save Schedule",
+  scheduleTimeRequired: "Choose a schedule time before saving.",
+  generateError: "Unable to generate post.",
+  publishError: "Unable to publish.",
+  scheduleError: "Unable to schedule.",
+  autoGenerateField: "Automatic",
+  autoGeneratingField: "Generating...",
+  autoGenerateAllFields: "Automatic all",
+  autoGenerateHint:
+    "Uses the saved strategy and your current inputs as a base so the result stays coherent."
+},
+
+upload: {
+  title: "Upload custom image",
+  description: "Uploading an image overrides the AI-generated preview for publishing.",
+  carouselTitle: "Upload carousel images",
+  carouselDescription:
+    "Add between 2 and 10 images. The generated image can be the first slide, and the extra uploads will complete the carousel.",
+  markAsAiGenerated: "Mark uploaded images as AI-generated",
+  markAsAiGeneratedDescription:
+    "Use this if the uploaded images were also created with AI and should carry the same metadata marker.",
+  uploading: "Uploading...",
+  error: "Upload failed."
+},
+
+preview: {
+  imageAlt: "Generated post preview",
+  empty: "Generate a post to preview it here",
+  noCaption: "No caption yet.",
+  previous: "Previous",
+  next: "Next",
+  downloadPost: "Download post",
+  downloadCurrentSlide: "Download current slide"
+},
+
+scheduler: {
+  label: "Schedule time"
+},
+
+instagramCard: {
+  title: "Connected Instagram Account",
+  username: "Username",
+  instagramId: "Instagram ID",
+  connectionStatus: "Connection Status"
+},
+};
