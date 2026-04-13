@@ -56,12 +56,12 @@ async function persistInstagramAccessToken(input: {
   });
 }
 
-export function getInstagramAuthUrl(state: string) {
-  const redirectUri = requireEnv("INSTAGRAM_REDIRECT_URI");
+export function getInstagramAuthUrl(state: string, redirectUri?: string) {
+  const resolvedRedirectUri = redirectUri ?? requireEnv("INSTAGRAM_REDIRECT_URI");
   const url = new URL("https://www.instagram.com/oauth/authorize");
 
   url.searchParams.set("client_id", requireEnv("INSTAGRAM_APP_ID"));
-  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("redirect_uri", resolvedRedirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set(
     "scope",
@@ -71,25 +71,25 @@ export function getInstagramAuthUrl(state: string) {
   url.searchParams.set("force_authentication", "1");
 
   console.log("[instagram] Building auth URL", {
-    redirectUri,
+    redirectUri: resolvedRedirectUri,
     stateLength: state.length
   });
 
   return url.toString();
 }
 
-export async function exchangeCodeForAccessToken(code: string) {
-  const redirectUri = requireEnv("INSTAGRAM_REDIRECT_URI");
+export async function exchangeCodeForAccessToken(code: string, redirectUri?: string) {
+  const resolvedRedirectUri = redirectUri ?? requireEnv("INSTAGRAM_REDIRECT_URI");
   const body = new URLSearchParams({
     client_id: requireEnv("INSTAGRAM_APP_ID"),
     client_secret: requireEnv("INSTAGRAM_APP_SECRET"),
     grant_type: "authorization_code",
-    redirect_uri: redirectUri,
+    redirect_uri: resolvedRedirectUri,
     code
   });
 
   console.log("[instagram] Exchanging code for token", {
-    redirectUri,
+    redirectUri: resolvedRedirectUri,
     codeLength: code.length
   });
 
@@ -105,7 +105,7 @@ export async function exchangeCodeForAccessToken(code: string) {
     console.error("[instagram] Token exchange failed", {
       status: response.status,
       statusText: response.statusText,
-      redirectUri,
+      redirectUri: resolvedRedirectUri,
       errorType: json.error_type ?? null,
       errorMessage: json.error_message ?? null
     });

@@ -1,15 +1,12 @@
-import { execFile as execFileCallback } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
-
-const execFile = promisify(execFileCallback);
-const AI_DIGITAL_SOURCE_TYPE =
-  "https://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia";
-const DEFAULT_STORAGE_BUCKET = "instagram-post-media";
-const GENERATED_POSTS_DIR = "generated-posts";
-const UPLOADS_DIR = "uploads";
+import {
+  GENERATED_POSTS_DIR,
+  getSupabaseStorageConfig,
+  sanitizeFileName,
+  UPLOADS_DIR
+} from "@/lib/storage.server.config";
+import { applyAiMetadataToBuffer } from "@/lib/storage-ai-metadata";
 
 type StoredAsset = {
   fileName: string;
@@ -19,63 +16,8 @@ type StoredAsset = {
   provider: "local" | "supabase";
 };
 
-function sanitizeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9.-]/g, "-").toLowerCase();
-}
-
-function normalizeSupabaseUrl(url: string) {
-  return url.replace(/\/$/, "");
-}
-
-function getSupabaseStorageConfig() {
-  const supabaseUrl = process.env.SUPABASE_URL?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET?.trim() || DEFAULT_STORAGE_BUCKET;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return null;
-  }
-
-  return {
-    supabaseUrl: normalizeSupabaseUrl(supabaseUrl),
-    serviceRoleKey,
-    bucket
-  };
-}
-
 export function isDurableStorageConfigured() {
   return Boolean(getSupabaseStorageConfig());
-}
-
-async function applyAiMetadataToBuffer(buffer: Buffer, fileName: string) {
-  let tempDir = "";
-
-  try {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "instagram-post-ai-"));
-    const tempFilePath = path.join(tempDir, sanitizeFileName(fileName));
-
-    await writeFile(tempFilePath, buffer);
-    await execFile("exiftool", [
-      "-overwrite_original",
-      `-XMP-iptcExt:DigitalSourceType=${AI_DIGITAL_SOURCE_TYPE}`,
-      "-XMP-dc:Creator=InstagramPost AI Publisher",
-      "-XMP-xmp:CreatorTool=InstagramPost AI Publisher",
-      tempFilePath
-    ]);
-
-    return await readFile(tempFilePath);
-  } catch (error) {
-    console.warn("[storage] Failed to embed AI metadata into asset buffer", {
-      fileName,
-      error: error instanceof Error ? error.message : String(error)
-    });
-
-    return buffer;
-  } finally {
-    if (tempDir) {
-      await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
-    }
-  }
 }
 
 async function uploadToSupabaseStorage(input: {

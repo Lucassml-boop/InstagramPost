@@ -10,7 +10,21 @@ export const postMediaItemSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6)
+  password: z.string().min(8)
+});
+
+export const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email()
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(20),
+  password: z.string().min(8)
 });
 
 export const generatePostSchema = z.object({

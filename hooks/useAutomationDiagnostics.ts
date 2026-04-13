@@ -3,27 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { fetchAgenda, runAutomationAction } from "@/services/frontend/content-system";
 import type { ContentPlanItem } from "@/lib/content-system";
-
-type AutomationAction = {
-  id:
-    | "generate-weekly"
-    | "clear-topics-history"
-    | "publish-scheduled"
-    | "publish-weekly-preview"
-    | "refresh-instagram";
-  title: string;
-  description: string;
-  endpoint: string;
-  method: "GET" | "POST";
-};
-
-type ActionState = {
-  loading: boolean;
-  status: number | null;
-  result: string | null;
-  parsed: unknown | null;
-  error: string | null;
-};
+import {
+  buildAutomationActions,
+  getHumanSummary,
+  loadAgendaOptions,
+  type ActionState,
+  type AutomationAction
+} from "@/hooks/automation-diagnostics-helpers";
 
 export function useAutomationDiagnostics(input: {
   dictionary: {
@@ -55,99 +41,12 @@ export function useAutomationDiagnostics(input: {
   const [selectedWeeklyDate, setSelectedWeeklyDate] = useState<string>("all");
 
   const actions: AutomationAction[] = useMemo(
-    () => [
-      {
-        id: "generate-weekly",
-        title: input.dictionary.generateWeeklyTitle,
-        description: input.dictionary.generateWeeklyDescription,
-        endpoint: "/api/cron/generate-weekly-content",
-        method: "GET"
-      },
-      {
-        id: "clear-topics-history",
-        title: input.dictionary.clearTopicsTitle,
-        description: input.dictionary.clearTopicsDescription,
-        endpoint: "/api/cron/clear-topics-history",
-        method: "GET"
-      },
-      {
-        id: "publish-scheduled",
-        title: input.dictionary.publishScheduledTitle,
-        description: input.dictionary.publishScheduledDescription,
-        endpoint: "/api/cron/publish-scheduled",
-        method: "POST"
-      },
-      {
-        id: "publish-weekly-preview",
-        title: input.dictionary.publishWeeklyPreviewTitle,
-        description: input.dictionary.publishWeeklyPreviewDescription,
-        endpoint: "/api/content-system/publish-weekly-preview",
-        method: "POST"
-      },
-      {
-        id: "refresh-instagram",
-        title: input.dictionary.refreshTokensTitle,
-        description: input.dictionary.refreshTokensDescription,
-        endpoint: "/api/cron/refresh-instagram-tokens",
-        method: "POST"
-      }
-    ],
+    () => buildAutomationActions(input.dictionary),
     [input.dictionary]
   );
 
-  function getHumanSummary(actionId: AutomationAction["id"], parsed: unknown) {
-    if (!parsed || typeof parsed !== "object") {
-      return null;
-    }
-
-    const candidate = parsed as Record<string, unknown>;
-
-    if (actionId === "generate-weekly") {
-      if (candidate.skipped === true) {
-        return `${input.dictionary.summaryLabel} ${input.dictionary.weeklySkipped}`;
-      }
-
-      if (typeof candidate.generated === "number") {
-        return `${input.dictionary.summaryLabel} ${candidate.generated} ${input.dictionary.itemsGenerated}`;
-      }
-    }
-
-    if (actionId === "clear-topics-history") {
-      if (candidate.skipped === true && typeof candidate.frequency === "string") {
-        return `${input.dictionary.summaryLabel} ${input.dictionary.cleanupSkipped} (${candidate.frequency})`;
-      }
-
-      if (typeof candidate.clearedEntries === "number") {
-        return `${input.dictionary.summaryLabel} ${candidate.clearedEntries} ${input.dictionary.itemsCleared}`;
-      }
-    }
-
-    if (actionId === "publish-scheduled" && typeof candidate.processed === "number") {
-      return `${input.dictionary.summaryLabel} ${candidate.processed} ${input.dictionary.itemsProcessed}`;
-    }
-
-    if (actionId === "publish-weekly-preview") {
-      const published = typeof candidate.published === "number" ? candidate.published : 0;
-      const failed = typeof candidate.failed === "number" ? candidate.failed : 0;
-      return `${input.dictionary.summaryLabel} ${published} ${input.dictionary.itemsPublished}, ${failed} ${input.dictionary.itemsFailed}`;
-    }
-
-    if (actionId === "refresh-instagram" && typeof candidate.refreshed === "number") {
-      return `${input.dictionary.summaryLabel} ${candidate.refreshed} ${input.dictionary.tokensRefreshed}`;
-    }
-
-    return null;
-  }
-
   async function ensureAgendaOptions() {
-    if (agendaOptions.length > 0) {
-      return agendaOptions;
-    }
-
-    const json = await fetchAgenda();
-    const nextAgenda = json.agenda ?? [];
-    setAgendaOptions(nextAgenda);
-    return nextAgenda;
+    return loadAgendaOptions(agendaOptions, fetchAgenda, setAgendaOptions);
   }
 
   function runAction(action: AutomationAction) {
@@ -213,7 +112,8 @@ export function useAutomationDiagnostics(input: {
     agendaOptions,
     selectedWeeklyDate,
     setSelectedWeeklyDate,
-    getHumanSummary,
+    getHumanSummary: (actionId: AutomationAction["id"], parsed: unknown) =>
+      getHumanSummary(input.dictionary, actionId, parsed),
     ensureAgendaOptions,
     runAction
   };

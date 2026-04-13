@@ -27,3 +27,15 @@ test("dashboard description remains callable", () => {
 
   assert.match(text, /user@example\.com/);
 });
+
+test("auth dictionaries expose register and password reset labels", () => {
+  const en = getDictionary("en");
+  const pt = getDictionary("pt-BR");
+
+  assert.equal(Boolean(en.register.title), true);
+  assert.equal(Boolean(pt.register.title), true);
+  assert.equal(Boolean(en.forgotPassword.submit), true);
+  assert.equal(Boolean(pt.forgotPassword.submit), true);
+  assert.equal(Boolean(en.resetPassword.invalidToken), true);
+  assert.equal(Boolean(pt.resetPassword.invalidToken), true);
+});

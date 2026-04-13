@@ -8,6 +8,7 @@ const localPort = 3020;
 const localUrl = `http://127.0.0.1:${localPort}`;
 const redirectPath = "/api/auth/instagram/callback";
 const shouldSkipTunnel = process.env.SKIP_TUNNEL === "1" || process.env.SKIP_TUNNEL === "true";
+const fixedPublicUrl = process.env.FIXED_PUBLIC_URL?.trim().replace(/\/$/, "") ?? "";
 
 let shuttingDown = false;
 let nextProcess;
@@ -186,6 +187,11 @@ process.on("SIGTERM", () => cleanupAndExit(0));
 
 if (shouldSkipTunnel) {
   log("SKIP_TUNNEL ativo. Iniciando a app localmente sem tunel.");
+  startNext();
+} else if (fixedPublicUrl) {
+  updateEnvFile(fixedPublicUrl);
+  log(`FIXED_PUBLIC_URL detectado. Mantendo callback fixo em ${fixedPublicUrl}${redirectPath}`);
+  log("Nenhum quick tunnel aleatorio sera criado nesta execucao.");
   startNext();
 } else {
   startTunnel();

@@ -13,7 +13,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
-  const baseUrl = getBaseUrl();
+  const requestUrl = new URL(request.url);
+  const requestOrigin = requestUrl.origin;
+  const baseUrl = getBaseUrl(requestOrigin);
+  const redirectUri = `${requestOrigin}/api/auth/instagram/callback`;
 
   if (!user) {
     console.warn("[instagram-callback] Anonymous callback, redirecting to login", {
@@ -22,18 +25,17 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login", baseUrl));
   }
 
-  const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-  const error = url.searchParams.get("error");
-  const errorReason = url.searchParams.get("error_reason");
+  const code = requestUrl.searchParams.get("code");
+  const state = requestUrl.searchParams.get("state");
+  const error = requestUrl.searchParams.get("error");
+  const errorReason = requestUrl.searchParams.get("error_reason");
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(OAUTH_STATE_COOKIE_NAME)?.value;
 
   console.log("[instagram-callback] Received callback", {
     requestUrl: request.url,
     baseUrl,
-    redirectUri: process.env.INSTAGRAM_REDIRECT_URI ?? null,
+    redirectUri,
     hasCode: Boolean(code),
     stateLength: state?.length ?? 0,
     expectedStateLength: expectedState?.length ?? 0,
@@ -74,7 +76,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const tokenResponse = await exchangeCodeForAccessToken(code);
+    const tokenResponse = await exchangeCodeForAccessToken(code, redirectUri);
     const longLivedToken = await exchangeForLongLivedAccessToken(tokenResponse.accessToken);
     const profile = await fetchInstagramProfile(
       longLivedToken.accessToken,

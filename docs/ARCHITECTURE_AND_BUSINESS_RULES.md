@@ -262,6 +262,7 @@ Recommended frontend rules:
 - keep UI rendering separate from orchestration logic
 - move repeated async client logic into reusable hooks when it appears more than once
 - centralize API calls in `services/` or `lib/client/` as the frontend grows
+- keep every source file at 200 lines or fewer; split files into hooks, helpers, and section components before crossing this limit
 - maintain strong TypeScript typing for props and API contracts
 
 ### 3.2 Backend

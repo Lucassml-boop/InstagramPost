@@ -1,6 +1,7 @@
 import { CaptionGenerator } from "@/components/create-post";
 import { SectionTitle } from "@/components/shared";
 import { getCurrentUser } from "@/lib/auth";
+import { sanitizeCustomInstructions } from "@/lib/briefing-builder";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
 
@@ -20,7 +21,7 @@ export default async function CreatePostPage() {
         <CaptionGenerator
           initialOutputLanguage={user?.preferredOutputLanguage === "pt-BR" ? "pt-BR" : "en"}
           initialCustomInstructions={
-            user?.preferredCustomInstructions?.trim() ||
+            sanitizeCustomInstructions(user?.preferredCustomInstructions) ||
             "You are an expert Instagram content strategist and visual designer."
           }
         />

@@ -132,7 +132,7 @@ function buildPrompt(
   automationContext?: AutomationContext
 ) {
   const keywords = input.keywords?.trim() ? input.keywords.trim() : "none";
-  const customInstructions = input.customInstructions?.trim();
+  const customInstructions = sanitizeCustomInstructions(input.customInstructions);
   const languageLabel = input.outputLanguage === "pt-BR" ? "Brazilian Portuguese" : "English";
   const postFormat =
     input.postType === "story"
@@ -448,3 +448,4 @@ export async function generateInstagramCarouselPosts(
     hashtags: firstSlide.hashtags
   };
 }
+import { sanitizeCustomInstructions } from "@/lib/briefing-builder";

@@ -6,20 +6,27 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 
-export function Sidebar() {
+type SidebarProps = {
+  hasConnectedInstagramAccount: boolean;
+};
+
+export function Sidebar({ hasConnectedInstagramAccount }: SidebarProps) {
   const currentPath = usePathname();
   const router = useRouter();
   const { dictionary } = useI18n();
   const navigation = useMemo(
-    () => [
-      { href: "/dashboard", label: dictionary.sidebar.dashboard },
-      { href: "/connect-instagram", label: dictionary.sidebar.connectInstagram },
-      { href: "/create-post", label: dictionary.sidebar.createPost },
-      { href: "/scheduled-posts", label: dictionary.sidebar.scheduledPosts },
-      { href: "/content-automation", label: dictionary.sidebar.contentAutomation },
-      { href: "/automation-diagnostics", label: dictionary.sidebar.automationDiagnostics }
-    ],
-    [dictionary]
+    () =>
+      [
+        { href: "/dashboard", label: dictionary.sidebar.dashboard },
+        !hasConnectedInstagramAccount
+          ? { href: "/connect-instagram", label: dictionary.sidebar.connectInstagram }
+          : null,
+        { href: "/create-post", label: dictionary.sidebar.createPost },
+        { href: "/scheduled-posts", label: dictionary.sidebar.scheduledPosts },
+        { href: "/content-automation", label: dictionary.sidebar.contentAutomation },
+        { href: "/automation-diagnostics", label: dictionary.sidebar.automationDiagnostics }
+      ].filter((item): item is { href: string; label: string } => item !== null),
+    [dictionary, hasConnectedInstagramAccount]
   );
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
 import { z } from "zod";
+import { sanitizeCustomInstructions } from "@/lib/briefing-builder";
 import {
   buildTopicsHistoryEntries,
   getAgendaWeekKey,
@@ -1109,7 +1110,7 @@ export async function generateAutomaticSettingsBundle(input: {
   customInstructions: string;
 }) {
   const profile = brandProfileSchema.parse(input.profile);
-  const customInstructions = z.string().parse(input.customInstructions);
+  const customInstructions = sanitizeCustomInstructions(z.string().parse(input.customInstructions));
   const prompt = [
     "Recalibre toda a configuracao editorial de uma marca para Instagram mantendo o mesmo posicionamento central.",
     "Todos os campos devem ser coerentes entre si e se apoiar mutuamente.",
@@ -1218,6 +1219,7 @@ export async function generateAutomaticCreatePostInputs(input: {
       customInstructions: z.string()
     })
     .parse(input.current);
+  const currentCustomInstructions = sanitizeCustomInstructions(current.customInstructions);
   const languageLabel = current.outputLanguage === "pt-BR" ? "portugues do Brasil" : "english";
 
   const prompt = [
@@ -1250,7 +1252,7 @@ export async function generateAutomaticCreatePostInputs(input: {
     `Presets de objetivo: ${(profile.goalPresets ?? []).join(" | ")}`,
     `Presets de tipos: ${(profile.contentTypePresets ?? []).join(" | ")}`,
     `Presets de formatos: ${(profile.formatPresets ?? []).join(" | ")}`,
-    `Prompt atual: ${current.customInstructions || "(vazio)"}`
+    `Prompt atual: ${currentCustomInstructions || "(vazio)"}`
   ].join("\n");
 
   try {

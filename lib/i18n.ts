@@ -34,10 +34,54 @@ type Dictionary = {
     description: string;
     email: string;
     password: string;
+    forgotPassword: string;
+    createAccount: string;
     emailPlaceholder: string;
     passwordPlaceholder: string;
     submit: string;
     submitting: string;
+    continueError: string;
+  };
+  register: {
+    title: string;
+    description: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    emailPlaceholder: string;
+    passwordPlaceholder: string;
+    confirmPasswordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    loginLink: string;
+    passwordMismatch: string;
+    continueError: string;
+  };
+  forgotPassword: {
+    title: string;
+    description: string;
+    email: string;
+    emailPlaceholder: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    loginLink: string;
+    continueError: string;
+    devLinkLabel: string;
+  };
+  resetPassword: {
+    title: string;
+    description: string;
+    password: string;
+    confirmPassword: string;
+    passwordPlaceholder: string;
+    confirmPasswordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    invalidToken: string;
+    loginLink: string;
+    passwordMismatch: string;
     continueError: string;
   };
   dashboard: {
@@ -101,6 +145,27 @@ type Dictionary = {
     outputLanguageDescription: string;
     outputLanguageEnglish: string;
     outputLanguagePtBR: string;
+    briefingMode: string;
+    briefingModeDescription: string;
+    briefingModeGuided: string;
+    briefingModeGuidedDescription: string;
+    briefingModePrompt: string;
+    briefingModePromptDescription: string;
+    guidedBriefingTitle: string;
+    guidedBriefingDescription: string;
+    guidedBriefingPreview: string;
+    guidedBriefingPreviewDescription: string;
+    restoreGuidedBriefing: string;
+    briefingBusinessSummary: string;
+    briefingTargetAudience: string;
+    briefingMainObjective: string;
+    briefingProductsOrServices: string;
+    briefingBrandVoice: string;
+    briefingDifferentiators: string;
+    briefingPainPoints: string;
+    briefingContentPillars: string;
+    briefingCtaPreference: string;
+    briefingRestrictions: string;
     customInstructions: string;
     customInstructionsDescription: string;
     customInstructionsPlaceholder: string;
@@ -371,14 +436,62 @@ const dictionaries: Record<Locale, Dictionary> = {
     login: {
       title: "Login",
       description:
-        "Use any email and password. If the account does not exist yet, the app creates it automatically for this review demo.",
+        "Sign in with your existing account to manage Instagram connections, content generation, and publishing flows.",
       email: "Email",
       password: "Password",
+      forgotPassword: "Forgot your password?",
+      createAccount: "Create account",
       emailPlaceholder: "reviewer@example.com",
-      passwordPlaceholder: "minimum 6 characters",
+      passwordPlaceholder: "minimum 8 characters",
       submit: "Login",
       submitting: "Signing in...",
       continueError: "Unable to continue."
+    },
+    register: {
+      title: "Create Account",
+      description:
+        "Create your account with a secure password so each user has their own protected workspace.",
+      email: "Email",
+      password: "Password",
+      confirmPassword: "Confirm password",
+      emailPlaceholder: "reviewer@example.com",
+      passwordPlaceholder: "minimum 8 characters",
+      confirmPasswordPlaceholder: "Repeat your password",
+      submit: "Create account",
+      submitting: "Creating account...",
+      loginLink: "Already have an account? Sign in",
+      passwordMismatch: "Passwords do not match.",
+      continueError: "Unable to create your account."
+    },
+    forgotPassword: {
+      title: "Reset Password",
+      description:
+        "Enter your email and we will generate a secure reset link if the account exists.",
+      email: "Email",
+      emailPlaceholder: "reviewer@example.com",
+      submit: "Send reset link",
+      submitting: "Sending link...",
+      success:
+        "If this email exists, a password reset link has been generated. In development, the link may appear below.",
+      loginLink: "Back to sign in",
+      continueError: "Unable to request password reset.",
+      devLinkLabel: "Development reset link"
+    },
+    resetPassword: {
+      title: "Choose New Password",
+      description:
+        "Create a new password to restore access to your account. Existing sessions will be signed out.",
+      password: "New password",
+      confirmPassword: "Confirm new password",
+      passwordPlaceholder: "minimum 8 characters",
+      confirmPasswordPlaceholder: "Repeat your new password",
+      submit: "Save new password",
+      submitting: "Saving password...",
+      success: "Password updated successfully. Redirecting to the dashboard...",
+      invalidToken: "This password reset link is missing or invalid.",
+      loginLink: "Back to sign in",
+      passwordMismatch: "Passwords do not match.",
+      continueError: "Unable to reset password."
     },
     dashboard: {
       eyebrow: "Dashboard",
@@ -447,6 +560,27 @@ const dictionaries: Record<Locale, Dictionary> = {
       outputLanguageDescription: "Choose the language used in the caption and in the text rendered inside the generated post image.",
       outputLanguageEnglish: "English",
       outputLanguagePtBR: "Portuguese (Brazil)",
+      briefingMode: "Briefing setup",
+      briefingModeDescription: "Choose whether you want to build the briefing from key business points or write the complete prompt manually.",
+      briefingModeGuided: "Guided briefing",
+      briefingModeGuidedDescription: "Fill in the most important strategic points and let the app assemble the final briefing.",
+      briefingModePrompt: "Full prompt",
+      briefingModePromptDescription: "Write the full instruction manually when you want maximum control over the briefing.",
+      guidedBriefingTitle: "Guided briefing form",
+      guidedBriefingDescription: "Use these 10 points to give the AI a stronger strategic context before it writes content or visuals.",
+      guidedBriefingPreview: "Generated briefing preview",
+      guidedBriefingPreviewDescription: "This is the final briefing that will be sent to the AI while guided mode is active.",
+      restoreGuidedBriefing: "Clear guided briefing",
+      briefingBusinessSummary: "Business summary",
+      briefingTargetAudience: "Target audience",
+      briefingMainObjective: "Main objective",
+      briefingProductsOrServices: "Products or services",
+      briefingBrandVoice: "Brand voice",
+      briefingDifferentiators: "Differentiators",
+      briefingPainPoints: "Pain points to address",
+      briefingContentPillars: "Content pillars",
+      briefingCtaPreference: "Preferred CTA",
+      briefingRestrictions: "Restrictions and rules",
       customInstructions: "Prompt formula",
       customInstructionsDescription: "Customize the base instruction sent to the AI. You can keep the default formula or rewrite it to match your brand voice.",
       customInstructionsPlaceholder: "You are an expert Instagram content strategist and visual designer.",
@@ -746,14 +880,62 @@ const dictionaries: Record<Locale, Dictionary> = {
     login: {
       title: "Entrar",
       description:
-        "Use qualquer email e senha. Se a conta ainda nao existir, o app a cria automaticamente para esta demo de revisao.",
+        "Entre com sua conta existente para gerenciar conexoes do Instagram, geracao de conteudo e publicacoes.",
       email: "Email",
       password: "Senha",
+      forgotPassword: "Esqueceu sua senha?",
+      createAccount: "Criar conta",
       emailPlaceholder: "revisor@exemplo.com",
-      passwordPlaceholder: "minimo de 6 caracteres",
+      passwordPlaceholder: "minimo de 8 caracteres",
       submit: "Entrar",
       submitting: "Entrando...",
       continueError: "Nao foi possivel continuar."
+    },
+    register: {
+      title: "Criar Conta",
+      description:
+        "Crie sua conta com uma senha segura para que cada usuario tenha seu proprio espaco protegido.",
+      email: "Email",
+      password: "Senha",
+      confirmPassword: "Confirmar senha",
+      emailPlaceholder: "revisor@exemplo.com",
+      passwordPlaceholder: "minimo de 8 caracteres",
+      confirmPasswordPlaceholder: "Repita sua senha",
+      submit: "Criar conta",
+      submitting: "Criando conta...",
+      loginLink: "Ja tem conta? Entrar",
+      passwordMismatch: "As senhas nao coincidem.",
+      continueError: "Nao foi possivel criar sua conta."
+    },
+    forgotPassword: {
+      title: "Redefinir Senha",
+      description:
+        "Informe seu email e vamos gerar um link seguro de redefinicao caso a conta exista.",
+      email: "Email",
+      emailPlaceholder: "revisor@exemplo.com",
+      submit: "Enviar link de redefinicao",
+      submitting: "Enviando link...",
+      success:
+        "Se este email existir, um link de redefinicao foi gerado. Em desenvolvimento, o link pode aparecer abaixo.",
+      loginLink: "Voltar para o login",
+      continueError: "Nao foi possivel solicitar a redefinicao de senha.",
+      devLinkLabel: "Link de redefinicao em desenvolvimento"
+    },
+    resetPassword: {
+      title: "Escolher Nova Senha",
+      description:
+        "Crie uma nova senha para recuperar o acesso a sua conta. As sessoes antigas serao encerradas.",
+      password: "Nova senha",
+      confirmPassword: "Confirmar nova senha",
+      passwordPlaceholder: "minimo de 8 caracteres",
+      confirmPasswordPlaceholder: "Repita sua nova senha",
+      submit: "Salvar nova senha",
+      submitting: "Salvando senha...",
+      success: "Senha atualizada com sucesso. Redirecionando para o dashboard...",
+      invalidToken: "Este link de redefinicao esta ausente ou e invalido.",
+      loginLink: "Voltar para o login",
+      passwordMismatch: "As senhas nao coincidem.",
+      continueError: "Nao foi possivel redefinir a senha."
     },
     dashboard: {
       eyebrow: "Painel",
@@ -822,6 +1004,27 @@ const dictionaries: Record<Locale, Dictionary> = {
       outputLanguageDescription: "Escolha o idioma usado na legenda e nos textos renderizados dentro da imagem gerada.",
       outputLanguageEnglish: "Ingles",
       outputLanguagePtBR: "Portugues (Brasil)",
+      briefingMode: "Configuracao do briefing",
+      briefingModeDescription: "Escolha se deseja montar o briefing por pontos-chave do negocio ou escrever o prompt completo manualmente.",
+      briefingModeGuided: "Briefing guiado",
+      briefingModeGuidedDescription: "Preencha os pontos estrategicos mais importantes e deixe o app montar o briefing final.",
+      briefingModePrompt: "Prompt completo",
+      briefingModePromptDescription: "Escreva a instrucao inteira manualmente quando quiser controle total sobre o briefing.",
+      guidedBriefingTitle: "Formulario de briefing guiado",
+      guidedBriefingDescription: "Use estes 10 pontos para dar um contexto estrategico mais forte antes da IA escrever os conteudos e visuais.",
+      guidedBriefingPreview: "Previa do briefing gerado",
+      guidedBriefingPreviewDescription: "Este e o briefing final que sera enviado para a IA enquanto o modo guiado estiver ativo.",
+      restoreGuidedBriefing: "Limpar briefing guiado",
+      briefingBusinessSummary: "Resumo do negocio",
+      briefingTargetAudience: "Publico-alvo",
+      briefingMainObjective: "Objetivo principal",
+      briefingProductsOrServices: "Produtos ou servicos",
+      briefingBrandVoice: "Voz da marca",
+      briefingDifferentiators: "Diferenciais",
+      briefingPainPoints: "Dores que devem ser abordadas",
+      briefingContentPillars: "Pilares de conteudo",
+      briefingCtaPreference: "CTA preferido",
+      briefingRestrictions: "Restricoes e regras",
       customInstructions: "Formula do prompt",
       customInstructionsDescription: "Personalize a instrucao base enviada para a IA. Voce pode manter a formula padrao ou reescrever para combinar com a voz da sua marca.",
       customInstructionsPlaceholder: "Voce e um especialista em estrategia de conteudo para Instagram e design visual.",

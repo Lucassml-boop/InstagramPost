@@ -35,6 +35,7 @@ OLLAMA_MODEL=kimi-k2.5:cloud
 OLLAMA_TIMEOUT_MS=480000
 NEXT_PUBLIC_OLLAMA_TIMEOUT_MS=480000
 APP_BASE_URL=http://localhost:3020
+FIXED_PUBLIC_URL=
 CRON_SECRET=replace-with-a-long-random-secret
 ```
 
@@ -53,6 +54,12 @@ CRON_SECRET=replace-with-a-long-random-secret
 7. Run `npm run db:push`.
 8. Start the app with `npm run dev`.
 9. Open `http://localhost:3020`.
+
+If you need a fixed Instagram OAuth callback during local testing, set `FIXED_PUBLIC_URL` in `.env.local`.
+When `FIXED_PUBLIC_URL` is present, `npm run dev` will stop generating a random `trycloudflare` URL and will keep:
+
+- `APP_BASE_URL=<FIXED_PUBLIC_URL>`
+- `INSTAGRAM_REDIRECT_URI=<FIXED_PUBLIC_URL>/api/auth/instagram/callback`
 
 ## Supabase + Prisma
 

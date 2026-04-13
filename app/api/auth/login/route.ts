@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createSession, loginOrRegister, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { authenticateUser, createSession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { jsonError } from "@/lib/server-utils";
 import { loginSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
     const parsed = loginSchema.parse(await request.json());
-    const user = await loginOrRegister(parsed.email, parsed.password);
+    const user = await authenticateUser(parsed.email, parsed.password);
     const session = await createSession(user);
     const cookieStore = await cookies();
 

@@ -5,9 +5,12 @@ import { getCurrentUser, OAUTH_STATE_COOKIE_NAME } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/env";
 import { getInstagramAuthUrl } from "@/lib/instagram";
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await getCurrentUser();
-  const baseUrl = getBaseUrl();
+  const requestUrl = new URL(request.url);
+  const requestOrigin = requestUrl.origin;
+  const baseUrl = getBaseUrl(requestOrigin);
+  const redirectUri = `${requestOrigin}/api/auth/instagram/callback`;
 
   if (!user) {
     console.warn("[instagram-auth] Redirecting anonymous user to login", {
@@ -21,7 +24,7 @@ export async function GET() {
 
   cookieStore.set(OAUTH_STATE_COOKIE_NAME, state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: requestUrl.protocol === "https:",
     sameSite: "lax",
     path: "/",
     maxAge: 600
@@ -30,9 +33,9 @@ export async function GET() {
   console.log("[instagram-auth] Starting OAuth flow", {
     userId: user.id,
     baseUrl,
-    redirectUri: process.env.INSTAGRAM_REDIRECT_URI ?? null,
+    redirectUri,
     stateLength: state.length
   });
 
-  return NextResponse.redirect(getInstagramAuthUrl(state));
+  return NextResponse.redirect(getInstagramAuthUrl(state, redirectUri));
 }

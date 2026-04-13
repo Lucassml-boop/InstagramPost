@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
@@ -83,6 +84,15 @@ export function LoginForm() {
       >
         {isPending || loginAction.isLoading ? dictionary.login.submitting : dictionary.login.submit}
       </button>
+
+      <div className="mt-5 flex flex-col gap-3 text-center text-sm">
+        <Link href="/forgot-password" className="font-medium text-slate-600 transition hover:text-ink">
+          {dictionary.login.forgotPassword}
+        </Link>
+        <Link href="/register" className="font-medium text-slate-600 transition hover:text-ink">
+          {dictionary.login.createAccount}
+        </Link>
+      </div>
     </form>
   );
 }
