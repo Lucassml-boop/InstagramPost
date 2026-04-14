@@ -62,6 +62,7 @@ export async function publishWeeklyAgendaPreview(input: {
         customInstructions: input.user.preferredCustomInstructions?.trim() || "",
         brandColors: DEFAULT_BRAND_COLORS,
         keywords: item.topicKeywords.join(", "),
+        userTopicHint: "",
         allowSimilarPost: false
       };
 

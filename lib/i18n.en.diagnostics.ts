@@ -44,6 +44,18 @@ automationDiagnostics: {
     "Every action returns the live backend response so you can validate the exact status without opening the terminal.",
   sectionSafety: "Safe testing",
   sectionSafetyDescription:
-    "Use the day selector in the weekly publish test if you want to publish only one agenda item instead of the full week."
+    "Use the day selector in the weekly publish test if you want to publish only one agenda item instead of the full week.",
+  aiMetadataTitle: "AI metadata diagnostics",
+  aiMetadataDescription:
+    "Upload a generated image to inspect whether the expected XMP/IPTC AI metadata is present before publishing.",
+  aiMetadataUploading: "Inspecting image...",
+  aiMetadataSelectFile: "Choose an image file to inspect its metadata.",
+  aiMetadataNoResult: "No image inspected yet.",
+  aiMetadataExiftoolMissing:
+    "exiftool is not available in this environment, so the app cannot verify image metadata here.",
+  aiMetadataDetected: "AI metadata was detected in the image.",
+  aiMetadataMissing: "The expected AI metadata was not detected in the image.",
+  aiMetadataExpectedLabel: "Expected AI metadata label",
+  aiMetadataRawOutput: "Raw metadata output"
 }
 };

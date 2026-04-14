@@ -9,6 +9,7 @@ type DayConfig = {
     goal: string;
     contentTypes: string[];
     formats: string[];
+    confirmed: boolean;
   }>;
 };
 
@@ -78,10 +79,36 @@ export function getDayConfig(profile: BrandProfile, day: DayLabel): DayConfig {
           .filter(Boolean),
         formats: (savedIdea?.formats ?? (index === 0 ? config?.formats : []) ?? [])
           .map((item) => item.trim())
-          .filter(Boolean)
+          .filter(Boolean),
+        confirmed: savedIdea?.confirmed ?? (
+          index === 0 ||
+          Boolean(savedIdea?.goal?.trim()) ||
+          Boolean(savedIdea?.contentTypes?.length) ||
+          Boolean(savedIdea?.formats?.length)
+        )
       };
     })
   };
+}
+
+export function getConfirmedSlotIndexes(config: DayConfig) {
+  return config.postIdeas
+    .map((idea, index) => ({ idea, index }))
+    .filter((entry) => entry.idea.confirmed)
+    .map((entry) => entry.index);
+}
+
+export function countConfirmedPostsForDay(profile: BrandProfile, day: DayLabel) {
+  const config = getDayConfig(profile, day);
+  if (!config.enabled) {
+    return 0;
+  }
+
+  return getConfirmedSlotIndexes(config).length;
+}
+
+export function countConfirmedWeeklyPosts(profile: BrandProfile) {
+  return DAY_ORDER.reduce((total, day) => total + countConfirmedPostsForDay(profile, day), 0);
 }
 
 export function expandPostTimes(postTimes: string[], postsPerDay: number) {
@@ -99,14 +126,23 @@ export function buildWeekSlots(profile: BrandProfile, referenceDate = new Date()
     if (!config.enabled) {
       continue;
     }
-    for (const [index, time] of expandPostTimes(config.postTimes, config.postsPerDay).entries()) {
-      const postIdea = config.postIdeas[index] ?? { goal: "", contentTypes: [], formats: [] };
+    const expandedTimes = expandPostTimes(config.postTimes, config.postsPerDay);
+    const confirmedSlotIndexes = getConfirmedSlotIndexes(config);
+    const postsPerDay = Math.max(confirmedSlotIndexes.length, 1);
+    for (const index of confirmedSlotIndexes) {
+      const time = expandedTimes[index] ?? "09:00";
+      const postIdea = config.postIdeas[index] ?? {
+        goal: "",
+        contentTypes: [],
+        formats: [],
+        confirmed: false
+      };
       slots.push({
         label: day.label,
         date: day.date,
         time,
         slotIndex: index + 1,
-        postsPerDay: config.postsPerDay,
+        postsPerDay,
         goal: postIdea.goal,
         contentTypes: postIdea.contentTypes,
         formats: postIdea.formats
@@ -114,4 +150,16 @@ export function buildWeekSlots(profile: BrandProfile, referenceDate = new Date()
     }
   }
   return slots;
+}
+
+export function isConfirmedDaySlot(profile: BrandProfile, day: DayLabel, time: string) {
+  const config = getDayConfig(profile, day);
+  const expandedTimes = expandPostTimes(config.postTimes, config.postsPerDay);
+  const slotIndex = expandedTimes.findIndex((candidate) => candidate === time);
+
+  if (slotIndex === -1) {
+    return false;
+  }
+
+  return config.postIdeas[slotIndex]?.confirmed ?? false;
 }

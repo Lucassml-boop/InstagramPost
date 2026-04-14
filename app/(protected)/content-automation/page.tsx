@@ -15,6 +15,7 @@ import {
   getContentTopicsHistory,
   getCurrentWeeklyAgenda
 } from "@/lib/content-system";
+import { countConfirmedWeeklyPosts } from "@/lib/content-system.schedule";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
 
@@ -29,10 +30,7 @@ export default async function ContentAutomationPage() {
   ]);
   const agendaWithStatus = user ? await attachAgendaPostStatuses(user.id, agenda) : [];
   const weekPosts = user ? await getWeeklyPostsForAgenda(user.id, agenda) : [];
-  const totalExpectedPosts = Object.values(profile.weeklyAgenda).reduce(
-    (total, day) => total + ((day?.enabled ?? false) ? Math.max(1, day?.postsPerDay ?? 1) : 0),
-    0
-  );
+  const totalExpectedPosts = countConfirmedWeeklyPosts(profile);
   const agendaMetadata = user ? serializeWeeklyAgendaState(await getWeeklyAgendaState(user.id)) : null;
   const initialAgendaSummary = summarizeWeeklyAgendaUsage({
     agenda: agendaWithStatus,

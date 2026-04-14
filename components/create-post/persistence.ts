@@ -26,6 +26,8 @@ type RestoreHandlers = {
   setActiveTab: (value: "content" | "settings") => void;
   setTopic: (value: string) => void;
   setMessage: (value: string) => void;
+  setLastAutoGenerateTopicHint: (value: string) => void;
+  setLastGeneratePostTopicHint: (value: string) => void;
   setPostType: (value: PostType) => void;
   setCarouselSlideCount: (value: number) => void;
   setCarouselSlideContexts: (value: CarouselSlideContext[]) => void;
@@ -93,6 +95,14 @@ export function restoreCreatePostState(handlers: RestoreHandlers) {
 
   if (typeof parsed.message === "string") {
     handlers.setMessage(parsed.message);
+  }
+
+  if (typeof parsed.lastAutoGenerateTopicHint === "string") {
+    handlers.setLastAutoGenerateTopicHint(parsed.lastAutoGenerateTopicHint);
+  }
+
+  if (typeof parsed.lastGeneratePostTopicHint === "string") {
+    handlers.setLastGeneratePostTopicHint(parsed.lastGeneratePostTopicHint);
   }
 
   if (isPostType(parsed.postType)) {

@@ -64,6 +64,32 @@ contentAutomation: {
   autoGenerateSectionHint:
     "Use Automatico para regenerar este campo com IA, preservando a intencao atual como base.",
   autoGenerateAll: "Automatico geral",
+  autoFillNewPostTitle: "Preencher este novo post automaticamente?",
+  autoFillNewPostDescription:
+    "Se aceitar, o sistema sugere horario, objetivo, tipos de conteudo e formatos para este novo slot, verificando os demais posts da semana para evitar duplicidade.",
+  autoFillNewPostAccept: "Preencher automaticamente",
+  autoFillNewPostDismiss: "Agora nao",
+  autoFillInProgressTitle: "Gerando...",
+  autoFillInProgressDescription:
+    "Preenchendo horario, objetivo, tipos de conteudo e formatos automaticamente para este post.",
+  slotConfirmed: "Confirmado para geracao",
+  slotAwaitingConfirmation: "Aguardando confirmacao",
+  slotConfirmAction: "Confirmar para geracao",
+  slotUnconfirmAction: "Manter como rascunho",
+  slotConfirmationDescription:
+    "Enquanto este slot nao for confirmado, ele nao entra na fila automatica de geracao/publicacao.",
+  nextPostTimerEyebrow: "Proximo post",
+  nextPostTimerDescription:
+    "Acompanhe quanto tempo falta para o proximo slot da agenda e se o post ja foi criado.",
+  nextPostTimerLabel: "Tempo restante",
+  nextPostCreationStatusLabel: "Situacao do post",
+  nextPostCreationReady: "Ja criado",
+  nextPostCreationPending: "Ainda nao criado",
+  nextPostSlotLabel: "Slot planejado",
+  nextPostManualSlotLabel: "Post manual/agendado fora do plano",
+  nextPostTimerEmptyTitle: "Nenhum proximo post encontrado",
+  nextPostTimerEmptyDescription:
+    "Nao encontramos um item futuro na agenda atual. Gere uma nova agenda semanal ou revise os horarios configurados.",
   chooseSavedPreset: "Escolher dos presets salvos",
   noSavedPresets: "Ainda nao existem presets salvos. Adicione-os na aba de configuracoes.",
   singlePostLabel: "post",

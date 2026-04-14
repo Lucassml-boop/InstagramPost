@@ -27,11 +27,13 @@ export async function POST(request: Request) {
         outputLanguage: "en" | "pt-BR";
         customInstructions: string;
       };
+      userTopicHint?: string;
     };
     const profile = await getContentBrandProfile();
     const result = await generateAutomaticCreatePostInputs({
       profile,
-      current: body.current
+      current: body.current,
+      userTopicHint: body.userTopicHint
     });
 
     return NextResponse.json({

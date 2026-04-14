@@ -18,6 +18,7 @@ import { BriefingEditorSection } from "./settings-sections/BriefingEditorSection
 import { GeneratedAgendaSection } from "./settings-sections/GeneratedAgendaSection";
 import { LanguageSection, PresetLibrarySection } from "./settings-sections/LanguageAndPresetSections";
 import { MemorySection } from "./settings-sections/MemorySection";
+import { NextPostCountdownCard } from "./settings-sections/NextPostCountdownCard";
 import { SourcesSection } from "./settings-sections/SourcesSection";
 import { StrategySection } from "./settings-sections/StrategySection";
 import type { DayLabel, Props } from "./types";
@@ -38,18 +39,48 @@ export function ContentAutomationSettings({ initialProfile, initialAgenda, initi
   const [openPresetPicker, setOpenPresetPicker] = useState<string | null>(null);
   const automation = useContentAutomation({ initialProfile, initialAgenda, initialWeekPosts, initialAgendaSummary, initialTopicsHistory, dictionary: { saveSuccess: dictionary.contentAutomation.saveSuccess, saveError: dictionary.contentAutomation.saveError, generateSuccess: dictionary.contentAutomation.generateSuccess, generateError: dictionary.contentAutomation.generateError, clearTopicsHistorySuccess: dictionary.contentAutomation.clearTopicsHistorySuccess, clearTopicsHistoryError: dictionary.contentAutomation.clearTopicsHistoryError } });
 
+  const getConfirmedDaySlotData = (day: DayLabel) => {
+    const dayConfig = automation.daySettings[day];
+    const expandedTimes = expandPreviewPostTimes(
+      parseTextareaItems(dayConfig.postTimes),
+      Math.max(1, Number.parseInt(dayConfig.postsPerDay, 10) || 1)
+    );
+    const confirmedEntries = dayConfig.postIdeas
+      .map((idea, index) => ({ idea, index }))
+      .filter((entry) => entry.idea.confirmed);
+
+    return {
+      count: confirmedEntries.length,
+      times: confirmedEntries.map((entry) => expandedTimes[entry.index] ?? "--:--"),
+      ideas: confirmedEntries.map((entry) => ({
+        goal: entry.idea.goal,
+        contentTypes: entry.idea.contentTypes,
+        formats: entry.idea.formats
+      }))
+    };
+  };
+
   const groupedAgenda = useMemo(() => {
     const groups = automation.agenda.reduce((map, item) => {
       const key = `${item.date}-${item.day}`;
       const current = map.get(key);
       const dayConfig = automation.daySettings[item.day as DayLabel];
-      const expectedPostsCount = Math.max(1, Number.parseInt(dayConfig?.postsPerDay ?? "1", 10) || 1);
-      const expectedTimes = expandPreviewPostTimes(parseTextareaItems(dayConfig?.postTimes ?? "09:00"), expectedPostsCount);
-      const expectedIdeas = Array.from({ length: expectedPostsCount }, (_, index) => ({
-        goal: dayConfig?.postIdeas[index]?.goal ?? "",
-        contentTypes: dayConfig?.postIdeas[index]?.contentTypes ?? "",
-        formats: dayConfig?.postIdeas[index]?.formats ?? ""
-      }));
+      const confirmedSlotData = dayConfig ? getConfirmedDaySlotData(item.day as DayLabel) : {
+        count: 0,
+        times: [],
+        ideas: []
+      };
+
+      if (
+        confirmedSlotData.count === 0 ||
+        !confirmedSlotData.times.includes(item.time)
+      ) {
+        return map;
+      }
+
+      const expectedPostsCount = confirmedSlotData.count;
+      const expectedTimes = confirmedSlotData.times;
+      const expectedIdeas = confirmedSlotData.ideas;
       if (current) {
         current.items.push(item);
       } else {
@@ -75,7 +106,17 @@ export function ContentAutomationSettings({ initialProfile, initialAgenda, initi
 
     return Array.from(groups.values());
   }, [automation.agenda, automation.daySettings, automation.weekPosts]);
-  const totalExpectedPosts = useMemo(() => DAY_ORDER.reduce((total, day) => total + (automation.daySettings[day].enabled ? Math.max(1, Number.parseInt(automation.daySettings[day].postsPerDay, 10) || 1) : 0), 0), [automation.daySettings]);
+  const totalExpectedPosts = useMemo(
+    () =>
+      DAY_ORDER.reduce((total, day) => {
+        if (!automation.daySettings[day].enabled) {
+          return total;
+        }
+
+        return total + automation.daySettings[day].postIdeas.filter((idea) => idea.confirmed).length;
+      }, 0),
+    [automation.daySettings]
+  );
   const goalPresetItems = useMemo(() => parseTextareaItems(automation.presets.goalPresets), [automation.presets.goalPresets]);
   const contentTypePresetItems = useMemo(() => parseTextareaItems(automation.presets.contentTypePresets), [automation.presets.contentTypePresets]);
   const formatPresetItems = useMemo(() => parseTextareaItems(automation.presets.formatPresets), [automation.presets.formatPresets]);
@@ -92,7 +133,7 @@ export function ContentAutomationSettings({ initialProfile, initialAgenda, initi
   const generateAutomaticSettingsBundle = () => startAutoGeneratingAllSettings(async () => { setGenerationSettingsMessage(null); automation.setError(null); try { const json = await generateAutomaticSettingsBundleService({ profile: automation.builtProfile, customInstructions: effectiveCustomInstructions }); automation.setBrandName(json.brandName ?? automation.brandName); automation.setEditableBrief(json.editableBrief ?? automation.editableBrief); automation.setServices(json.services ?? automation.services); automation.setContentRules(json.contentRules ?? automation.contentRules); automation.setResearchQueries(json.researchQueries ?? automation.researchQueries); automation.setCarouselDefaultStructure(json.carouselDefaultStructure ?? automation.carouselDefaultStructure); automation.updatePreset("goalPresets", json.goalPresets ?? automation.presets.goalPresets); automation.updatePreset("contentTypePresets", json.contentTypePresets ?? automation.presets.contentTypePresets); automation.updatePreset("formatPresets", json.formatPresets ?? automation.presets.formatPresets); if (typeof json.customInstructions === "string") { setBriefingMode("prompt"); setCustomInstructions(json.customInstructions || DEFAULT_CUSTOM_INSTRUCTIONS); } } catch (requestError) { automation.setError(getClientRequestErrorMessage(requestError, dictionary.contentAutomation.generateError, dictionary.common.serverConnectionError)); } });
 
   const settingsSectionProps = { dictionary, brandName: automation.brandName, setBrandName: automation.setBrandName, editableBrief: automation.editableBrief, setEditableBrief: automation.setEditableBrief, automationLoopEnabled: automation.automationLoopEnabled, setAutomationLoopEnabled: automation.setAutomationLoopEnabled, topicsHistoryCleanupFrequency: automation.topicsHistoryCleanupFrequency, setTopicsHistoryCleanupFrequency: automation.setTopicsHistoryCleanupFrequency, services: automation.services, setServices: automation.setServices, contentRules: automation.contentRules, setContentRules: automation.setContentRules, researchQueries: automation.researchQueries, setResearchQueries: automation.setResearchQueries, carouselDefaultStructure: automation.carouselDefaultStructure, setCarouselDefaultStructure: automation.setCarouselDefaultStructure, presets: automation.presets, updatePreset: automation.updatePreset, renderAutoButton, runAutomaticSetting, saveSettings: automation.saveSettings, generateWeeklyAgenda: automation.generateWeeklyAgenda, isSaving: automation.isSaving, isGenerating: automation.isGenerating, currentTopics: automation.currentTopics, uniqueTopicsHistory: automation.uniqueTopicsHistory, clearTopicsHistory: automation.clearTopicsHistory };
-  const agendaSectionProps = { dictionary, daySettings: automation.daySettings, expandedDays, toggleExpandedDay: (day: DayLabel) => setExpandedDays((current) => ({ ...current, [day]: !current[day] })), toggleDay: automation.toggleDay, updateDay: automation.updateDay, updateDayPostTime: automation.updateDayPostTime, updateDayPostIdea: automation.updateDayPostIdea, renderPresetPicker, goalPresetItems, contentTypePresetItems, formatPresetItems, generateAutomaticPostIdea: automation.generateAutomaticPostIdea, postTimesByDay, setAllDaysEnabled: automation.setAllDaysEnabled, saveSettings: automation.saveSettings, generateWeeklyAgenda: automation.generateWeeklyAgenda, isSaving: automation.isSaving, isGenerating: automation.isGenerating, currentTopics: automation.currentTopics, groupedAgenda, totalExpectedPosts, agendaSummary: automation.agendaSummary, keepUsingStaleAgenda: automation.keepUsingStaleAgenda, isResolvingStaleAgenda: automation.isResolvingStaleAgenda };
+  const agendaSectionProps = { dictionary, daySettings: automation.daySettings, expandedDays, toggleExpandedDay: (day: DayLabel) => setExpandedDays((current) => ({ ...current, [day]: !current[day] })), toggleDay: automation.toggleDay, updateDay: automation.updateDay, updateDayPostTime: automation.updateDayPostTime, updateDayPostIdea: automation.updateDayPostIdea, toggleDayPostConfirmation: automation.toggleDayPostConfirmation, renderPresetPicker, goalPresetItems, contentTypePresetItems, formatPresetItems, autoFillKey: automation.autoFillKey, generateAutomaticPostIdea: automation.generateAutomaticPostIdea, autoFillNewDayPost: automation.autoFillNewDayPost, dismissAutoFillSuggestion: automation.dismissAutoFillSuggestion, suggestedAutoFillTargets: automation.suggestedAutoFillTargets, postTimesByDay, setAllDaysEnabled: automation.setAllDaysEnabled, saveSettings: automation.saveSettings, generateWeeklyAgenda: automation.generateWeeklyAgenda, isSaving: automation.isSaving, isGenerating: automation.isGenerating, currentTopics: automation.currentTopics, groupedAgenda, totalExpectedPosts, agendaSummary: automation.agendaSummary, keepUsingStaleAgenda: automation.keepUsingStaleAgenda, isResolvingStaleAgenda: automation.isResolvingStaleAgenda };
 
-  return <div className="space-y-6">{renderStatusMessage(automation.message, automation.error)}{initialTab === "settings" ? <><BriefingControlsSection dictionary={dictionary} outputLanguage={outputLanguage} setOutputLanguage={setOutputLanguage} briefingMode={briefingMode} setBriefingMode={setBriefingMode} /><BriefingEditorSection dictionary={dictionary} briefingMode={briefingMode} briefingFieldDefinitions={briefingFieldDefinitions} guidedBriefingFields={guidedBriefingFields} updateGuidedBriefingField={(field, value) => setGuidedBriefingFields((current) => ({ ...current, [field]: value }))} guidedBriefingPrompt={guidedBriefingPrompt} customInstructions={customInstructions} setCustomInstructions={setCustomInstructions} renderAutoButton={renderAutoButton} generatePromptInstructions={() => runAutomaticSetting({ key: "customInstructions", target: "customInstructions", currentValue: customInstructions, apply: (value) => { setBriefingMode("prompt"); setCustomInstructions(value); } })} clearGuidedBriefing={() => setGuidedBriefingFields(createEmptyBriefingFields())} /><BriefingActionsBar dictionary={dictionary} generateAutomaticSettingsBundle={generateAutomaticSettingsBundle} isAutoGeneratingAllSettings={isAutoGeneratingAllSettings} saveGenerationSettings={saveGenerationSettings} isSavingGenerationSettings={isSavingGenerationSettings} generationSettingsMessage={generationSettingsMessage} /><StrategySection {...settingsSectionProps} /><div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]"><SourcesSection {...settingsSectionProps} /><AutomationSection {...settingsSectionProps} /></div><MemorySection {...settingsSectionProps} /><LanguageSection dictionary={dictionary} /><PresetLibrarySection {...settingsSectionProps} /></> : null}{initialTab === "agenda" ? <><AgendaAutomationSection {...agendaSectionProps} /><AgendaRulesSection {...agendaSectionProps} /><GeneratedAgendaSection dictionary={dictionary} groupedAgenda={groupedAgenda} totalExpectedPosts={totalExpectedPosts} agendaSummary={automation.agendaSummary} keepUsingStaleAgenda={automation.keepUsingStaleAgenda} isResolvingStaleAgenda={automation.isResolvingStaleAgenda} /></> : null}</div>;
+  return <div className="space-y-6">{renderStatusMessage(automation.message, automation.error)}{initialTab === "settings" ? <><BriefingControlsSection dictionary={dictionary} outputLanguage={outputLanguage} setOutputLanguage={setOutputLanguage} briefingMode={briefingMode} setBriefingMode={setBriefingMode} /><BriefingEditorSection dictionary={dictionary} briefingMode={briefingMode} briefingFieldDefinitions={briefingFieldDefinitions} guidedBriefingFields={guidedBriefingFields} updateGuidedBriefingField={(field, value) => setGuidedBriefingFields((current) => ({ ...current, [field]: value }))} guidedBriefingPrompt={guidedBriefingPrompt} customInstructions={customInstructions} setCustomInstructions={setCustomInstructions} renderAutoButton={renderAutoButton} generatePromptInstructions={() => runAutomaticSetting({ key: "customInstructions", target: "customInstructions", currentValue: customInstructions, apply: (value) => { setBriefingMode("prompt"); setCustomInstructions(value); } })} clearGuidedBriefing={() => setGuidedBriefingFields(createEmptyBriefingFields())} /><BriefingActionsBar dictionary={dictionary} generateAutomaticSettingsBundle={generateAutomaticSettingsBundle} isAutoGeneratingAllSettings={isAutoGeneratingAllSettings} saveGenerationSettings={saveGenerationSettings} isSavingGenerationSettings={isSavingGenerationSettings} generationSettingsMessage={generationSettingsMessage} /><StrategySection {...settingsSectionProps} /><div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]"><SourcesSection {...settingsSectionProps} /><AutomationSection {...settingsSectionProps} /></div><MemorySection {...settingsSectionProps} /><LanguageSection dictionary={dictionary} /><PresetLibrarySection {...settingsSectionProps} /></> : null}{initialTab === "agenda" ? <><NextPostCountdownCard dictionary={dictionary} groupedAgenda={groupedAgenda} weekPosts={automation.weekPosts} /><AgendaAutomationSection {...agendaSectionProps} /><AgendaRulesSection {...agendaSectionProps} /><GeneratedAgendaSection dictionary={dictionary} groupedAgenda={groupedAgenda} totalExpectedPosts={totalExpectedPosts} agendaSummary={automation.agendaSummary} keepUsingStaleAgenda={automation.keepUsingStaleAgenda} isResolvingStaleAgenda={automation.isResolvingStaleAgenda} /></> : null}</div>;
 }

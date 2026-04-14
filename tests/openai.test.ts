@@ -16,6 +16,7 @@ test("getOllamaTimeoutForInput keeps base timeout for non-carousel posts", () =>
     outputLanguage: "pt-BR",
     customInstructions: "",
     keywords: "",
+    userTopicHint: "",
     allowSimilarPost: false
   });
 
@@ -36,6 +37,7 @@ test("getOllamaTimeoutForInput adds four minutes per carousel slide", () => {
     outputLanguage: "pt-BR",
     customInstructions: "",
     keywords: "",
+    userTopicHint: "",
     allowSimilarPost: false
   });
 

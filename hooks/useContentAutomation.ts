@@ -14,6 +14,7 @@ import {
   buildDayState,
   buildPresetsState,
   buildProfileFromState,
+  expandPreviewPostTimes,
   fromTextareaValue,
   toTextareaValue
 } from "@/components/content-automation/utils";
@@ -63,6 +64,17 @@ export function useContentAutomation(input: {
   const [isSaving, startSaving] = useTransition();
   const [isGenerating, startGenerating] = useTransition();
   const [autoFillKey, setAutoFillKey] = useState<string | null>(null);
+  const [suggestedAutoFillTargets, setSuggestedAutoFillTargets] = useState<
+    Record<DayLabel, number[]>
+  >({
+    Segunda: [],
+    Terca: [],
+    Quarta: [],
+    Quinta: [],
+    Sexta: [],
+    Sabado: [],
+    Domingo: []
+  });
   const [isResolvingStaleAgenda, startResolvingStaleAgenda] = useTransition();
 
   const builtProfile = useMemo(
@@ -100,6 +112,7 @@ export function useContentAutomation(input: {
 
   function updateDay(day: DayLabel, field: "postsPerDay" | "postTimes", value: string) {
     setDaySettings((current) => {
+      const previousPostsPerDay = Math.max(1, Number.parseInt(current[day].postsPerDay, 10) || 1);
       const nextValue =
         field === "postsPerDay" ? Math.max(1, Number.parseInt(value, 10) || 1).toString() : value;
       const nextPostsPerDay =
@@ -110,7 +123,8 @@ export function useContentAutomation(input: {
       const nextIdeas = Array.from({ length: nextPostsPerDay }, (_, index) => ({
         goal: existingIdeas[index]?.goal ?? "",
         contentTypes: existingIdeas[index]?.contentTypes ?? "",
-        formats: existingIdeas[index]?.formats ?? ""
+        formats: existingIdeas[index]?.formats ?? "",
+        confirmed: existingIdeas[index]?.confirmed ?? index === 0
       }));
 
       return {
@@ -122,6 +136,32 @@ export function useContentAutomation(input: {
         }
       };
     });
+
+    if (field === "postsPerDay") {
+      const nextPostsPerDay = Math.max(1, Number.parseInt(value, 10) || 1);
+      const previousPostsPerDay = Math.max(1, Number.parseInt(daySettings[day].postsPerDay, 10) || 1);
+
+      setSuggestedAutoFillTargets((current) => {
+        const existing = current[day] ?? [];
+
+        if (nextPostsPerDay <= previousPostsPerDay) {
+          return {
+            ...current,
+            [day]: existing.filter((index) => index < nextPostsPerDay)
+          };
+        }
+
+        const addedIndexes = Array.from(
+          { length: nextPostsPerDay - previousPostsPerDay },
+          (_, index) => previousPostsPerDay + index
+        );
+
+        return {
+          ...current,
+          [day]: Array.from(new Set([...existing, ...addedIndexes]))
+        };
+      });
+    }
   }
 
   function updateDayPostIdea(
@@ -130,6 +170,11 @@ export function useContentAutomation(input: {
     field: "goal" | "contentTypes" | "formats",
     value: string
   ) {
+    setSuggestedAutoFillTargets((current) => ({
+      ...current,
+      [day]: (current[day] ?? []).filter((index) => index !== postIndex)
+    }));
+
     setDaySettings((current) => ({
       ...current,
       [day]: {
@@ -147,6 +192,11 @@ export function useContentAutomation(input: {
   }
 
   function updateDayPostTime(day: DayLabel, postIndex: number, value: string) {
+    setSuggestedAutoFillTargets((current) => ({
+      ...current,
+      [day]: (current[day] ?? []).filter((index) => index !== postIndex)
+    }));
+
     setDaySettings((current) => {
       const nextTimes = fromTextareaValue(current[day].postTimes);
       const normalizedTimes = Array.from(
@@ -164,6 +214,28 @@ export function useContentAutomation(input: {
         }
       };
     });
+  }
+
+  function toggleDayPostConfirmation(day: DayLabel, postIndex: number, confirmed: boolean) {
+    setSuggestedAutoFillTargets((current) => ({
+      ...current,
+      [day]: confirmed ? (current[day] ?? []) : (current[day] ?? []).filter((index) => index !== postIndex)
+    }));
+
+    setDaySettings((current) => ({
+      ...current,
+      [day]: {
+        ...current[day],
+        postIdeas: current[day].postIdeas.map((idea, index) =>
+          index === postIndex
+            ? {
+                ...idea,
+                confirmed
+              }
+            : idea
+        )
+      }
+    }));
   }
 
   function updatePreset(
@@ -203,11 +275,16 @@ export function useContentAutomation(input: {
                   ...idea,
                   goal: json.idea?.goal ?? "",
                   contentTypes: (json.idea?.contentTypes ?? []).join("\n"),
-                  formats: (json.idea?.formats ?? []).join("\n")
+                  formats: (json.idea?.formats ?? []).join("\n"),
+                  confirmed: idea.confirmed
                 }
               : idea
           )
         }
+      }));
+      setSuggestedAutoFillTargets((current) => ({
+        ...current,
+        [day]: (current[day] ?? []).filter((index) => index !== postIndex)
       }));
     } catch (requestError) {
       setError(
@@ -216,6 +293,28 @@ export function useContentAutomation(input: {
     } finally {
       setAutoFillKey((current) => (current === requestKey ? null : current));
     }
+  }
+
+  async function autoFillNewDayPost(day: DayLabel, postIndex: number) {
+    const expandedTimes = expandPreviewPostTimes(
+      fromTextareaValue(daySettings[day].postTimes),
+      Math.max(1, Number.parseInt(daySettings[day].postsPerDay, 10) || 1)
+    );
+    const suggestedTime = expandedTimes[postIndex] ?? "";
+    const currentTime = fromTextareaValue(daySettings[day].postTimes)[postIndex] ?? "";
+
+    if (!currentTime && suggestedTime) {
+      updateDayPostTime(day, postIndex, suggestedTime);
+    }
+
+    await generateAutomaticPostIdea(day, postIndex);
+  }
+
+  function dismissAutoFillSuggestion(day: DayLabel, postIndex: number) {
+    setSuggestedAutoFillTargets((current) => ({
+      ...current,
+      [day]: (current[day] ?? []).filter((index) => index !== postIndex)
+    }));
   }
 
   function toggleDay(day: DayLabel, enabled: boolean) {
@@ -346,12 +445,16 @@ export function useContentAutomation(input: {
     isSaving,
     isGenerating,
     autoFillKey,
+    suggestedAutoFillTargets,
     isResolvingStaleAgenda,
     uniqueTopicsHistory,
     updateDay,
     updateDayPostIdea,
     updateDayPostTime,
+    toggleDayPostConfirmation,
     generateAutomaticPostIdea,
+    autoFillNewDayPost,
+    dismissAutoFillSuggestion,
     toggleDay,
     setAllDaysEnabled,
     saveSettings,

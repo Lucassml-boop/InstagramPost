@@ -5,6 +5,8 @@ import {
   getCurrentWeeklyAgenda
 } from "@/lib/content-system.storage";
 import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
+import { isConfirmedDaySlot } from "@/lib/content-system.schedule";
+import type { DayLabel } from "@/lib/content-system.constants";
 import { generateInstagramCarouselPosts, generateInstagramPost } from "@/lib/openai";
 import { renderPostImage } from "@/lib/renderer";
 import { getPersistedPreviewUrl, slugify } from "@/lib/storage";
@@ -83,6 +85,7 @@ async function createScheduledDraftFromAgendaItem(input: {
     customInstructions: input.preferredCustomInstructions?.trim() || "",
     brandColors: DEFAULT_BRAND_COLORS,
     keywords: input.item.topicKeywords.join(", "),
+    userTopicHint: "",
     allowSimilarPost: false
   };
 
@@ -171,6 +174,10 @@ export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
   const agendaWithStatus = await attachAgendaPostStatuses(automationUser.id, agenda);
   const dueItems = agendaWithStatus.filter((item) => {
     if (item.postGenerationStatus !== "not-generated") {
+      return false;
+    }
+
+    if (!isConfirmedDaySlot(brandProfile, item.day as DayLabel, item.time)) {
       return false;
     }
 

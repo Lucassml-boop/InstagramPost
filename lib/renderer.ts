@@ -3,16 +3,40 @@ import { saveGeneratedImageBuffer } from "@/lib/storage.server";
 const RENDER_TIMEOUT_MS = 120_000;
 
 async function launchRendererBrowser() {
-  const [{ default: chromium }, { default: puppeteer }] = await Promise.all([
-    import("@sparticuz/chromium"),
-    import("puppeteer-core")
-  ]);
+  const isServerlessLinux =
+    process.platform === "linux" &&
+    (Boolean(process.env.VERCEL) || Boolean(process.env.AWS_EXECUTION_ENV));
 
-  const executablePath = await chromium.executablePath();
+  if (isServerlessLinux) {
+    const [{ default: chromium }, { default: puppeteerCore }] = await Promise.all([
+      import("@sparticuz/chromium"),
+      import("puppeteer-core")
+    ]);
+
+    const executablePath = await chromium.executablePath();
+
+    console.info("[renderer] Using serverless Chromium", {
+      platform: process.platform,
+      executablePath
+    });
+
+    return puppeteerCore.launch({
+      executablePath,
+      args: chromium.args,
+      headless: true
+    });
+  }
+
+  const { default: puppeteer } = await import("puppeteer");
+  const executablePath = puppeteer.executablePath();
+
+  console.info("[renderer] Using local Puppeteer browser", {
+    platform: process.platform,
+    executablePath
+  });
 
   return puppeteer.launch({
     executablePath,
-    args: chromium.args,
     headless: true
   });
 }

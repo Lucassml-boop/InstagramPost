@@ -1,5 +1,6 @@
 "use client";
 
+import { AiMetadataDiagnostics } from "@/components/automation-diagnostics/AiMetadataDiagnostics";
 import { useI18n } from "@/components/I18nProvider";
 import { Panel } from "@/components/shared";
 import { useAutomationDiagnostics } from "@/hooks/useAutomationDiagnostics";
@@ -74,6 +75,21 @@ export function AutomationDiagnostics() {
           </div>
         </div>
       </Panel>
+
+      <AiMetadataDiagnostics
+        dictionary={{
+          title: dictionary.automationDiagnostics.aiMetadataTitle,
+          description: dictionary.automationDiagnostics.aiMetadataDescription,
+          uploading: dictionary.automationDiagnostics.aiMetadataUploading,
+          selectFile: dictionary.automationDiagnostics.aiMetadataSelectFile,
+          noResult: dictionary.automationDiagnostics.aiMetadataNoResult,
+          exiftoolMissing: dictionary.automationDiagnostics.aiMetadataExiftoolMissing,
+          aiMetadataDetected: dictionary.automationDiagnostics.aiMetadataDetected,
+          aiMetadataMissing: dictionary.automationDiagnostics.aiMetadataMissing,
+          expectedLabel: dictionary.automationDiagnostics.aiMetadataExpectedLabel,
+          rawOutput: dictionary.automationDiagnostics.aiMetadataRawOutput
+        }}
+      />
 
       <div className="grid gap-6">
         {orderedActions.map((action) => {

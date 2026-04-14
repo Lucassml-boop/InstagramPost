@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
   getBrandColorsHistoryLabel,
   getBrandColorsSwatches,
@@ -33,6 +33,27 @@ export function CaptionGeneratorPrimaryFields(input: {
   const { dictionary } = input;
   const palette = parseBrandColors(input.brandColors);
   const [optionalFieldsVisible, setOptionalFieldsVisible] = useState(0);
+
+  useEffect(() => {
+    if (!palette.support && !palette.accent) {
+      return;
+    }
+
+    input.setBrandColors((current) => {
+      const currentPalette = parseBrandColors(current);
+
+      if (!currentPalette.support && !currentPalette.accent) {
+        return current;
+      }
+
+      return serializeBrandColors({
+        primary: currentPalette.primary,
+        background: currentPalette.background,
+        support: "",
+        accent: ""
+      });
+    });
+  }, []);
 
   function updateBrandColorField(
     role: "primary" | "background" | "support" | "accent",

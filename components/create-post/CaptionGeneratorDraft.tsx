@@ -7,6 +7,19 @@ import { PostScheduler } from "./PostScheduler";
 import { formatDuration } from "./utils";
 import type { DraftResponse, PostType } from "./types";
 
+function buildManualFocusSummary(input: {
+  topic: string;
+  message: string;
+  keywords: string;
+}) {
+  const parts = [input.topic.trim(), input.message.trim(), input.keywords.trim()].filter(Boolean);
+  if (parts.length === 0) {
+    return "";
+  }
+
+  return parts.join(" | ");
+}
+
 export function CaptionGeneratorDraft(input: {
   dictionary: any;
   isGenerating: boolean;
@@ -18,9 +31,15 @@ export function CaptionGeneratorDraft(input: {
   carouselSlideCount: number;
   cancelGeneration: () => void;
   isAutoGeneratingAll: boolean;
-  generateAllCreatePostInputs: () => void;
-  generatePost: () => void;
-  generatePostIgnoringSimilar: () => void;
+  openAutoGenerateAllModal: () => void;
+  openGeneratePostModal: () => void;
+  generatePostIgnoringSimilar: (userTopicHint?: string) => void;
+  lastAutoGenerateTopicHint: string;
+  lastGeneratePostTopicHint: string;
+  clearFocusHints: () => void;
+  topic: string;
+  message: string;
+  keywords: string;
   draft: DraftResponse | null;
   shouldShowCaptionEditor: boolean;
   caption: string;
@@ -35,6 +54,11 @@ export function CaptionGeneratorDraft(input: {
   error: GeneratorErrorState | null;
 }) {
   const { dictionary } = input;
+  const manualFocusSummary = buildManualFocusSummary({
+    topic: input.topic,
+    message: input.message,
+    keywords: input.keywords
+  });
 
   return (
     <>
@@ -44,7 +68,7 @@ export function CaptionGeneratorDraft(input: {
             <>
               <button
                 type="button"
-                onClick={input.generateAllCreatePostInputs}
+                onClick={input.openAutoGenerateAllModal}
                 disabled={input.isAutoGeneratingAll}
                 className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:opacity-60"
               >
@@ -54,7 +78,7 @@ export function CaptionGeneratorDraft(input: {
               </button>
               <button
                 type="button"
-                onClick={input.generatePost}
+                onClick={input.openGeneratePostModal}
                 disabled={input.isGenerating}
                 className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
               >
@@ -70,6 +94,39 @@ export function CaptionGeneratorDraft(input: {
               {dictionary.generator.cancelGeneration}
             </button>
           )}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              {dictionary.generator.focusSummaryTitle}
+            </p>
+            <button
+              type="button"
+              onClick={input.clearFocusHints}
+              className="text-xs font-semibold text-slate-600 transition hover:text-ink"
+            >
+              {dictionary.generator.focusSummaryClear}
+            </button>
+          </div>
+          <p className="mt-2">
+            <span className="font-semibold text-ink">
+              {dictionary.generator.focusSummaryAutoLabel}:
+            </span>{" "}
+            {input.lastAutoGenerateTopicHint || dictionary.generator.focusSummaryNone}
+          </p>
+          <p className="mt-1">
+            <span className="font-semibold text-ink">
+              {dictionary.generator.focusSummaryGenerateLabel}:
+            </span>{" "}
+            {input.lastGeneratePostTopicHint || dictionary.generator.focusSummaryNone}
+          </p>
+          <p className="mt-1">
+            <span className="font-semibold text-ink">
+              {dictionary.generator.focusSummaryManualLabel}:
+            </span>{" "}
+            {manualFocusSummary || dictionary.generator.focusSummaryNone}
+          </p>
         </div>
       </div>
 
@@ -185,7 +242,7 @@ export function CaptionGeneratorDraft(input: {
               </a>
               <button
                 type="button"
-                onClick={input.generatePostIgnoringSimilar}
+                onClick={() => input.generatePostIgnoringSimilar()}
                 disabled={input.isGenerating}
                 className="inline-flex rounded-full bg-red-700 px-4 py-2 font-semibold text-white transition hover:bg-red-800 disabled:opacity-60"
               >

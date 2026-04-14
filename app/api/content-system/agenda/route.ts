@@ -7,6 +7,7 @@ import {
 } from "@/lib/content-system.agenda-metadata";
 import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
 import { getContentBrandProfile, getCurrentWeeklyAgenda } from "@/lib/content-system";
+import { countConfirmedWeeklyPosts } from "@/lib/content-system.schedule";
 import { jsonError } from "@/lib/server-utils";
 
 export async function GET() {
@@ -22,10 +23,7 @@ export async function GET() {
     getWeeklyAgendaState(user.id)
   ]);
   const agendaWithStatus = await attachAgendaPostStatuses(user.id, agenda);
-  const totalExpectedPosts = Object.values(profile.weeklyAgenda).reduce(
-    (total, day) => total + ((day?.enabled ?? false) ? Math.max(1, day?.postsPerDay ?? 1) : 0),
-    0
-  );
+  const totalExpectedPosts = countConfirmedWeeklyPosts(profile);
   const agendaSummary = summarizeWeeklyAgendaUsage({
     agenda: agendaWithStatus,
     totalExpectedPosts,

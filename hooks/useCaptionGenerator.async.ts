@@ -17,7 +17,7 @@ export async function generateCaptionPost(
   state: CaptionGeneratorState,
   dictionary: UseCaptionGeneratorInput["dictionary"],
   saveBrandColorsToHistory: () => void,
-  options?: { allowSimilarPost?: boolean }
+  options?: { allowSimilarPost?: boolean; userTopicHint?: string }
 ) {
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -40,6 +40,7 @@ export async function generateCaptionPost(
       customInstructions: state.customInstructions,
       brandColors: state.brandColors,
       keywords: state.keywords,
+      userTopicHint: options?.userTopicHint ?? "",
       allowSimilarPost: options?.allowSimilarPost ?? false,
       signal: controller.signal
     });

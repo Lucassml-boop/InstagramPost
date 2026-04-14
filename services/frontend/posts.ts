@@ -26,6 +26,7 @@ export async function generatePost(input: {
   customInstructions: string;
   brandColors: string;
   keywords: string;
+  userTopicHint?: string;
   allowSimilarPost?: boolean;
   signal?: AbortSignal;
 }) {
@@ -43,6 +44,7 @@ export async function generatePost(input: {
       customInstructions: input.customInstructions,
       brandColors: input.brandColors,
       keywords: input.keywords,
+      userTopicHint: input.userTopicHint ?? "",
       allowSimilarPost: input.allowSimilarPost ?? false
     }),
     signal: input.signal
@@ -127,6 +129,34 @@ export async function uploadImage(file: File, markAsAiGenerated: boolean) {
   >(response, "Upload failed.");
 }
 
+export async function inspectAiMetadata(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch("/api/posts/inspect-ai-metadata", {
+    method: "POST",
+    body: formData
+  });
+
+  return parseJsonOrThrow<
+    {
+      exiftoolAvailable: boolean;
+      expectedDigitalSourceType: string;
+      detected: {
+        digitalSourceType: string | null;
+        creator: string | null;
+        creatorTool: string | null;
+        description: string | null;
+        credit: string | null;
+        rights: string | null;
+      };
+      hasAiMetadata: boolean;
+      rawOutput: Record<string, unknown> | null;
+      error?: string;
+    }
+  >(response, "Unable to inspect AI metadata.");
+}
+
 export async function generateCreatePostInputs(input: {
   current: {
     topic: string;
@@ -140,6 +170,7 @@ export async function generateCreatePostInputs(input: {
     outputLanguage: OutputLanguage;
     customInstructions: string;
   };
+  userTopicHint?: string;
 }) {
   const response = await fetch("/api/posts/generate-inputs", {
     method: "POST",

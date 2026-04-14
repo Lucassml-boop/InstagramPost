@@ -228,12 +228,22 @@ export async function handleGeneratePost(
     const renderedImages = [];
 
     for (const [index, slide] of slidesToRender.entries()) {
+      const slideRenderStartedAt = Date.now();
       const image = await resolvedDeps.renderPostImage({
         slug: `${resolvedDeps.slugify(parsed.topic)}-${index + 1}`,
         html: slide.html,
         css: slide.css,
         width: 1080,
         height: parsed.postType === "story" ? 1920 : 1080
+      });
+
+      console.info("[api/posts/generate] Slide rendered", {
+        userId: user.id,
+        slideIndex: index + 1,
+        slideCount: slidesToRender.length,
+        renderDurationMs: Date.now() - slideRenderStartedAt,
+        totalRenderDurationMs: Date.now() - phaseStartedAt.render,
+        totalDurationMs: Date.now() - startedAt
       });
 
       renderedImages.push(image);
@@ -261,6 +271,14 @@ export async function handleGeneratePost(
       })),
       imageUrl: renderedImages[0].publicPath,
       imagePath: renderedImages[0].absolutePath
+    });
+
+    console.info("[api/posts/generate] Draft created", {
+      userId: user.id,
+      draftDurationMs: Date.now() - phaseStartedAt.draft,
+      renderDurationMs: phaseStartedAt.draft - phaseStartedAt.render,
+      totalDurationMs: Date.now() - startedAt,
+      slidesCount: renderedImages.length
     });
 
     return Response.json({

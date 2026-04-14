@@ -41,28 +41,30 @@ export async function generateInstagramCarouselPosts(
   const styleGuide =
     firstSlide.styleGuide?.trim() ||
     "Match the first slide's composition, typography rhythm, and color balance closely.";
-  const slides: GeneratedPost[] = [firstSlide];
+  const remainingSlides = await Promise.all(
+    Array.from({ length: Math.max(slideCount - 1, 0) }, async (_, offset) => {
+      const index = offset + 1;
+      const slide = await requestInstagramPostGeneration(
+        parsedInput,
+        {
+          slideIndex: index + 1,
+          slideCount,
+          slideContext: slideContexts[index],
+          styleGuide,
+          requireCaption: false
+        },
+        automationContext
+      );
 
-  for (let index = 1; index < slideCount; index += 1) {
-    const slide = await requestInstagramPostGeneration(
-      parsedInput,
-      {
-        slideIndex: index + 1,
-        slideCount,
-        slideContext: slideContexts[index],
-        styleGuide,
-        requireCaption: false
-      },
-      automationContext
-    );
-
-    slides.push({
-      ...slide,
-      caption: firstSlide.caption,
-      hashtags: firstSlide.hashtags,
-      styleGuide
-    });
-  }
+      return {
+        ...slide,
+        caption: firstSlide.caption,
+        hashtags: firstSlide.hashtags,
+        styleGuide
+      };
+    })
+  );
+  const slides: GeneratedPost[] = [firstSlide, ...remainingSlides];
 
   return {
     slides,

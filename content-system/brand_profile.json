@@ -42,7 +42,8 @@
           "formats": [
             "Carrossel",
             "Reels explicativo"
-          ]
+          ],
+          "confirmed": true
         },
         {
           "goal": "Estabelecer credibilidade através de evidências tangíveis de transformação operacional, demonstrando como a automação inteligente traduz-se em ganhos reais de produtividade e receita, enquanto posiciona a EcomForge como parceira estratégica capaz de executar implementações complexas que geram ROI mensurável.",
@@ -58,7 +59,8 @@
             "Reels narrativo com storytelling de transformação - vídeo curto (60-90s) utilizando o formato 'day in the life' comparativo, mostrando o operador antes (estressado, copiando dados manualmente) e depois (analisando estratégias no dashboard), com texto em tela destacando números específicos de economia de tempo.",
             "Infográfico animado em Stories (com destaque permanente) - série de 3-5 stories utilizando recursos interativos (enquetes 'Você sabia?', caixas de perguntas) para apresentar os dados do case de forma fragmentada e engajadora, com link swipe-up ou sticker de link para landing page de cases de sucesso.",
             "Post single-image 'Dashboard da Semana' - imagem estética e profissional de um dashboard real (ou mockup fiel) com destaque para métricas específicas de eficiência operacional, acompanhada de legenda longa que narra o contexto por trás daqueles números e como sistemas integrados possibilitaram aquela visibilidade."
-          ]
+          ],
+          "confirmed": true
         }
       ]
     },
@@ -75,9 +77,10 @@
         "Reels",
         "Stories"
       ],
-      "postsPerDay": 1,
+      "postsPerDay": 2,
       "postTimes": [
-        "11:00"
+        "11:00",
+        "15:30"
       ],
       "postIdeas": [
         {
@@ -91,7 +94,23 @@
           "formats": [
             "Reels",
             "Stories"
-          ]
+          ],
+          "confirmed": true
+        },
+        {
+          "goal": "Gerar confianca mostrando resultados.",
+          "contentTypes": [
+            "explicacoes aplicado a integracao Mercado Livre e Shopee com foco em decisao, clareza operacional e ganho de produtividade",
+            "dicas praticas aplicado a integracao Mercado Livre e Shopee com foco em decisao, clareza operacional e ganho de produtividade",
+            "erros comuns aplicado a integracao Mercado Livre e Shopee com foco em decisao, clareza operacional e ganho de produtividade",
+            "casos de cliente"
+          ],
+          "formats": [
+            "Reels explicativo com abordagem mais consultiva, exemplo realista e CTA conectado ao servico",
+            "Imagem com CTA com abordagem mais consultiva, exemplo realista e CTA conectado ao servico",
+            "Video curto com abordagem mais consultiva, exemplo realista e CTA conectado ao servico"
+          ],
+          "confirmed": true
         }
       ]
     },
@@ -122,7 +141,8 @@
           ],
           "formats": [
             "Carrossel"
-          ]
+          ],
+          "confirmed": true
         }
       ]
     },
@@ -153,7 +173,8 @@
           ],
           "formats": [
             "Reels"
-          ]
+          ],
+          "confirmed": true
         }
       ]
     },
@@ -190,7 +211,8 @@
             "Reels de 45-60 segundos utilizando storytelling visual do arco narrativo 'Do Caos à Tranquilidade', começando com montagem rápida de notificações de pedidos piscando no celular (som de notificação sobreposto), transicionando para cenas de alguém fechando o laptop com satisfação às 18h enquanto o sistema trabalha sozinho, com legendas educativas em destaque explicando cada ponto de automação (ex: 'Estoque atualizado sozinho às 19h') e texto final convidando para o link na bio.",
             "Post estático no formato infográfico dividido verticalmente em duas colunas contrastantes com design limpo: esquerda intitulada 'Sexta-feira sem automação' com lista visual de 8 tarefas manuais em vermelho/alaranjado, e direita 'Sexta-feira com EcomForge' com apenas 3 itens de aprovação estratégica em verde/azul corporativo, utilizando tipografia sans-serif de alta legibilidade para consumo rápido no feed durante o deslocamento matinal.",
             "Sequência de Stories interativos em 4 frames: primeiro frame com enquete binária 'Você já conseguiu sair cedo na sexta-feira esse mês?', segundo frame com breve explicação textual sobre como dashboards mobile permitem monitoramento sem presença física, terceiro frame demonstrando swipe-up ou sticker de link para 'Diagnóstico de Automação Gratuita', e quarto frame com depoimento em texto de cliente satisfeito sobre trabalho aos finais de semana."
-          ]
+          ],
+          "confirmed": true
         },
         {
           "goal": "Gerar confianca mostrando resultados.",
@@ -204,7 +226,8 @@
             "Reels explicativo com abordagem mais consultiva, exemplo realista e CTA conectado ao servico",
             "Reels com abordagem mais consultiva, exemplo realista e CTA conectado ao servico",
             "Stories com abordagem mais consultiva, exemplo realista e CTA conectado ao servico"
-          ]
+          ],
+          "confirmed": true
         }
       ]
     },
@@ -221,7 +244,8 @@
         {
           "goal": "",
           "contentTypes": [],
-          "formats": []
+          "formats": [],
+          "confirmed": true
         }
       ]
     },
@@ -238,7 +262,8 @@
         {
           "goal": "",
           "contentTypes": [],
-          "formats": []
+          "formats": [],
+          "confirmed": true
         }
       ]
     }

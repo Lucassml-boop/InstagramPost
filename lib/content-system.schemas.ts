@@ -40,7 +40,8 @@ export const brandProfileSchema = z.object({
           z.object({
             goal: z.string().default(""),
             contentTypes: z.array(z.string().min(1)).default([]),
-            formats: z.array(z.string().min(1)).default([])
+            formats: z.array(z.string().min(1)).default([]),
+            confirmed: z.boolean().default(true)
           })
         )
         .default([])

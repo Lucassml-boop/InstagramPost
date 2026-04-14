@@ -58,6 +58,8 @@ export type CreatePostPersistedState = {
   activeTab: "content" | "settings";
   topic: string;
   message: string;
+  lastAutoGenerateTopicHint: string;
+  lastGeneratePostTopicHint: string;
   postType: PostType;
   carouselSlideCount: number;
   carouselSlideContexts: string[];

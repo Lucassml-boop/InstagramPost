@@ -18,6 +18,12 @@ export function startPostScheduler() {
   }
 
   global.__postSchedulerStarted__ = true;
+  const timezone = process.env.TZ?.trim() || "America/Sao_Paulo";
+
+  console.info("[scheduler] Starting post scheduler", {
+    timezone,
+    environment: process.env.NODE_ENV ?? "unknown"
+  });
 
   cron.schedule("* * * * *", async () => {
     try {
@@ -26,6 +32,9 @@ export function startPostScheduler() {
     } catch (error) {
       console.error("Scheduled post processor failed", error);
     }
+  }, {
+    timezone,
+    noOverlap: true
   });
 
   cron.schedule("0 4 * * *", async () => {
@@ -34,6 +43,9 @@ export function startPostScheduler() {
     } catch (error) {
       console.error("Instagram token refresh scheduler failed", error);
     }
+  }, {
+    timezone,
+    noOverlap: true
   });
 
   cron.schedule("0 9 * * 0", async () => {
@@ -42,6 +54,9 @@ export function startPostScheduler() {
     } catch (error) {
       console.error("Weekly content generation scheduler failed", error);
     }
+  }, {
+    timezone,
+    noOverlap: true
   });
 
   cron.schedule("0 3 * * *", async () => {
@@ -50,5 +65,8 @@ export function startPostScheduler() {
     } catch (error) {
       console.error("Topics history cleanup scheduler failed", error);
     }
+  }, {
+    timezone,
+    noOverlap: true
   });
 }

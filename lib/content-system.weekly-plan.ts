@@ -19,6 +19,8 @@ import {
   writeJsonFile
 } from "./content-system.storage.ts";
 
+const MAX_WEEKLY_AGENDA_ATTEMPTS = 3;
+
 function extractGoogleNewsTitles(xml: string) {
   return [...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)]
     .map((match) => match[1])
@@ -52,6 +54,7 @@ function buildWeeklyPrompt(input: {
   weekSlots: WeekSlot[];
   currentTopics: string[];
   recentTopics: string[];
+  rejectedThemes?: string[];
 }) {
   const weeklyAgenda = input.weekSlots
     .map((slot) => {
@@ -89,6 +92,7 @@ function buildWeeklyPrompt(input: {
     "",
     `Temas atuais encontrados: ${input.currentTopics.join(" | ") || "Nenhum tema atual encontrado."}`,
     `Assuntos recentes a evitar: ${input.recentTopics.join(" | ") || "Nenhum."}`,
+    `Temas rejeitados nesta tentativa por repeticao: ${input.rejectedThemes?.join(" | ") || "Nenhum."}`,
     "",
     "Saída esperada por item:",
     "- theme: tema do post",
@@ -98,8 +102,69 @@ function buildWeeklyPrompt(input: {
     "- caption: legenda completa",
     "- visualIdea: ideia visual do post",
     "- cta: chamada para ação",
-    "- topicKeywords: 3 a 6 palavras-chave curtas para o histórico"
+    "- topicKeywords: 3 a 6 palavras-chave curtas para o histórico",
+    "",
+    "Regras críticas:",
+    "- nao repita o mesmo tema em mais de um slot da semana",
+    "- se houver dois slots parecidos, force angulos claramente diferentes",
+    "- nao reutilize nenhum item listado como assunto recente a evitar",
+    "- nao reutilize nenhum tema listado como rejeitado nesta tentativa"
   ].join("\n");
+}
+
+function buildAgendaWithWeekSlots(generatedAgenda: Awaited<ReturnType<typeof requestWeeklyAgenda>>, weekSlots: WeekSlot[]) {
+  return generatedAgenda.map((item, index) => ({
+    ...item,
+    date: weekSlots[index]?.date ?? item.date,
+    day: weekSlots[index]?.label ?? item.day,
+    time: weekSlots[index]?.time ?? item.time
+  }));
+}
+
+function dedupeAgendaAgainstHistory(
+  agenda: ReturnType<typeof buildAgendaWithWeekSlots>,
+  topicsHistory: string[]
+) {
+  const normalizedTopicHistory = topicsHistory.map(normalizeTopic).filter(Boolean);
+  const generatedTopics = new Set<string>();
+  const rejectedThemes = new Set<string>();
+
+  const dedupedAgenda = agenda.filter((item) => {
+    const normalizedTheme = normalizeTopic(item.theme);
+    const normalizedEntries = buildTopicsHistoryEntries([item]);
+    const hasInternalDuplicate =
+      generatedTopics.has(normalizedTheme) ||
+      Array.from(generatedTopics).some((entry) =>
+        normalizedEntries.some((topic) => isSameOrSimilarTopic(topic, entry))
+      );
+
+    if (hasInternalDuplicate) {
+      rejectedThemes.add(item.theme);
+      normalizedEntries.forEach((entry) => rejectedThemes.add(entry));
+      return false;
+    }
+
+    const collidesWithHistory = normalizedTopicHistory.some(
+      (historyEntry) =>
+        isSameOrSimilarTopic(normalizedTheme, historyEntry) ||
+        normalizedEntries.some((entry) => isSameOrSimilarTopic(entry, historyEntry))
+    );
+
+    if (collidesWithHistory) {
+      rejectedThemes.add(item.theme);
+      normalizedEntries.forEach((entry) => rejectedThemes.add(entry));
+      return false;
+    }
+
+    generatedTopics.add(normalizedTheme);
+    normalizedEntries.forEach((entry) => generatedTopics.add(entry));
+    return true;
+  });
+
+  return {
+    dedupedAgenda,
+    rejectedThemes: Array.from(rejectedThemes)
+  };
 }
 
 export async function generateWeeklyContentPlan(referenceDate = new Date()) {
@@ -111,45 +176,39 @@ export async function generateWeeklyContentPlan(referenceDate = new Date()) {
   const contentHistory = await getContentHistory();
   const topicsHistory = await getTopicsHistory();
   const currentTopics = await fetchCurrentTopics(brandProfile.researchQueries);
-  const generatedAgenda = await requestWeeklyAgenda(
-    buildWeeklyPrompt({
-      brandProfile,
-      weekSlots,
-      currentTopics,
-      recentTopics: topicsHistory.slice(-120)
-    }),
-    weekSlots.length
-  );
-  const agenda = generatedAgenda.map((item, index) => ({
-    ...item,
-    date: weekSlots[index]?.date ?? item.date,
-    day: weekSlots[index]?.label ?? item.day,
-    time: weekSlots[index]?.time ?? item.time
-  }));
-  const normalizedTopicHistory = topicsHistory.map(normalizeTopic).filter(Boolean);
-  const generatedTopics = new Set<string>();
-  const dedupedAgenda = agenda.filter((item) => {
-    const normalizedTheme = normalizeTopic(item.theme);
-    const normalizedEntries = buildTopicsHistoryEntries([item]);
-    const hasInternalDuplicate =
-      generatedTopics.has(normalizedTheme) ||
-      Array.from(generatedTopics).some((entry) =>
-        normalizedEntries.some((topic) => isSameOrSimilarTopic(topic, entry))
-      );
-    if (hasInternalDuplicate) {
-      return false;
-    }
-    generatedTopics.add(normalizedTheme);
-    normalizedEntries.forEach((entry) => generatedTopics.add(entry));
-    return !normalizedTopicHistory.some(
-      (historyEntry) =>
-        isSameOrSimilarTopic(normalizedTheme, historyEntry) ||
-        normalizedEntries.some((entry) => isSameOrSimilarTopic(entry, historyEntry))
+  let dedupedAgenda: ReturnType<typeof buildAgendaWithWeekSlots> | null = null;
+  let rejectedThemes: string[] = [];
+
+  for (let attempt = 1; attempt <= MAX_WEEKLY_AGENDA_ATTEMPTS; attempt += 1) {
+    const generatedAgenda = await requestWeeklyAgenda(
+      buildWeeklyPrompt({
+        brandProfile,
+        weekSlots,
+        currentTopics,
+        recentTopics: topicsHistory.slice(-120),
+        rejectedThemes
+      }),
+      weekSlots.length
     );
-  });
-  if (dedupedAgenda.length !== agenda.length) {
-    throw new Error("Weekly agenda generation produced repeated themes. Try again.");
+    const agenda = buildAgendaWithWeekSlots(generatedAgenda, weekSlots);
+    const dedupeResult = dedupeAgendaAgainstHistory(agenda, topicsHistory);
+
+    if (dedupeResult.dedupedAgenda.length === agenda.length) {
+      dedupedAgenda = dedupeResult.dedupedAgenda;
+      break;
+    }
+
+    rejectedThemes = Array.from(new Set([...rejectedThemes, ...dedupeResult.rejectedThemes]));
+    console.warn("[content-system] Weekly agenda attempt rejected due to repeated themes", {
+      attempt,
+      rejectedThemes
+    });
   }
+
+  if (!dedupedAgenda) {
+    throw new Error("Weekly agenda generation produced repeated themes after multiple attempts. Try again.");
+  }
+
   await writeJsonFile(AGENDA_PATH, dedupedAgenda);
   await writeJsonFile(CONTENT_HISTORY_PATH, [
     ...contentHistory,

@@ -38,6 +38,7 @@ export const generatePostSchema = z.object({
   customInstructions: z.string().optional().default(""),
   brandColors: z.string().min(2),
   keywords: z.string().optional().default(""),
+  userTopicHint: z.string().optional().default(""),
   allowSimilarPost: z.boolean().optional().default(false)
 });
 

@@ -27,7 +27,8 @@ export function useAutoCreatePostInputs(input: {
   const [isAutoGeneratingAll, startAutoGeneratingAll] = useTransition();
 
   async function generateCreatePostInputs(
-    field?: "topic" | "message" | "keywords" | "carouselSlideContexts"
+    field?: "topic" | "message" | "keywords" | "carouselSlideContexts",
+    userTopicHint?: string
   ) {
     const requestKey = field ?? "all";
     setAutoFieldKey(requestKey);
@@ -47,7 +48,8 @@ export function useAutoCreatePostInputs(input: {
             carouselSlideContexts: input.carouselSlideContexts.map((item) => item.value),
             outputLanguage: input.outputLanguage,
             customInstructions: input.customInstructions
-          }
+          },
+          userTopicHint
         }),
         topic: input.topic,
         setTopic: input.setTopic,
@@ -69,9 +71,9 @@ export function useAutoCreatePostInputs(input: {
     }
   }
 
-  function generateAllCreatePostInputs() {
+  function generateAllCreatePostInputs(userTopicHint?: string) {
     startAutoGeneratingAll(async () => {
-      await generateCreatePostInputs();
+      await generateCreatePostInputs(undefined, userTopicHint);
     });
   }
 

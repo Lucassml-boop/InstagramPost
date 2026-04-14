@@ -39,6 +39,10 @@ export type CaptionGeneratorState = {
   setTopic: (value: string) => void;
   message: string;
   setMessage: (value: string) => void;
+  lastAutoGenerateTopicHint: string;
+  setLastAutoGenerateTopicHint: (value: string) => void;
+  lastGeneratePostTopicHint: string;
+  setLastGeneratePostTopicHint: (value: string) => void;
   postType: PostType;
   setPostType: (value: PostType) => void;
   carouselSlideCount: number;

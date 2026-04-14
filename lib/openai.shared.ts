@@ -26,6 +26,43 @@ export type AutomationContext = {
 const DEFAULT_OLLAMA_TIMEOUT_MS = 480_000;
 const CAROUSEL_EXTRA_TIMEOUT_PER_SLIDE_MS = 240_000;
 
+function normalizeForMatch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function scoreItemAgainstContext(item: string, context: string) {
+  const normalizedItem = normalizeForMatch(item);
+  const normalizedContext = normalizeForMatch(context);
+  if (!normalizedItem || !normalizedContext) {
+    return 0;
+  }
+
+  return normalizedItem
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 4)
+    .reduce((score, token) => (normalizedContext.includes(token) ? score + 1 : score), 0);
+}
+
+function pickRelevantItems(items: string[], context: string, limit = 4) {
+  return items
+    .map((item, index) => ({
+      item,
+      index,
+      score: scoreItemAgainstContext(item, context)
+    }))
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+      return left.index - right.index;
+    })
+    .slice(0, Math.min(limit, items.length))
+    .map((entry) => entry.item);
+}
+
 function getOllamaTimeoutMs() {
   const rawValue = process.env.OLLAMA_TIMEOUT_MS?.trim();
   if (!rawValue) {
@@ -93,6 +130,40 @@ export function coerceGeneratedPost(raw: unknown): GeneratedPost {
   return generatedPostSchema.parse(raw);
 }
 
+function stripCarouselPaginationLabels(html: string) {
+  const patterns = [
+    /\b(?:slide|slideshow|serie|s[eé]rie|pagina|p[aá]gina|page|part)\s*\d+\s*(?:\/|de|of)\s*\d+\b/gi,
+    /\b\d+\s*(?:\/|de|of)\s*\d+\b/gi
+  ];
+
+  let sanitizedHtml = html;
+
+  for (const pattern of patterns) {
+    sanitizedHtml = sanitizedHtml.replace(pattern, "");
+  }
+
+  sanitizedHtml = sanitizedHtml
+    .replace(/>\s+</g, "><")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return sanitizedHtml;
+}
+
+export function sanitizeGeneratedPost(
+  generated: GeneratedPost,
+  input: Pick<GeneratePostInput, "postType">
+) {
+  if (input.postType !== "carousel") {
+    return generated;
+  }
+
+  return {
+    ...generated,
+    html: stripCarouselPaginationLabels(generated.html)
+  };
+}
+
 export function buildPrompt(
   input: GeneratePostInput,
   options?: {
@@ -105,6 +176,7 @@ export function buildPrompt(
   automationContext?: AutomationContext
 ) {
   const keywords = input.keywords?.trim() ? input.keywords.trim() : "none";
+  const userTopicHint = input.userTopicHint?.trim();
   const customInstructions = sanitizeCustomInstructions(input.customInstructions);
   const languageLabel = input.outputLanguage === "pt-BR" ? "Brazilian Portuguese" : "English";
   const postFormat =
@@ -116,12 +188,40 @@ export function buildPrompt(
   const slideContext = options?.slideContext?.trim() || "No extra context provided.";
   const styleGuide = options?.styleGuide?.trim();
   const requireCaption = options?.requireCaption ?? true;
+  const primaryContext = [
+    userTopicHint ?? "",
+    input.topic,
+    input.message,
+    input.keywords ?? "",
+    slideContext
+  ].join(" ");
+  const relevantServices = automationContext?.brandProfile
+    ? pickRelevantItems(automationContext.brandProfile.services, primaryContext, 4)
+    : [];
+  const relevantRules = automationContext?.brandProfile
+    ? pickRelevantItems(automationContext.brandProfile.contentRules, primaryContext, 5)
+    : [];
+  const relevantResearchQueries = automationContext?.brandProfile
+    ? pickRelevantItems(automationContext.brandProfile.researchQueries, primaryContext, 4)
+    : [];
+  const relevantGoalPresets = automationContext?.brandProfile
+    ? pickRelevantItems(automationContext.brandProfile.goalPresets ?? [], primaryContext, 3)
+    : [];
+  const relevantContentTypePresets = automationContext?.brandProfile
+    ? pickRelevantItems(automationContext.brandProfile.contentTypePresets ?? [], primaryContext, 4)
+    : [];
+  const relevantFormatPresets = automationContext?.brandProfile
+    ? pickRelevantItems(automationContext.brandProfile.formatPresets ?? [], primaryContext, 4)
+    : [];
 
   return [
     customInstructions || "You are an expert Instagram content strategist and visual designer.",
     "Return only valid JSON with the keys caption, hashtags, html, css, and styleGuide.",
     "Do not wrap the JSON in markdown or add any commentary.",
     `Write the caption and every visible piece of text inside the HTML in ${languageLabel}.`,
+    "The explicit user focus, Topic, Message, Keywords, and Slide context are the highest-priority instructions.",
+    "Use the broader brand strategy only as supporting context.",
+    "Do not collapse different business angles into one repeated theme if the user requested something more specific.",
     "Requirements:",
     requireCaption
       ? `- caption: persuasive Instagram caption in ${languageLabel}, 2 to 4 short paragraphs, no emojis unless highly relevant`
@@ -133,12 +233,16 @@ export function buildPrompt(
     "- avoid external assets, web fonts, scripts, and SVG data URLs",
     "- use the brand colors provided according to their roles whenever possible: primary for dominant areas, background for the base, support for secondary elements, accent for CTAs or emphasis",
     input.postType === "carousel"
+      ? "- never show pagination, progress markers, or slide counters inside the artwork; do not render labels like 1/3, 2 of 5, slide 1, page 2, or serie 1/3"
+      : null,
+    input.postType === "carousel"
       ? `- this is slide ${slideIndex} of ${slideCount} in an Instagram carousel`
       : "- this is a single standalone post",
     styleGuide
       ? `- match this established visual direction exactly: ${styleGuide}`
       : "- establish a distinctive but reusable visual direction that later slides can follow",
     "",
+    `Explicit user focus: ${userTopicHint || "none"}`,
     `Topic: ${input.topic}`,
     `Message: ${input.message}`,
     `Slide context: ${slideContext}`,
@@ -148,13 +252,13 @@ export function buildPrompt(
     `Brand colors: ${input.brandColors}`,
     `Keywords: ${keywords}`,
     automationContext?.brandProfile ? `Brand positioning context: ${automationContext.brandProfile.editableBrief}` : null,
-    automationContext?.brandProfile ? `Brand services context: ${automationContext.brandProfile.services.join(", ")}` : null,
-    automationContext?.brandProfile ? `Editorial rules context: ${automationContext.brandProfile.contentRules.join(" | ")}` : null,
-    automationContext?.brandProfile ? `Preferred research context: ${automationContext.brandProfile.researchQueries.join(" | ")}` : null,
+    automationContext?.brandProfile ? `Most relevant brand services context: ${(relevantServices.length > 0 ? relevantServices : automationContext.brandProfile.services).join(", ")}` : null,
+    automationContext?.brandProfile ? `Most relevant editorial rules context: ${(relevantRules.length > 0 ? relevantRules : automationContext.brandProfile.contentRules).join(" | ")}` : null,
+    automationContext?.brandProfile ? `Most relevant research context: ${(relevantResearchQueries.length > 0 ? relevantResearchQueries : automationContext.brandProfile.researchQueries).join(" | ")}` : null,
     automationContext?.brandProfile ? `Preferred carousel structure: ${automationContext.brandProfile.carouselDefaultStructure.join(" -> ")}` : null,
-    automationContext?.brandProfile ? `Goal presets to stay aligned with: ${(automationContext.brandProfile.goalPresets ?? []).join(" | ")}` : null,
-    automationContext?.brandProfile ? `Content type presets to stay aligned with: ${(automationContext.brandProfile.contentTypePresets ?? []).join(" | ")}` : null,
-    automationContext?.brandProfile ? `Format presets to stay aligned with: ${(automationContext.brandProfile.formatPresets ?? []).join(" | ")}` : null
+    automationContext?.brandProfile ? `Goal presets to stay aligned with: ${(relevantGoalPresets.length > 0 ? relevantGoalPresets : automationContext.brandProfile.goalPresets ?? []).join(" | ")}` : null,
+    automationContext?.brandProfile ? `Content type presets to stay aligned with: ${(relevantContentTypePresets.length > 0 ? relevantContentTypePresets : automationContext.brandProfile.contentTypePresets ?? []).join(" | ")}` : null,
+    automationContext?.brandProfile ? `Format presets to stay aligned with: ${(relevantFormatPresets.length > 0 ? relevantFormatPresets : automationContext.brandProfile.formatPresets ?? []).join(" | ")}` : null
   ]
     .filter(Boolean)
     .join("\n");

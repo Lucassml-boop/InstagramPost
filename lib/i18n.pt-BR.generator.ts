@@ -101,7 +101,31 @@ generator: {
   autoGeneratingField: "Gerando...",
   autoGenerateAllFields: "Automatico geral",
   autoGenerateHint:
-    "Usa a estrategia salva e o que ja estiver preenchido como base para manter coerencia no resultado."
+    "Usa a estrategia salva e o que ja estiver preenchido como base para manter coerencia no resultado.",
+  autoGenerateModalTitle: "Antes de gerar tudo automaticamente",
+  autoGenerateModalDescription:
+    "Se quiser, adicione um foco especifico para orientar melhor a IA antes de preencher todos os campos.",
+  autoGenerateModalFieldLabel: "Topico ou foco especifico",
+  autoGenerateModalFieldPlaceholder:
+    "Exemplo: o post deve falar sobre Econverse, Shopify, criacao de plataforma do zero ou outro tema importante.",
+  autoGenerateModalCancel: "Cancelar",
+  autoGenerateModalSubmit: "Gerar com esse foco",
+  autoGenerateModalSkip: "Gerar sem foco extra",
+  generatePostModalTitle: "Antes de gerar o post",
+  generatePostModalDescription:
+    "Se quiser, adicione um foco especifico para orientar melhor a IA na geracao final do post.",
+  generatePostModalFieldLabel: "Topico ou foco especifico",
+  generatePostModalFieldPlaceholder:
+    "Exemplo: falar sobre Econverse, Shopify, performance da loja, UX do checkout ou outro ponto importante.",
+  generatePostModalCancel: "Cancelar",
+  generatePostModalSubmit: "Gerar post com esse foco",
+  generatePostModalSkip: "Gerar post sem foco extra",
+  focusSummaryTitle: "Focos usados pela IA",
+  focusSummaryAutoLabel: "Sugestao automatica",
+  focusSummaryGenerateLabel: "Geracao final",
+  focusSummaryManualLabel: "Base manual do formulario",
+  focusSummaryNone: "Nenhum foco extra informado",
+  focusSummaryClear: "Limpar focos usados"
 },
 
 upload: {

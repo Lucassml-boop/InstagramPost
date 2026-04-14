@@ -62,6 +62,32 @@ contentAutomation: {
   autoGenerateSectionHint:
     "Use Automatic to regenerate this field with AI while preserving the current intent as a base.",
   autoGenerateAll: "Automatic all",
+  autoFillNewPostTitle: "Auto-fill this new post?",
+  autoFillNewPostDescription:
+    "If you accept, the system suggests time, goal, content types, and formats for this new slot while checking the rest of the week to avoid duplication.",
+  autoFillNewPostAccept: "Auto-fill now",
+  autoFillNewPostDismiss: "Not now",
+  autoFillInProgressTitle: "Generating...",
+  autoFillInProgressDescription:
+    "Filling time, goal, content types, and formats automatically for this post.",
+  slotConfirmed: "Confirmed for generation",
+  slotAwaitingConfirmation: "Awaiting confirmation",
+  slotConfirmAction: "Confirm for generation",
+  slotUnconfirmAction: "Keep as draft",
+  slotConfirmationDescription:
+    "Until this slot is confirmed, it stays out of the automatic generation/publishing queue.",
+  nextPostTimerEyebrow: "Next post",
+  nextPostTimerDescription:
+    "Track how much time is left until the next agenda slot and whether the post has already been created.",
+  nextPostTimerLabel: "Time remaining",
+  nextPostCreationStatusLabel: "Post status",
+  nextPostCreationReady: "Already created",
+  nextPostCreationPending: "Not created yet",
+  nextPostSlotLabel: "Planned slot",
+  nextPostManualSlotLabel: "Manual/scheduled post outside plan",
+  nextPostTimerEmptyTitle: "No upcoming post found",
+  nextPostTimerEmptyDescription:
+    "We could not find a future item in the current agenda. Generate a new weekly agenda or review the configured times.",
   chooseSavedPreset: "Choose from saved presets",
   noSavedPresets: "No saved presets yet. Add them in the settings tab.",
   singlePostLabel: "post",

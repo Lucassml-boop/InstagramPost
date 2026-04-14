@@ -51,7 +51,13 @@ function buildPostIdeas(profile: BrandProfile, day: DayLabel) {
     return {
       goal: saved?.goal ?? fallbackGoal,
       contentTypes: toTextareaValue(saved?.contentTypes ?? fallbackTypes),
-      formats: toTextareaValue(saved?.formats ?? fallbackFormats)
+      formats: toTextareaValue(saved?.formats ?? fallbackFormats),
+      confirmed: saved?.confirmed ?? (
+        index === 0 ||
+        Boolean(saved?.goal?.trim()) ||
+        Boolean(saved?.contentTypes?.length) ||
+        Boolean(saved?.formats?.length)
+      )
     };
   });
 }
@@ -110,7 +116,8 @@ export function buildProfileFromState(input: {
           postIdeas: input.daySettings[day].postIdeas.map((idea) => ({
             goal: idea.goal.trim(),
             contentTypes: fromTextareaValue(idea.contentTypes),
-            formats: fromTextareaValue(idea.formats)
+            formats: fromTextareaValue(idea.formats),
+            confirmed: idea.confirmed
           }))
         };
         return acc;

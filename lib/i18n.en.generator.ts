@@ -99,7 +99,31 @@ generator: {
   autoGeneratingField: "Generating...",
   autoGenerateAllFields: "Automatic all",
   autoGenerateHint:
-    "Uses the saved strategy and your current inputs as a base so the result stays coherent."
+    "Uses the saved strategy and your current inputs as a base so the result stays coherent.",
+  autoGenerateModalTitle: "Before auto-generating everything",
+  autoGenerateModalDescription:
+    "If you want, add a specific focus so the AI can fill all fields with a clearer direction.",
+  autoGenerateModalFieldLabel: "Specific topic or focus",
+  autoGenerateModalFieldPlaceholder:
+    "Example: the post should be about Econverse, Shopify, building a platform from scratch, or another important topic.",
+  autoGenerateModalCancel: "Cancel",
+  autoGenerateModalSubmit: "Generate with this focus",
+  autoGenerateModalSkip: "Generate without extra focus",
+  generatePostModalTitle: "Before generating the post",
+  generatePostModalDescription:
+    "If you want, add a specific focus so the AI can use a clearer direction for the final post generation.",
+  generatePostModalFieldLabel: "Specific topic or focus",
+  generatePostModalFieldPlaceholder:
+    "Example: talk about Econverse, Shopify, store performance, checkout UX, or another important angle.",
+  generatePostModalCancel: "Cancel",
+  generatePostModalSubmit: "Generate post with this focus",
+  generatePostModalSkip: "Generate post without extra focus",
+  focusSummaryTitle: "AI focus summary",
+  focusSummaryAutoLabel: "Auto suggestion",
+  focusSummaryGenerateLabel: "Final generation",
+  focusSummaryManualLabel: "Manual form input",
+  focusSummaryNone: "No extra focus provided",
+  focusSummaryClear: "Clear used focuses"
 },
 
 upload: {

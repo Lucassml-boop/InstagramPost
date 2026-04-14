@@ -55,6 +55,11 @@ export function useCaptionGeneratorActions(input: {
     state.setSettingsMessage(null);
   }
 
+  function clearFocusHints() {
+    state.setLastAutoGenerateTopicHint("");
+    state.setLastGeneratePostTopicHint("");
+  }
+
   function cancelGeneration() {
     state.generationAbortControllerRef.current?.abort();
     state.generationAbortControllerRef.current = null;
@@ -63,12 +68,15 @@ export function useCaptionGeneratorActions(input: {
     state.setError(input.dictionary.generator.generationCanceled);
   }
 
-  async function generatePost() {
-    await generateCaptionPost(state, input.dictionary, saveBrandColorsToHistory);
+  async function generatePost(userTopicHint?: string) {
+    await generateCaptionPost(state, input.dictionary, saveBrandColorsToHistory, {
+      userTopicHint
+    });
   }
 
-  async function generatePostIgnoringSimilar() {
+  async function generatePostIgnoringSimilar(userTopicHint?: string) {
     await generateCaptionPost(state, input.dictionary, saveBrandColorsToHistory, {
+      userTopicHint,
       allowSimilarPost: true
     });
   }
@@ -101,6 +109,7 @@ export function useCaptionGeneratorActions(input: {
     saveBrandColorsToHistory,
     removeBrandColorsFromHistory,
     clearGeneratedPost,
+    clearFocusHints,
     cancelGeneration,
     generatePost,
     generatePostIgnoringSimilar,

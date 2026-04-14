@@ -36,6 +36,8 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
   const [activeTab, setActiveTab] = useState<"content" | "settings">("content");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
+  const [lastAutoGenerateTopicHint, setLastAutoGenerateTopicHint] = useState("");
+  const [lastGeneratePostTopicHint, setLastGeneratePostTopicHint] = useState("");
   const [postType, setPostType] = useState<PostType>("feed");
   const [carouselSlideCount, setCarouselSlideCount] = useState(DEFAULT_CAROUSEL_SLIDE_COUNT);
   const [carouselSlideContexts, setCarouselSlideContexts] = useState<CarouselSlideContext[]>(
@@ -101,6 +103,10 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
     setTopic,
     message,
     setMessage,
+    lastAutoGenerateTopicHint,
+    setLastAutoGenerateTopicHint,
+    lastGeneratePostTopicHint,
+    setLastGeneratePostTopicHint,
     postType,
     setPostType,
     carouselSlideCount,

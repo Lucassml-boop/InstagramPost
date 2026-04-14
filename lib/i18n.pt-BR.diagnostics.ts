@@ -46,6 +46,18 @@ automationDiagnostics: {
     "Cada acao retorna a resposta real do backend para que voce valide o status exato sem abrir o terminal.",
   sectionSafety: "Teste com seguranca",
   sectionSafetyDescription:
-    "Use o seletor de dia na publicacao da agenda semanal se quiser disparar apenas um item em vez da semana inteira."
+    "Use o seletor de dia na publicacao da agenda semanal se quiser disparar apenas um item em vez da semana inteira.",
+  aiMetadataTitle: "Diagnostico de metadados de IA",
+  aiMetadataDescription:
+    "Envie uma imagem gerada para verificar se os metadados XMP/IPTC esperados estao presentes antes da publicacao.",
+  aiMetadataUploading: "Inspecionando imagem...",
+  aiMetadataSelectFile: "Escolha uma imagem para inspecionar os metadados.",
+  aiMetadataNoResult: "Nenhuma imagem foi inspecionada ainda.",
+  aiMetadataExiftoolMissing:
+    "O exiftool nao esta disponivel neste ambiente, entao o app nao consegue verificar os metadados aqui.",
+  aiMetadataDetected: "Metadados de IA detectados na imagem.",
+  aiMetadataMissing: "Os metadados esperados de IA nao foram detectados na imagem.",
+  aiMetadataExpectedLabel: "Rotulo esperado de metadado de IA",
+  aiMetadataRawOutput: "Saida bruta dos metadados"
 }
 };

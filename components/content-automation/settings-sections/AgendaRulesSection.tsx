@@ -44,7 +44,25 @@ export function AgendaRulesSection(props: AgendaSectionsProps) {
   );
 }
 
-function ExpandedDayEditor({ day, dictionary, daySettings, updateDay, postTimesByDay, updateDayPostTime, renderPresetPicker, goalPresetItems, contentTypePresetItems, formatPresetItems, generateAutomaticPostIdea, updateDayPostIdea }: AgendaSectionsProps & { day: keyof AgendaSectionsProps["daySettings"] }) {
+function ExpandedDayEditor({
+  day,
+  dictionary,
+  daySettings,
+  updateDay,
+  postTimesByDay,
+  updateDayPostTime,
+  renderPresetPicker,
+  goalPresetItems,
+  contentTypePresetItems,
+  formatPresetItems,
+  generateAutomaticPostIdea,
+  autoFillNewDayPost,
+  dismissAutoFillSuggestion,
+  suggestedAutoFillTargets,
+  autoFillKey,
+  updateDayPostIdea,
+  toggleDayPostConfirmation
+}: AgendaSectionsProps & { day: keyof AgendaSectionsProps["daySettings"]; autoFillKey?: string | null }) {
   return (
     <>
       <div className="mt-4">
@@ -54,15 +72,90 @@ function ExpandedDayEditor({ day, dictionary, daySettings, updateDay, postTimesB
         </label>
       </div>
       <div className="mt-4 space-y-4">
-        {daySettings[day].postIdeas.map((idea, index) => (
-          <div key={`${String(day)}-idea-${index}`} className="rounded-3xl border border-slate-200 bg-white p-5">
-            <p className="text-sm font-semibold text-ink">{dictionary.contentAutomation.postLabel} {index + 1}</p>
+        {daySettings[day].postIdeas.map((idea, index) => {
+          const isAutoFilling = autoFillKey === `${String(day)}-${index}`;
+
+          return (
+          <div key={`${String(day)}-idea-${index}`} className={`rounded-3xl border bg-white p-5 transition ${isAutoFilling ? "border-amber-300 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]" : "border-slate-200"}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-ink">{dictionary.contentAutomation.postLabel} {index + 1}</p>
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${idea.confirmed ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-700"}`}>
+                  {idea.confirmed
+                    ? dictionary.contentAutomation.slotConfirmed
+                    : dictionary.contentAutomation.slotAwaitingConfirmation}
+                </span>
+              </div>
+              {isAutoFilling ? (
+                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                  {dictionary.contentAutomation.autoFillInProgressTitle}
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => toggleDayPostConfirmation(day, index, !idea.confirmed)}
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition ${idea.confirmed ? "border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-ink" : "bg-ink text-white hover:bg-slate-800"}`}
+              >
+                {idea.confirmed
+                  ? dictionary.contentAutomation.slotUnconfirmAction
+                  : dictionary.contentAutomation.slotConfirmAction}
+              </button>
+              {!idea.confirmed ? (
+                <p className="self-center text-xs text-slate-500">
+                  {dictionary.contentAutomation.slotConfirmationDescription}
+                </p>
+              ) : null}
+            </div>
+            {isAutoFilling ? (
+              <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="text-sm font-semibold text-amber-900">
+                  {dictionary.contentAutomation.autoFillInProgressTitle}
+                </p>
+                <p className="mt-1 text-sm text-amber-800">
+                  {dictionary.contentAutomation.autoFillInProgressDescription}
+                </p>
+              </div>
+            ) : null}
+            {daySettings[day].enabled && suggestedAutoFillTargets[day]?.includes(index) ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-sm font-semibold text-emerald-900">
+                  {dictionary.contentAutomation.autoFillNewPostTitle}
+                </p>
+                <p className="mt-2 text-sm text-emerald-800">
+                  {dictionary.contentAutomation.autoFillNewPostDescription}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void autoFillNewDayPost(day, index);
+                    }}
+                    disabled={autoFillKey === `${String(day)}-${index}`}
+                    className="rounded-full bg-emerald-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
+                  >
+                    {autoFillKey === `${String(day)}-${index}`
+                      ? dictionary.contentAutomation.autoGeneratingField
+                      : dictionary.contentAutomation.autoFillNewPostAccept}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dismissAutoFillSuggestion(day, index)}
+                    disabled={isAutoFilling}
+                    className="rounded-full border border-emerald-300 bg-white px-4 py-2 text-xs font-semibold text-emerald-800 transition hover:border-emerald-400"
+                  >
+                    {dictionary.contentAutomation.autoFillNewPostDismiss}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <label className="mt-4 block text-sm font-medium text-slate-700"><span>{dictionary.contentAutomation.postTimes}</span><input type="time" value={postTimesByDay[day][index] ?? ""} onChange={(event) => updateDayPostTime(day, index, event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink outline-none transition focus:border-slate-400" /></label>
             <FieldWithPicker label={dictionary.contentAutomation.dayGoal} picker={renderPresetPicker({ pickerKey: `${String(day)}-${index}-goal`, presetsList: goalPresetItems, value: idea.goal, onAuto: () => generateAutomaticPostIdea(day, index), onSelectPreset: (preset) => updateDayPostIdea(day, index, "goal", preset) })}><textarea value={idea.goal} onChange={(event) => updateDayPostIdea(day, index, "goal", event.target.value)} rows={3} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink outline-none transition focus:border-slate-400" /></FieldWithPicker>
             <FieldWithPicker label={dictionary.contentAutomation.dayTypes} picker={renderPresetPicker({ pickerKey: `${String(day)}-${index}-types`, presetsList: contentTypePresetItems, value: idea.contentTypes, multiselect: true, onAuto: () => generateAutomaticPostIdea(day, index), onSelectPreset: (preset) => updateDayPostIdea(day, index, "contentTypes", togglePresetInTextarea(idea.contentTypes, preset)) })}><textarea value={idea.contentTypes} onChange={(event) => updateDayPostIdea(day, index, "contentTypes", event.target.value)} rows={4} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink outline-none transition focus:border-slate-400" /></FieldWithPicker>
             <FieldWithPicker label={dictionary.contentAutomation.dayFormats} picker={renderPresetPicker({ pickerKey: `${String(day)}-${index}-formats`, presetsList: formatPresetItems, value: idea.formats, multiselect: true, onAuto: () => generateAutomaticPostIdea(day, index), onSelectPreset: (preset) => updateDayPostIdea(day, index, "formats", togglePresetInTextarea(idea.formats, preset)) })}><textarea value={idea.formats} onChange={(event) => updateDayPostIdea(day, index, "formats", event.target.value)} rows={3} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink outline-none transition focus:border-slate-400" /></FieldWithPicker>
           </div>
-        ))}
+        )})}
       </div>
     </>
   );

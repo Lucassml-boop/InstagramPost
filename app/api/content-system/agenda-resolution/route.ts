@@ -9,6 +9,7 @@ import {
 } from "@/lib/content-system.agenda-metadata";
 import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
 import { getContentBrandProfile, getCurrentWeeklyAgenda } from "@/lib/content-system";
+import { countConfirmedWeeklyPosts } from "@/lib/content-system.schedule";
 import { jsonError } from "@/lib/server-utils";
 
 const requestSchema = z.object({
@@ -33,10 +34,7 @@ export async function POST(request: Request) {
       attachAgendaPostStatuses(user.id, agenda),
       updateWeeklyAgendaResolution(user.id, parsed.resolution)
     ]);
-    const totalExpectedPosts = Object.values(profile.weeklyAgenda).reduce(
-      (total, day) => total + ((day?.enabled ?? false) ? Math.max(1, day?.postsPerDay ?? 1) : 0),
-      0
-    );
+    const totalExpectedPosts = countConfirmedWeeklyPosts(profile);
 
     return NextResponse.json({
       ok: true,

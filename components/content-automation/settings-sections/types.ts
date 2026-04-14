@@ -149,7 +149,7 @@ export type AgendaSectionsProps = {
     enabled: boolean;
     postsPerDay: string;
     postTimes: string;
-    postIdeas: Array<{ goal: string; contentTypes: string; formats: string }>;
+    postIdeas: Array<{ goal: string; contentTypes: string; formats: string; confirmed: boolean }>;
   }>;
   expandedDays: Record<DayLabel, boolean>;
   toggleExpandedDay: (day: DayLabel) => void;
@@ -162,11 +162,16 @@ export type AgendaSectionsProps = {
     field: "goal" | "contentTypes" | "formats",
     value: string
   ) => void;
+  toggleDayPostConfirmation: (day: DayLabel, index: number, confirmed: boolean) => void;
   renderPresetPicker: PresetPickerRenderer;
   goalPresetItems: string[];
   contentTypePresetItems: string[];
   formatPresetItems: string[];
+  autoFillKey: string | null;
   generateAutomaticPostIdea: (day: DayLabel, index: number) => Promise<void>;
+  autoFillNewDayPost: (day: DayLabel, index: number) => Promise<void>;
+  dismissAutoFillSuggestion: (day: DayLabel, index: number) => void;
+  suggestedAutoFillTargets: Record<DayLabel, number[]>;
   postTimesByDay: Record<DayLabel, string[]>;
   setAllDaysEnabled: (enabled: boolean) => void;
   saveSettings: () => void;
