@@ -1,4 +1,5 @@
 import cron from "node-cron";
+import { prepareUpcomingAgendaPosts } from "@/lib/weekly-agenda-scheduler";
 import {
   runTopicsHistoryCleanupAutomation,
   runWeeklyContentAutomationLoop
@@ -20,6 +21,7 @@ export function startPostScheduler() {
 
   cron.schedule("* * * * *", async () => {
     try {
+      await prepareUpcomingAgendaPosts();
       await processScheduledPosts();
     } catch (error) {
       console.error("Scheduled post processor failed", error);

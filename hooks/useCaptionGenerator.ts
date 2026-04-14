@@ -7,20 +7,31 @@ import {
   PROGRESS_CAP
 } from "@/components/create-post/constants";
 import type {
+  CarouselSlideContext,
+  DraftResponse,
   OutputLanguage,
-  PostType
+  PostType,
+  StoryCaptionMode,
+  Tone
 } from "@/components/create-post/types";
 import {
   createSlideContexts,
   getClientGenerationTimeoutMs,
-  normalizeSlideContexts
+  normalizeSlideContexts,
+  parseBrandColors,
+  serializeBrandColors
 } from "@/components/create-post/utils";
 import { useCaptionGeneratorActions } from "./useCaptionGenerator.actions";
 import { useCaptionGeneratorPersistence } from "./useCaptionGenerator.persistence";
 import type { UseCaptionGeneratorInput } from "./useCaptionGenerator.types";
 
 export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
-  const defaultBrandColors = "#101828, #d62976, #feda75";
+  const defaultBrandColors = serializeBrandColors({
+    primary: "#d62976",
+    background: "#101828",
+    support: "",
+    accent: ""
+  });
   const [activeTab, setActiveTab] = useState<"content" | "settings">("content");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
@@ -134,6 +145,41 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
     generationAbortControllerRef
   };
   const { clearPersistedState } = useCaptionGeneratorPersistence(state);
+
+  useEffect(() => {
+    const palette = parseBrandColors(brandColors);
+    const isLegacyDefaultPalette =
+      palette.primary === "#d62976" &&
+      palette.background === "#101828" &&
+      palette.support === "#f59e0b" &&
+      palette.accent === "#f8fafc";
+
+    if (isLegacyDefaultPalette) {
+      setBrandColors(defaultBrandColors);
+    }
+  }, [brandColors, defaultBrandColors]);
+
+  useEffect(() => {
+    setBrandColorsHistory((current) => {
+      const normalized = current.map((value) => {
+        const palette = parseBrandColors(value);
+        const isLegacyDefaultPalette =
+          palette.primary === "#d62976" &&
+          palette.background === "#101828" &&
+          palette.support === "#f59e0b" &&
+          palette.accent === "#f8fafc";
+
+        return isLegacyDefaultPalette ? defaultBrandColors : value;
+      });
+
+      const deduped = Array.from(new Set(normalized));
+      const unchanged =
+        deduped.length === current.length && deduped.every((value, index) => value === current[index]);
+
+      return unchanged ? current : deduped;
+    });
+  }, [defaultBrandColors]);
+
   const actions = useCaptionGeneratorActions({
     state,
     dictionary: input.dictionary,

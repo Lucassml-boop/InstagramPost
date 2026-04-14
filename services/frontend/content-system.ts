@@ -1,5 +1,7 @@
 import { parseJsonOrThrow, parseJsonResponse } from "@/lib/client/http";
-import type { AutomaticPostIdea, BrandProfile, ContentPlanItem } from "@/lib/content-system";
+import type { AutomaticPostIdea, BrandProfile } from "@/lib/content-system";
+import type { WeeklyAgendaUsageSummary } from "@/lib/content-system.agenda-metadata";
+import type { ContentPlanItemWithStatus } from "@/lib/content-system.agenda-status";
 
 export async function saveBrandProfile(profile: BrandProfile) {
   const response = await fetch("/api/content-system/brand-profile", {
@@ -21,7 +23,8 @@ export async function generateWeeklyAgenda() {
 
   return parseJsonOrThrow<
     {
-      agenda?: ContentPlanItem[];
+      agenda?: ContentPlanItemWithStatus[];
+      agendaSummary?: WeeklyAgendaUsageSummary;
       currentTopics?: string[];
       error?: string;
     }
@@ -117,7 +120,23 @@ export async function clearTopicsHistory() {
 
 export async function fetchAgenda() {
   const response = await fetch("/api/content-system/agenda");
-  return parseJsonResponse<{ agenda?: ContentPlanItem[] }>(response);
+  return parseJsonResponse<{
+    agenda?: ContentPlanItemWithStatus[];
+    agendaSummary?: WeeklyAgendaUsageSummary;
+  }>(response);
+}
+
+export async function keepUsingStaleAgenda() {
+  const response = await fetch("/api/content-system/agenda-resolution", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ resolution: "KEEP_UNUSED" })
+  });
+
+  return parseJsonOrThrow<{ ok: true; agendaSummary?: WeeklyAgendaUsageSummary; error?: string }>(
+    response,
+    "Unable to keep the previous weekly agenda."
+  );
 }
 
 export async function runAutomationAction(input: {

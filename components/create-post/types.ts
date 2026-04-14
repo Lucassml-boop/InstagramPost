@@ -3,6 +3,13 @@ export type PostType = "feed" | "story" | "carousel";
 export type StoryCaptionMode = "image-only" | "with-caption";
 export type Tone = "professional" | "casual" | "promotional";
 
+export type BrandColorPalette = {
+  primary: string;
+  background: string;
+  support: string;
+  accent: string;
+};
+
 export type MediaItem = {
   imageUrl: string;
   imagePath: string;

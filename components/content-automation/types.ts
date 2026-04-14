@@ -1,4 +1,9 @@
-import type { BrandProfile, ContentPlanItem } from "@/lib/content-system";
+import type { BrandProfile } from "@/lib/content-system";
+import type {
+  ContentPlanItemWithStatus,
+  WeeklyPostSummary
+} from "@/lib/content-system.agenda-status";
+import type { WeeklyAgendaUsageSummary } from "@/lib/content-system.agenda-metadata";
 
 export type DayLabel =
   | "Segunda"
@@ -11,7 +16,9 @@ export type DayLabel =
 
 export type Props = {
   initialProfile: BrandProfile;
-  initialAgenda: ContentPlanItem[];
+  initialAgenda: ContentPlanItemWithStatus[];
+  initialWeekPosts: WeeklyPostSummary[];
+  initialAgendaSummary: WeeklyAgendaUsageSummary;
   initialTopicsHistory: string[];
   initialTab?: "agenda" | "settings";
   initialOutputLanguage?: "en" | "pt-BR";

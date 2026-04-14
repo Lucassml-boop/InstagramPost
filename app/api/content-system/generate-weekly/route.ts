@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { generateWeeklyContentPlan } from "@/lib/content-system";
+import {
+  serializeWeeklyAgendaState,
+  summarizeWeeklyAgendaUsage,
+  upsertWeeklyAgendaState
+} from "@/lib/content-system.agenda-metadata";
+import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
+import { generateWeeklyContentPlan, getContentBrandProfile } from "@/lib/content-system";
 import { jsonError } from "@/lib/server-utils";
 
 export async function POST() {
@@ -12,10 +18,25 @@ export async function POST() {
 
   try {
     const result = await generateWeeklyContentPlan();
+    const [agendaWithStatus, metadata, profile] = await Promise.all([
+      attachAgendaPostStatuses(user.id, result.agenda),
+      upsertWeeklyAgendaState(user.id, result.agenda),
+      getContentBrandProfile()
+    ]);
+    const totalExpectedPosts = Object.values(profile.weeklyAgenda).reduce(
+      (total, day) => total + ((day?.enabled ?? false) ? Math.max(1, day?.postsPerDay ?? 1) : 0),
+      0
+    );
+    const agendaSummary = summarizeWeeklyAgendaUsage({
+      agenda: agendaWithStatus,
+      totalExpectedPosts,
+      metadata: serializeWeeklyAgendaState(metadata)
+    });
 
     return NextResponse.json({
       ok: true,
-      agenda: result.agenda,
+      agenda: agendaWithStatus,
+      agendaSummary,
       currentTopics: result.currentTopics
     });
   } catch (error) {

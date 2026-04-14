@@ -1,0 +1,57 @@
+import { z } from "zod";
+import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
+import {
+  getWeeklyAgendaState,
+  serializeWeeklyAgendaState,
+  summarizeWeeklyAgendaUsage,
+  updateWeeklyAgendaResolution
+} from "@/lib/content-system.agenda-metadata";
+import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
+import { getContentBrandProfile, getCurrentWeeklyAgenda } from "@/lib/content-system";
+import { jsonError } from "@/lib/server-utils";
+
+const requestSchema = z.object({
+  resolution: z.enum(["KEEP_UNUSED"])
+});
+
+export async function POST(request: Request) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return jsonError("Unauthorized", 401);
+  }
+
+  try {
+    const parsed = requestSchema.parse(await request.json());
+    const [agenda, profile] = await Promise.all([
+      getCurrentWeeklyAgenda(),
+      getContentBrandProfile()
+    ]);
+
+    const [agendaWithStatus, metadata] = await Promise.all([
+      attachAgendaPostStatuses(user.id, agenda),
+      updateWeeklyAgendaResolution(user.id, parsed.resolution)
+    ]);
+    const totalExpectedPosts = Object.values(profile.weeklyAgenda).reduce(
+      (total, day) => total + ((day?.enabled ?? false) ? Math.max(1, day?.postsPerDay ?? 1) : 0),
+      0
+    );
+
+    return NextResponse.json({
+      ok: true,
+      agendaSummary: summarizeWeeklyAgendaUsage({
+        agenda: agendaWithStatus,
+        totalExpectedPosts,
+        metadata: serializeWeeklyAgendaState(
+          (await getWeeklyAgendaState(user.id)) ?? metadata
+        )
+      })
+    });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error ? error.message : "Unable to update weekly agenda resolution.",
+      400
+    );
+  }
+}

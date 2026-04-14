@@ -12,7 +12,7 @@ import {
 test("loginSchema accepts valid credentials", () => {
   const parsed = loginSchema.parse({
     email: "reviewer@example.com",
-    password: "123456"
+    password: "12345678"
   });
 
   assert.equal(parsed.email, "reviewer@example.com");

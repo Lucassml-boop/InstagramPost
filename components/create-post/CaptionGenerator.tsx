@@ -59,6 +59,7 @@ export function CaptionGenerator({
     shouldShowCaptionEditor,
     effectiveCaption,
     saveBrandColorsToHistory,
+    removeBrandColorsFromHistory,
     generatePost,
     cancelGeneration,
     clearGeneratedPost,
@@ -139,6 +140,7 @@ export function CaptionGenerator({
             setBrandColors={setBrandColors}
             brandColorsHistory={brandColorsHistory}
             saveBrandColorsToHistory={saveBrandColorsToHistory}
+            removeBrandColorsFromHistory={removeBrandColorsFromHistory}
             carouselSlideCount={carouselSlideCount}
             setCarouselSlideCount={setCarouselSlideCount}
             carouselSlideContexts={carouselSlideContexts}

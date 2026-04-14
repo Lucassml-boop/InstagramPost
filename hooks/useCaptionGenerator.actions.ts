@@ -1,5 +1,6 @@
 "use client";
 
+import { parseBrandColors, serializeBrandColors } from "@/components/create-post/utils";
 import type {
   CaptionGeneratorState,
   UseCaptionGeneratorInput
@@ -12,11 +13,7 @@ import {
 } from "./useCaptionGenerator.async";
 
 function normalizeBrandColorsValue(value: string) {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .join(", ");
+  return serializeBrandColors(parseBrandColors(value));
 }
 
 export function useCaptionGeneratorActions(input: {
@@ -39,6 +36,15 @@ export function useCaptionGeneratorActions(input: {
       const next = [normalized, ...current.filter((item) => item !== normalized)];
       return next.slice(0, 12);
     });
+  }
+
+  function removeBrandColorsFromHistory(value: string) {
+    const normalized = normalizeBrandColorsValue(value);
+    if (!normalized) {
+      return;
+    }
+
+    state.setBrandColorsHistory((current) => current.filter((item) => item !== normalized));
   }
 
   function clearGeneratedPost() {
@@ -87,6 +93,7 @@ export function useCaptionGeneratorActions(input: {
 
   return {
     saveBrandColorsToHistory,
+    removeBrandColorsFromHistory,
     clearGeneratedPost,
     cancelGeneration,
     generatePost,

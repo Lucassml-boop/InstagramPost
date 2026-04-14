@@ -24,6 +24,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   instagramAccount InstagramAccount?
   posts            Post[]
+  weeklyAgendaState WeeklyAgendaState?
 }
 
 model Session {
@@ -102,6 +103,22 @@ model Post {
   @@index([userId, status, scheduledTime])
 }
 
+model WeeklyAgendaState {
+  id                  String                 @id @default(cuid())
+  userId              String                 @unique
+  generatedAt         DateTime
+  weekStartDate       DateTime
+  weekEndDate         DateTime
+  weekKey             String
+  resolution          WeeklyAgendaResolution?
+  resolutionUpdatedAt DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([weekStartDate, weekEndDate])
+}
+
 enum PostStatus {
   DRAFT
   SCHEDULED
@@ -120,4 +137,9 @@ enum PublicationState {
   PUBLISHED
   ARCHIVED
   DELETED
+}
+
+enum WeeklyAgendaResolution {
+  KEEP_UNUSED
+  REGENERATED
 }

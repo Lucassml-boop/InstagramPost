@@ -13,12 +13,24 @@ export async function POST(request: Request) {
     }
 
     const parsed = schedulePostSchema.parse(await request.json());
+    const scheduledTime = new Date(parsed.scheduledTime);
+
+    if (Number.isNaN(scheduledTime.getTime())) {
+      return jsonError("Invalid schedule time.", 400);
+    }
+
+    if (scheduledTime.getTime() <= Date.now()) {
+      return jsonError(
+        "Escolha um horario futuro para agendar este post. O horario informado ja passou.",
+        400
+      );
+    }
 
     await schedulePost({
       postId: parsed.postId,
       userId: user.id,
       caption: parsed.caption,
-      scheduledTime: new Date(parsed.scheduledTime),
+      scheduledTime,
       postType: parsed.postType,
       mediaItems: parsed.mediaItems,
       imageUrl: parsed.imageUrl,

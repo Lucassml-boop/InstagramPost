@@ -22,6 +22,21 @@ export function fromTextareaValue(value: string) {
     .filter(Boolean);
 }
 
+export function expandPreviewPostTimes(postTimes: string[], postsPerDay: number) {
+  const times = postTimes.length > 0 ? [...postTimes] : ["09:00"];
+
+  while (times.length < postsPerDay) {
+    const [hours, minutes] = (times[0] ?? "09:00").split(":").map((item) => Number.parseInt(item, 10));
+    const totalMinutes =
+      ((hours * 60 + minutes + times.length * 180) % (24 * 60) + 24 * 60) % (24 * 60);
+    times.push(
+      `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`
+    );
+  }
+
+  return times.slice(0, postsPerDay);
+}
+
 function buildPostIdeas(profile: BrandProfile, day: DayLabel) {
   const config = profile.weeklyAgenda[day];
   const postsPerDay = Math.max(1, config?.postsPerDay ?? 1);

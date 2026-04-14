@@ -6,6 +6,7 @@ import {
   fetchTopicsHistory as fetchTopicsHistoryService,
   generateAutomaticPostIdea as generateAutomaticPostIdeaService,
   generateWeeklyAgenda as generateWeeklyAgendaService,
+  keepUsingStaleAgenda as keepUsingStaleAgendaService,
   saveBrandProfile as saveBrandProfileService
 } from "@/services/frontend/content-system";
 import type { DayLabel, Props } from "@/components/content-automation/types";
@@ -20,6 +21,8 @@ import {
 export function useContentAutomation(input: {
   initialProfile: Props["initialProfile"];
   initialAgenda: Props["initialAgenda"];
+  initialWeekPosts: Props["initialWeekPosts"];
+  initialAgendaSummary: Props["initialAgendaSummary"];
   initialTopicsHistory: Props["initialTopicsHistory"];
   dictionary: {
     saveSuccess: string;
@@ -51,6 +54,8 @@ export function useContentAutomation(input: {
   const [presets, setPresets] = useState(buildPresetsState(input.initialProfile));
   const [daySettings, setDaySettings] = useState(buildDayState(input.initialProfile));
   const [agenda, setAgenda] = useState(input.initialAgenda);
+  const [weekPosts] = useState(input.initialWeekPosts);
+  const [agendaSummary, setAgendaSummary] = useState(input.initialAgendaSummary);
   const [topicsHistory, setTopicsHistory] = useState(input.initialTopicsHistory);
   const [currentTopics, setCurrentTopics] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -58,6 +63,7 @@ export function useContentAutomation(input: {
   const [isSaving, startSaving] = useTransition();
   const [isGenerating, startGenerating] = useTransition();
   const [autoFillKey, setAutoFillKey] = useState<string | null>(null);
+  const [isResolvingStaleAgenda, startResolvingStaleAgenda] = useTransition();
 
   const builtProfile = useMemo(
     () =>
@@ -256,6 +262,9 @@ export function useContentAutomation(input: {
         const json = await generateWeeklyAgendaService();
 
         setAgenda(json.agenda ?? []);
+        if (json.agendaSummary) {
+          setAgendaSummary(json.agendaSummary);
+        }
         setCurrentTopics(json.currentTopics ?? []);
         const topicsHistoryJson = await fetchTopicsHistoryService();
         setTopicsHistory(topicsHistoryJson.topicsHistory ?? []);
@@ -287,6 +296,24 @@ export function useContentAutomation(input: {
     });
   }
 
+  function keepUsingStaleAgenda() {
+    setMessage(null);
+    setError(null);
+
+    startResolvingStaleAgenda(async () => {
+      try {
+        const json = await keepUsingStaleAgendaService();
+        if (json.agendaSummary) {
+          setAgendaSummary(json.agendaSummary);
+        }
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error ? requestError.message : input.dictionary.generateError
+        );
+      }
+    });
+  }
+
   return {
     brandName,
     setBrandName,
@@ -309,6 +336,8 @@ export function useContentAutomation(input: {
     builtProfile,
     daySettings,
     agenda,
+    weekPosts,
+    agendaSummary,
     topicsHistory,
     currentTopics,
     message,
@@ -317,6 +346,7 @@ export function useContentAutomation(input: {
     isSaving,
     isGenerating,
     autoFillKey,
+    isResolvingStaleAgenda,
     uniqueTopicsHistory,
     updateDay,
     updateDayPostIdea,
@@ -326,6 +356,7 @@ export function useContentAutomation(input: {
     setAllDaysEnabled,
     saveSettings,
     generateWeeklyAgenda,
+    keepUsingStaleAgenda,
     clearTopicsHistory
   };
 }

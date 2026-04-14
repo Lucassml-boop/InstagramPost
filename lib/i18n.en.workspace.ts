@@ -2,7 +2,7 @@ export const enWorkspaceDictionary = {
 dashboard: {
   eyebrow: "Dashboard",
   title: "Instagram publishing workspace",
-  description: (email) =>
+  description: (email: string) =>
     `Logged in as ${email}. Connect the Instagram account, generate content with AI, preview it, and publish or schedule it for your Meta review flow.`,
   logout: "Logout",
   connectedSuccess: "Instagram account connected successfully.",

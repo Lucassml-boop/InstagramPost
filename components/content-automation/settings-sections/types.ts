@@ -2,6 +2,11 @@ import type { ReactNode } from "react";
 import type { useI18n } from "@/components/I18nProvider";
 import type { BriefingFieldId, BriefingMode } from "@/lib/briefing-builder";
 import type { DayLabel } from "@/components/content-automation/types";
+import type { WeeklyAgendaUsageSummary } from "@/lib/content-system.agenda-metadata";
+import type {
+  AgendaPostGenerationStatus,
+  WeeklyPostSummary
+} from "@/lib/content-system.agenda-status";
 
 export type AppDictionary = ReturnType<typeof useI18n>["dictionary"];
 
@@ -33,6 +38,18 @@ export type AgendaGroup = {
   caption: string;
   visualIdea: string;
   cta: string;
+  postGenerationStatus: AgendaPostGenerationStatus;
+  linkedPostId: string | null;
+  linkedScheduledTime: string | null;
+  linkedPublishedAt: string | null;
+  linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
+  expectedPostsCount: number;
+  expectedTimes: string[];
+  expectedIdeas: Array<{
+    goal: string;
+    contentTypes: string;
+    formats: string;
+  }>;
   items: Array<{
     date: string;
     day: string;
@@ -45,7 +62,13 @@ export type AgendaGroup = {
     caption: string;
     visualIdea: string;
     cta: string;
+    postGenerationStatus: AgendaPostGenerationStatus;
+    linkedPostId: string | null;
+    linkedScheduledTime: string | null;
+    linkedPublishedAt: string | null;
+    linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
   }>;
+  extraPosts: WeeklyPostSummary[];
 };
 
 export type BriefingSettingsSectionProps = {
@@ -152,4 +175,8 @@ export type AgendaSectionsProps = {
   isGenerating: boolean;
   currentTopics: string[];
   groupedAgenda: AgendaGroup[];
+  totalExpectedPosts: number;
+  agendaSummary: WeeklyAgendaUsageSummary;
+  keepUsingStaleAgenda: () => void;
+  isResolvingStaleAgenda: boolean;
 };

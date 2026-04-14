@@ -62,13 +62,23 @@ generator: {
   carouselCount: "Carousel items",
   brandColors: "Brand colors",
   brandColorsHint:
-    "This field is preserved outside the automatic fill. Save palettes here to keep your brand identity and quickly reuse colors after changes.",
+    "Organize the palette by visual role so generated posts stay more consistent. Save combinations here to quickly reuse your brand identity.",
+  brandColorPrimary: "Primary color",
+  brandColorPrimaryHint: "Dominant color in the composition.",
+  brandColorBackground: "Background color",
+  brandColorBackgroundHint: "Neutral base that supports the layout.",
+  brandColorSupport: "Support color",
+  brandColorSupportHint: "Secondary color for balance and contrast.",
+  brandColorAccent: "Accent color",
+  brandColorAccentHint: "Optional color for CTAs, buttons, and details.",
+  addSupportColor: "Add support color",
+  addAccentColor: "Add accent color",
   keywords: "Optional keywords",
   keywordsPlaceholder: "clean beauty, launch, limited offer",
   generate: "Generate Post",
   generating: "Generating...",
   generationProgress: "Generating your post",
-  generationEstimate: (formattedTimeout, carouselSlideCount) =>
+  generationEstimate: (formattedTimeout: string, carouselSlideCount: number | undefined) =>
     carouselSlideCount
       ? `Estimated limit: about ${formattedTimeout} total for this carousel, with 4 extra minutes added per slide.`
       : `Estimated limit: about ${formattedTimeout} total while AI writes and renders the image.`,

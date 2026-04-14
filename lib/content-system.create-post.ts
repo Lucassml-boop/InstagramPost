@@ -32,7 +32,7 @@ export async function generateAutomaticCreatePostInputs(input: {
     "topic deve ser claro, especifico e bom para um post unico.",
     "message deve ser um direcionamento mais elaborado do angulo do conteudo, util para a IA gerar algo forte.",
     "keywords deve ser uma linha curta com termos separados por virgula.",
-    "brandColors deve ser uma linha curta de cores coerentes com a marca.",
+    "brandColors deve seguir preferencialmente a estrutura: Cor principal, Cor de fundo, Cor de apoio e Cor de destaque (opcional).",
     "carouselSlideContexts deve ter exatamente a quantidade de slides informada quando postType for carousel. Caso contrario, pode retornar array vazio.",
     "",
     `Idioma esperado: ${languageLabel}`,
@@ -69,7 +69,9 @@ export async function generateAutomaticCreatePostInputs(input: {
       keywords:
         current.keywords.trim() ||
         [profile.services[0] ?? "automacao", profile.services[1] ?? "produtividade", "eficiencia operacional"].join(", "),
-      brandColors: current.brandColors.trim() || "#101828, #1d4ed8, #38bdf8",
+      brandColors:
+        current.brandColors.trim() ||
+        "Cor principal: #1d4ed8\nCor de fundo: #101828\nCor de apoio: #38bdf8\nCor de destaque: #f8fafc",
       carouselSlideContexts:
         current.postType === "carousel"
           ? Array.from({ length: current.carouselSlideCount }, (_, index) => {

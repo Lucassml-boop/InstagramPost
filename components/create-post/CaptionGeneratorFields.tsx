@@ -19,9 +19,10 @@ export function CaptionGeneratorFields(input: {
   tone: "professional" | "casual" | "promotional";
   setTone: (value: "professional" | "casual" | "promotional") => void;
   brandColors: string;
-  setBrandColors: (value: string) => void;
+  setBrandColors: Dispatch<SetStateAction<string>>;
   brandColorsHistory: string[];
   saveBrandColorsToHistory: () => void;
+  removeBrandColorsFromHistory: (value: string) => void;
   carouselSlideCount: number;
   setCarouselSlideCount: (value: number) => void;
   carouselSlideContexts: CarouselSlideContext[];
@@ -51,6 +52,7 @@ export function CaptionGeneratorFields(input: {
         setBrandColors={input.setBrandColors}
         brandColorsHistory={input.brandColorsHistory}
         saveBrandColorsToHistory={input.saveBrandColorsToHistory}
+        removeBrandColorsFromHistory={input.removeBrandColorsFromHistory}
         onGenerateField={input.onGenerateField}
       />
       <CaptionGeneratorFormatFields

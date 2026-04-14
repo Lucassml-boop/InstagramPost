@@ -131,7 +131,7 @@ export function buildPrompt(
     `- css: complete CSS for the HTML, optimized for ${postFormat}`,
     "- styleGuide: a compact 2 to 4 sentence description of the visual system so follow-up slides can match the same art direction",
     "- avoid external assets, web fonts, scripts, and SVG data URLs",
-    "- use only the brand colors provided when possible",
+    "- use the brand colors provided according to their roles whenever possible: primary for dominant areas, background for the base, support for secondary elements, accent for CTAs or emphasis",
     input.postType === "carousel"
       ? `- this is slide ${slideIndex} of ${slideCount} in an Instagram carousel`
       : "- this is a single standalone post",
