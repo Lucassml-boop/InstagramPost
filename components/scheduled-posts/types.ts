@@ -1,10 +1,11 @@
 export type ScheduledPostItem = {
   id: string;
   caption: string;
+  previewUrl: string;
   imageUrl: string;
   imagePath: string;
   postType: "FEED" | "STORY" | "CAROUSEL";
-  status: "SCHEDULED" | "PUBLISHED" | "FAILED";
+  status: "DRAFT" | "SCHEDULED" | "PUBLISHED" | "FAILED";
   publicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
   scheduledTime: string | null;
   publishedAt: string | null;
@@ -28,6 +29,7 @@ export type ScheduledPostsDictionary = {
   publishedAt: string;
   status: string;
   fileStatus: string;
+  draftStatus: string;
   scheduledStatus: string;
   publishedStatus: string;
   failedStatus: string;
@@ -40,9 +42,9 @@ export type ScheduledPostsDictionary = {
   editSchedule: string;
   reschedule: string;
   saving: string;
+  draftCount: string;
   scheduledCount: string;
   publishedCount: string;
-  processedCount: string;
   previewUnavailable: string;
   updatedSuccess: string;
   updateError: string;
@@ -62,6 +64,7 @@ export type ScheduledPostsDictionary = {
   instagramFeedEmpty: string;
   instagramFeedError: string;
   openOnInstagram: string;
+  highlightedPost: string;
 };
 
 export type GeneratorDictionary = {

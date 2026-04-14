@@ -37,7 +37,8 @@ export const generatePostSchema = z.object({
   outputLanguage: z.enum(["en", "pt-BR"]).default("en"),
   customInstructions: z.string().optional().default(""),
   brandColors: z.string().min(2),
-  keywords: z.string().optional().default("")
+  keywords: z.string().optional().default(""),
+  allowSimilarPost: z.boolean().optional().default(false)
 });
 
 export const generationSettingsSchema = z.object({

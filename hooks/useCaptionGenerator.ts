@@ -9,6 +9,7 @@ import {
 import type {
   CarouselSlideContext,
   DraftResponse,
+  GeneratorErrorState,
   OutputLanguage,
   PostType,
   StoryCaptionMode,
@@ -54,7 +55,7 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
   const [draft, setDraft] = useState<DraftResponse | null>(null);
   const [caption, setCaption] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<GeneratorErrorState | null>(null);
   const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);

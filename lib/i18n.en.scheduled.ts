@@ -14,6 +14,7 @@ scheduledPage: {
   publishedAt: "Published at",
   status: "Status",
   fileStatus: "File",
+  draftStatus: "Draft",
   scheduledStatus: "Scheduled",
   publishedStatus: "Posted",
   failedStatus: "Failed",
@@ -26,11 +27,11 @@ scheduledPage: {
   editSchedule: "Update date",
   reschedule: "Reschedule",
   saving: "Saving...",
+  draftCount: "Drafts",
   scheduledCount: "Scheduled",
   publishedCount: "Posted",
-  processedCount: "Processed",
   previewUnavailable: "No preview",
-  noPosts: "No scheduled or published posts yet.",
+  noPosts: "No saved posts yet.",
   previewAlt: "Post preview",
   select: "Select",
   selectAll: "Select all listed posts",
@@ -44,6 +45,7 @@ scheduledPage: {
   instagramFeedDescription: "These are the latest items currently visible in your connected Instagram feed.",
   instagramFeedEmpty: "No feed items were returned by Instagram yet.",
   instagramFeedError: "Unable to load the Instagram feed",
-  openOnInstagram: "Open on Instagram"
+  openOnInstagram: "Open on Instagram",
+  highlightedPost: "The similar post was highlighted in the table below."
 },
 };

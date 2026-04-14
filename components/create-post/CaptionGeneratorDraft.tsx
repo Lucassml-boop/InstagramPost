@@ -1,5 +1,6 @@
 "use client";
 
+import type { GeneratorErrorState } from "./types";
 import { GenerationProgress } from "./GenerationProgress";
 import { MediaManager } from "./MediaManager";
 import { PostScheduler } from "./PostScheduler";
@@ -19,6 +20,7 @@ export function CaptionGeneratorDraft(input: {
   isAutoGeneratingAll: boolean;
   generateAllCreatePostInputs: () => void;
   generatePost: () => void;
+  generatePostIgnoringSimilar: () => void;
   draft: DraftResponse | null;
   shouldShowCaptionEditor: boolean;
   caption: string;
@@ -30,7 +32,7 @@ export function CaptionGeneratorDraft(input: {
   setScheduleTime: (value: string) => void;
   schedulePost: () => void;
   setDraft: React.Dispatch<React.SetStateAction<DraftResponse | null>>;
-  error: string | null;
+  error: GeneratorErrorState | null;
 }) {
   const { dictionary } = input;
 
@@ -151,9 +153,47 @@ export function CaptionGeneratorDraft(input: {
       ) : null}
 
       {input.error ? (
-        <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {input.error}
-        </p>
+        <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p>{typeof input.error === "string" ? input.error : input.error.message}</p>
+
+          {typeof input.error !== "string" ? (
+            <div className="mt-3 space-y-3">
+              <div className="space-y-2">
+                {input.error.similarPost.details.map((detail) => (
+                  <div key={`${detail.field}-${detail.label}`} className="rounded-xl bg-white/60 px-3 py-2">
+                    <p className="font-semibold text-red-800">{detail.label}</p>
+                    <p className="mt-1 text-red-700">
+                      Novo: {detail.candidateValue || "-"}
+                    </p>
+                    <p className="text-red-700">
+                      Post salvo: {detail.existingValue || "-"}
+                    </p>
+                    {detail.overlapKeywords?.length ? (
+                      <p className="text-red-700">
+                        Palavras em comum: {detail.overlapKeywords.join(", ")}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href={input.error.similarPost.href}
+                className="inline-flex rounded-full border border-red-200 bg-white px-4 py-2 font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
+              >
+                Abrir post semelhante
+              </a>
+              <button
+                type="button"
+                onClick={input.generatePostIgnoringSimilar}
+                disabled={input.isGenerating}
+                className="inline-flex rounded-full bg-red-700 px-4 py-2 font-semibold text-white transition hover:bg-red-800 disabled:opacity-60"
+              >
+                Seguir mesmo assim
+              </button>
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </>
   );

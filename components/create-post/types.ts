@@ -32,6 +32,28 @@ export type DraftResponse = {
   htmlLayout: string;
 };
 
+export type SimilarPostErrorDetail = {
+  field: "topic" | "message" | "keywords";
+  label: string;
+  matchType: "exact" | "similar" | "overlap";
+  candidateValue: string;
+  existingValue: string;
+  overlapKeywords?: string[];
+};
+
+export type GeneratorErrorState =
+  | string
+  | {
+      type: "similar-manual-post";
+      message: string;
+      similarPost: {
+        id: string;
+        href: string;
+        createdAt: string;
+        details: SimilarPostErrorDetail[];
+      };
+    };
+
 export type CreatePostPersistedState = {
   activeTab: "content" | "settings";
   topic: string;
@@ -49,6 +71,6 @@ export type CreatePostPersistedState = {
   draft: DraftResponse | null;
   caption: string;
   scheduleTime: string;
-  error: string | null;
+  error: GeneratorErrorState | null;
   settingsMessage: string | null;
 };

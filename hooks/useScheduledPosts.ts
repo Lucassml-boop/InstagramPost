@@ -47,9 +47,9 @@ export function useScheduledPosts(input: {
 
   const counts = useMemo(
     () => ({
+      drafts: input.posts.filter((post) => post.status === "DRAFT").length,
       scheduled: input.posts.filter((post) => post.status === "SCHEDULED").length,
-      published: input.posts.filter((post) => post.status === "PUBLISHED").length,
-      processed: input.posts.filter((post) => post.status !== "SCHEDULED").length
+      published: input.posts.filter((post) => post.status === "PUBLISHED").length
     }),
     [input.posts]
   );

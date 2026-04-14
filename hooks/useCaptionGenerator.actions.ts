@@ -67,6 +67,12 @@ export function useCaptionGeneratorActions(input: {
     await generateCaptionPost(state, input.dictionary, saveBrandColorsToHistory);
   }
 
+  async function generatePostIgnoringSimilar() {
+    await generateCaptionPost(state, input.dictionary, saveBrandColorsToHistory, {
+      allowSimilarPost: true
+    });
+  }
+
   async function publishNow() {
     await publishCaptionPost({
       state,
@@ -97,6 +103,7 @@ export function useCaptionGeneratorActions(input: {
     clearGeneratedPost,
     cancelGeneration,
     generatePost,
+    generatePostIgnoringSimilar,
     publishNow,
     schedulePost,
     saveGenerationSettings

@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { jsonError } from "../server-utils.ts";
 import type { BrandProfile } from "../content-system.ts";
+import type {
+  SimilarManualPostMatch,
+  SimilarManualPostResult
+} from "../posts.ts";
 import { generatePostSchema, publishPostSchema } from "../validators.ts";
 
 type AuthUser = {
@@ -50,7 +54,7 @@ type GeneratePostDeps = {
     topic: string;
     message: string;
     keywords?: string;
-  }) => Promise<{ id: string; createdAt: Date } | null>;
+  }) => Promise<SimilarManualPostResult | null>;
   slugify: (value: string) => string;
 };
 
@@ -92,6 +96,35 @@ async function getDefaultGeneratePostDeps(): Promise<GeneratePostDeps> {
 async function getDefaultPublishPostDeps(): Promise<PublishPostDeps> {
   const { publishPostNow } = await import("../posts.ts");
   return { publishPostNow };
+}
+
+function getSimilarFieldLabel(field: SimilarManualPostMatch["field"]) {
+  if (field === "topic") {
+    return "Produto ou tema";
+  }
+
+  if (field === "message") {
+    return "Promocao ou mensagem";
+  }
+
+  return "Palavras-chave opcionais";
+}
+
+function buildSimilarPostLink(request: Request, postId: string) {
+  const url = new URL("/scheduled-posts", request.url);
+  url.searchParams.set("highlightPostId", postId);
+  return `${url.pathname}${url.search}`;
+}
+
+function buildSimilarPostDetails(similarPost: SimilarManualPostResult) {
+  return similarPost.matches.map((match) => ({
+    field: match.field,
+    label: getSimilarFieldLabel(match.field),
+    matchType: match.matchType,
+    candidateValue: match.candidateValue,
+    existingValue: match.existingValue,
+    ...(match.overlapKeywords?.length ? { overlapKeywords: match.overlapKeywords } : {})
+  }));
 }
 
 export async function handleGeneratePost(
@@ -142,6 +175,7 @@ export async function handleGeneratePost(
     });
 
     const similarPost = resolvedDeps.findSimilarManualPost
+      && !parsed.allowSimilarPost
       ? await resolvedDeps.findSimilarManualPost({
           userId: user.id,
           topic: parsed.topic,
@@ -151,9 +185,20 @@ export async function handleGeneratePost(
       : null;
 
     if (similarPost) {
-      throw new Error(
-        "Ja existe um post manual muito parecido salvo anteriormente. Ajuste Produto ou tema, Promocao ou mensagem, ou Palavras-chave opcionais antes de gerar novamente."
-      );
+      const errorMessage =
+        "Ja existe um post manual muito parecido salvo anteriormente. Revise o post encontrado abaixo para ver exatamente o que ficou igual antes de gerar novamente.";
+
+      return jsonError(errorMessage, 400, {
+        errorDetails: {
+          type: "similar-manual-post",
+          similarPost: {
+            id: similarPost.id,
+            href: buildSimilarPostLink(request, similarPost.id),
+            createdAt: similarPost.createdAt.toISOString(),
+            details: buildSimilarPostDetails(similarPost)
+          }
+        }
+      });
     }
 
     phaseStartedAt.ai = Date.now();

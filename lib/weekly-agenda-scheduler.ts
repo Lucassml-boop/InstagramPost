@@ -82,7 +82,8 @@ async function createScheduledDraftFromAgendaItem(input: {
     outputLanguage: input.preferredOutputLanguage,
     customInstructions: input.preferredCustomInstructions?.trim() || "",
     brandColors: DEFAULT_BRAND_COLORS,
-    keywords: input.item.topicKeywords.join(", ")
+    keywords: input.item.topicKeywords.join(", "),
+    allowSimilarPost: false
   };
 
   const generatedCarousel =

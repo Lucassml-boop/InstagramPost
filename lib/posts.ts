@@ -63,7 +63,7 @@ function normalizeManualField(value: string | null | undefined) {
   return normalizeTopic(value ?? "");
 }
 
-function hasKeywordOverlap(candidateKeywords: string, existingKeywords: string) {
+function getKeywordOverlap(candidateKeywords: string, existingKeywords: string) {
   const candidateSet = new Set(
     candidateKeywords
       .split(" ")
@@ -77,23 +77,42 @@ function hasKeywordOverlap(candidateKeywords: string, existingKeywords: string) 
       .filter((item) => item.length >= 3)
   );
 
-  let overlap = 0;
+  const overlap: string[] = [];
 
   for (const keyword of candidateSet) {
     if (existingSet.has(keyword)) {
-      overlap += 1;
+      overlap.push(keyword);
     }
   }
 
-  return overlap >= 2;
+  return overlap;
 }
+
+export type SimilarManualPostMatchField = "topic" | "message" | "keywords";
+
+export type SimilarManualPostMatch = {
+  field: SimilarManualPostMatchField;
+  matchType: "exact" | "similar" | "overlap";
+  candidateValue: string;
+  existingValue: string;
+  overlapKeywords?: string[];
+};
+
+export type SimilarManualPostResult = {
+  id: string;
+  createdAt: Date;
+  topic: string;
+  message: string;
+  keywords: string | null;
+  matches: SimilarManualPostMatch[];
+};
 
 export async function findSimilarManualPost(input: {
   userId: string;
   topic: string;
   message: string;
   keywords?: string;
-}) {
+}): Promise<SimilarManualPostResult | null> {
   const candidateTopic = normalizeManualField(input.topic);
   const candidateMessage = normalizeManualField(input.message);
   const candidateKeywords = normalizeManualField(input.keywords);
@@ -115,24 +134,63 @@ export async function findSimilarManualPost(input: {
     take: 100
   });
 
-  return (
-    posts.find((post) => {
-      const existingTopic = normalizeManualField(post.topic);
-      const existingMessage = normalizeManualField(post.message);
-      const existingKeywords = normalizeManualField(post.keywords);
-      const sameTopic = isSameOrSimilarTopic(candidateTopic, existingTopic);
-      const sameMessage =
-        candidateMessage === existingMessage ||
-        isSameOrSimilarTopic(candidateMessage, existingMessage);
-      const sameKeywords =
-        candidateKeywords.length > 0 &&
-        existingKeywords.length > 0 &&
-        (candidateKeywords === existingKeywords ||
-          hasKeywordOverlap(candidateKeywords, existingKeywords));
+  for (const post of posts) {
+    const existingTopic = normalizeManualField(post.topic);
+    const existingMessage = normalizeManualField(post.message);
+    const existingKeywords = normalizeManualField(post.keywords);
+    const sameTopic = isSameOrSimilarTopic(candidateTopic, existingTopic);
+    const sameMessage =
+      candidateMessage === existingMessage ||
+      isSameOrSimilarTopic(candidateMessage, existingMessage);
+    const keywordOverlap = getKeywordOverlap(candidateKeywords, existingKeywords);
+    const sameKeywords =
+      candidateKeywords.length > 0 &&
+      existingKeywords.length > 0 &&
+      (candidateKeywords === existingKeywords || keywordOverlap.length >= 2);
 
-      return sameTopic && (sameMessage || sameKeywords);
-    }) ?? null
-  );
+    if (!(sameTopic && (sameMessage || sameKeywords))) {
+      continue;
+    }
+
+    const matches: SimilarManualPostMatch[] = [
+      {
+        field: "topic",
+        matchType: candidateTopic === existingTopic ? "exact" : "similar",
+        candidateValue: input.topic.trim(),
+        existingValue: post.topic.trim()
+      }
+    ];
+
+    if (sameMessage) {
+      matches.push({
+        field: "message",
+        matchType: candidateMessage === existingMessage ? "exact" : "similar",
+        candidateValue: input.message.trim(),
+        existingValue: post.message.trim()
+      });
+    }
+
+    if (sameKeywords) {
+      matches.push({
+        field: "keywords",
+        matchType: candidateKeywords === existingKeywords ? "exact" : "overlap",
+        candidateValue: (input.keywords ?? "").trim(),
+        existingValue: (post.keywords ?? "").trim(),
+        ...(keywordOverlap.length > 0 ? { overlapKeywords: keywordOverlap } : {})
+      });
+    }
+
+    return {
+      id: post.id,
+      createdAt: post.createdAt,
+      topic: post.topic,
+      message: post.message,
+      keywords: post.keywords,
+      matches
+    };
+  }
+
+  return null;
 }
 
 export async function createDraftPost(input: {

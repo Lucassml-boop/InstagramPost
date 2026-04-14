@@ -16,7 +16,8 @@ import type {
 export async function generateCaptionPost(
   state: CaptionGeneratorState,
   dictionary: UseCaptionGeneratorInput["dictionary"],
-  saveBrandColorsToHistory: () => void
+  saveBrandColorsToHistory: () => void,
+  options?: { allowSimilarPost?: boolean }
 ) {
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -39,10 +40,20 @@ export async function generateCaptionPost(
       customInstructions: state.customInstructions,
       brandColors: state.brandColors,
       keywords: state.keywords,
+      allowSimilarPost: options?.allowSimilarPost ?? false,
       signal: controller.signal
     });
 
     if (!response.ok) {
+      if (json.errorDetails?.type === "similar-manual-post" && json.error) {
+        state.setError({
+          type: "similar-manual-post",
+          message: json.error,
+          similarPost: json.errorDetails.similarPost
+        });
+        return;
+      }
+
       state.setError(json.error ?? dictionary.generator.generateError);
       return;
     }

@@ -50,6 +50,10 @@ export function getStatusLabel(
   status: ScheduledPostItem["status"],
   dictionary: ScheduledPostsDictionary
 ) {
+  if (status === "DRAFT") {
+    return dictionary.draftStatus;
+  }
+
   if (status === "PUBLISHED") {
     return dictionary.publishedStatus;
   }

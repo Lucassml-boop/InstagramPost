@@ -1,6 +1,7 @@
 import type {
   CarouselSlideContext,
   DraftResponse,
+  GeneratorErrorState,
   OutputLanguage,
   PostType,
   StoryCaptionMode,
@@ -64,8 +65,8 @@ export type CaptionGeneratorState = {
   setCaption: (value: string) => void;
   scheduleTime: string;
   setScheduleTime: (value: string) => void;
-  error: string | null;
-  setError: (value: string | null) => void;
+  error: GeneratorErrorState | null;
+  setError: (value: GeneratorErrorState | null) => void;
   settingsMessage: string | null;
   setSettingsMessage: (value: string | null) => void;
   isGenerating: boolean;

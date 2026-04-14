@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { generateCreatePostInputs as generateCreatePostInputsService } from "@/services/frontend/posts";
+import type { GeneratorErrorState } from "./types";
 import { applyGeneratedCreatePostInputs } from "./auto-inputs";
 
 export function useAutoCreatePostInputs(input: {
@@ -20,7 +21,7 @@ export function useAutoCreatePostInputs(input: {
   setCarouselSlideContexts: (value: Array<{ id: string; value: string }>) => void;
   outputLanguage: "en" | "pt-BR";
   customInstructions: string;
-  setError: (value: string | null) => void;
+  setError: (value: GeneratorErrorState | null) => void;
 }) {
   const [autoFieldKey, setAutoFieldKey] = useState<string | null>(null);
   const [isAutoGeneratingAll, startAutoGeneratingAll] = useTransition();

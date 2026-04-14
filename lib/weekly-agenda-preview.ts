@@ -61,7 +61,8 @@ export async function publishWeeklyAgendaPreview(input: {
             : ("pt-BR" as const),
         customInstructions: input.user.preferredCustomInstructions?.trim() || "",
         brandColors: DEFAULT_BRAND_COLORS,
-        keywords: item.topicKeywords.join(", ")
+        keywords: item.topicKeywords.join(", "),
+        allowSimilarPost: false
       };
 
       const generatedCarousel =

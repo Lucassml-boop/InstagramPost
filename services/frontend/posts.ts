@@ -1,10 +1,19 @@
 import { parseJsonOrThrow, parseJsonResponse } from "@/lib/client/http";
 import type {
   DraftResponse,
+  GeneratorErrorState,
   MediaItem,
   OutputLanguage,
   PostType
 } from "@/components/create-post/types";
+
+type GeneratePostErrorResponse = {
+  error?: string;
+  errorDetails?: {
+    type: "similar-manual-post";
+    similarPost: Extract<GeneratorErrorState, { type: "similar-manual-post" }>["similarPost"];
+  };
+};
 
 export async function generatePost(input: {
   topic: string;
@@ -17,6 +26,7 @@ export async function generatePost(input: {
   customInstructions: string;
   brandColors: string;
   keywords: string;
+  allowSimilarPost?: boolean;
   signal?: AbortSignal;
 }) {
   const response = await fetch("/api/posts/generate", {
@@ -32,14 +42,15 @@ export async function generatePost(input: {
       outputLanguage: input.outputLanguage,
       customInstructions: input.customInstructions,
       brandColors: input.brandColors,
-      keywords: input.keywords
+      keywords: input.keywords,
+      allowSimilarPost: input.allowSimilarPost ?? false
     }),
     signal: input.signal
   });
 
   return {
     response,
-    json: await parseJsonResponse<DraftResponse & { error?: string }>(response)
+    json: await parseJsonResponse<DraftResponse & GeneratePostErrorResponse>(response)
   };
 }
 

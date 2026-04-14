@@ -2,7 +2,33 @@ import { saveGeneratedImageBuffer } from "@/lib/storage.server";
 
 const RENDER_TIMEOUT_MS = 120_000;
 
+async function launchLocalPuppeteerBrowser() {
+  const { default: puppeteer } = await import("puppeteer");
+  const executablePath = puppeteer.executablePath();
+
+  console.info("[renderer] Launching local Puppeteer browser", {
+    executablePath,
+    platform: process.platform
+  });
+
+  return puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: process.platform === "linux" ? ["--no-sandbox", "--disable-setuid-sandbox"] : []
+  });
+}
+
 async function launchRendererBrowser() {
+  const shouldTryBundledChromium = process.platform === "linux" || process.env.VERCEL === "1";
+
+  if (!shouldTryBundledChromium) {
+    console.info("[renderer] Skipping bundled Chromium on this platform", {
+      platform: process.platform,
+      vercel: process.env.VERCEL ?? null
+    });
+    return launchLocalPuppeteerBrowser();
+  }
+
   try {
     const [{ default: chromium }, { default: puppeteer }] = await Promise.all([
       import("@sparticuz/chromium"),
@@ -11,7 +37,13 @@ async function launchRendererBrowser() {
 
     const executablePath = await chromium.executablePath();
 
-    return puppeteer.launch({
+    console.info("[renderer] Launching bundled Chromium", {
+      executablePath,
+      platform: process.platform,
+      vercel: process.env.VERCEL ?? null
+    });
+
+    return await puppeteer.launch({
       executablePath,
       args: chromium.args,
       headless: true
@@ -19,16 +51,12 @@ async function launchRendererBrowser() {
   } catch (error) {
     console.warn("[renderer] Falling back to local Puppeteer browser", {
       error: error instanceof Error ? error.message : String(error),
-      vercel: process.env.VERCEL ?? null
+      vercel: process.env.VERCEL ?? null,
+      platform: process.platform
     });
   }
 
-  const { default: puppeteer } = await import("puppeteer");
-
-  return puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
+  return launchLocalPuppeteerBrowser();
 }
 
 function buildHtmlDocument(html: string, css: string) {

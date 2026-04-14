@@ -25,7 +25,8 @@ export function ScheduledPostsTable({
   instagramFeedError,
   locale,
   dictionary,
-  generatorDictionary
+  generatorDictionary,
+  highlightPostId
 }: {
   posts: ScheduledPostItem[];
   instagramFeedItems: InstagramFeedItem[];
@@ -33,6 +34,7 @@ export function ScheduledPostsTable({
   locale: string;
   dictionary: ScheduledPostsDictionary;
   generatorDictionary: GeneratorDictionary;
+  highlightPostId?: string;
 }) {
   const {
     portalReady,
@@ -74,6 +76,10 @@ export function ScheduledPostsTable({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-white/80 bg-white/80 px-5 py-4 shadow-sm">
+          <p className="text-sm text-slate-500">{dictionary.draftCount}</p>
+          <p className="mt-2 text-3xl font-semibold text-ink">{counts.drafts}</p>
+        </div>
+        <div className="rounded-3xl border border-white/80 bg-white/80 px-5 py-4 shadow-sm">
           <p className="text-sm text-slate-500">{dictionary.scheduledCount}</p>
           <p className="mt-2 text-3xl font-semibold text-ink">{counts.scheduled}</p>
         </div>
@@ -81,11 +87,13 @@ export function ScheduledPostsTable({
           <p className="text-sm text-slate-500">{dictionary.publishedCount}</p>
           <p className="mt-2 text-3xl font-semibold text-ink">{counts.published}</p>
         </div>
-        <div className="rounded-3xl border border-white/80 bg-white/80 px-5 py-4 shadow-sm">
-          <p className="text-sm text-slate-500">{dictionary.processedCount}</p>
-          <p className="mt-2 text-3xl font-semibold text-ink">{counts.processed}</p>
-        </div>
       </div>
+
+      {highlightPostId ? (
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {dictionary.highlightedPost}
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
         <label className="flex min-w-0 max-w-full items-start gap-3 text-sm text-slate-600">
@@ -155,7 +163,14 @@ export function ScheduledPostsTable({
               const publicationStateLabel = getPublicationStateLabel(post.publicationState, dictionary);
 
               return (
-                <tr key={post.id} className="border-t border-slate-100 align-top">
+                <tr
+                  key={post.id}
+                  className={
+                    post.id === highlightPostId
+                      ? "border-t border-amber-200 bg-amber-50/70 align-top"
+                      : "border-t border-slate-100 align-top"
+                  }
+                >
                   <td className="px-2 py-2.5 sm:px-3 sm:py-3">
                     <input
                       type="checkbox"
@@ -166,7 +181,7 @@ export function ScheduledPostsTable({
                   </td>
                   <td className="px-2 py-2.5 sm:px-3 sm:py-3">
                     <PreviewCell
-                      imageUrl={post.imageUrl}
+                      imageUrl={post.previewUrl}
                       assetState={post.assetState}
                       alt={dictionary.previewAlt}
                       unavailableLabel={dictionary.previewUnavailable}

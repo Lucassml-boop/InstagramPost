@@ -61,6 +61,7 @@ export function CaptionGenerator({
     saveBrandColorsToHistory,
     removeBrandColorsFromHistory,
     generatePost,
+    generatePostIgnoringSimilar,
     cancelGeneration,
     clearGeneratedPost,
     publishNow,
@@ -167,6 +168,7 @@ export function CaptionGenerator({
           isAutoGeneratingAll={isAutoGeneratingAll}
           generateAllCreatePostInputs={generateAllCreatePostInputs}
           generatePost={generatePost}
+          generatePostIgnoringSimilar={generatePostIgnoringSimilar}
           draft={draft}
           shouldShowCaptionEditor={shouldShowCaptionEditor}
           caption={caption}

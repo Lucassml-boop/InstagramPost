@@ -59,7 +59,7 @@ async function getAssetState(imagePath: string, imageUrl: string) {
 export default async function ScheduledPostsPage({
   searchParams
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; highlightPostId?: string }>;
 }) {
   const user = await getCurrentUser();
   const locale = await getLocaleFromCookies();
@@ -71,7 +71,7 @@ export default async function ScheduledPostsPage({
     where: {
       userId: user!.id,
       status: {
-        in: [PostStatus.SCHEDULED, PostStatus.PUBLISHED, PostStatus.FAILED]
+        in: [PostStatus.DRAFT, PostStatus.SCHEDULED, PostStatus.PUBLISHED, PostStatus.FAILED]
       }
     },
     orderBy: {
@@ -82,15 +82,16 @@ export default async function ScheduledPostsPage({
     posts.map(async (post): Promise<ScheduledPostItem> => ({
       id: post.id,
       caption: post.caption,
-      imageUrl: getOptimizedAssetUrl(getStoredPreviewUrl(post.mediaItems, post.imageUrl), {
+      previewUrl: getOptimizedAssetUrl(getStoredPreviewUrl(post.mediaItems, post.imageUrl), {
         width: 160,
         height: 160,
         quality: 70,
         resize: "cover"
       }),
+      imageUrl: post.imageUrl,
       imagePath: post.imagePath,
       postType: post.postType,
-      status: post.status as "SCHEDULED" | "PUBLISHED" | "FAILED",
+      status: post.status as "DRAFT" | "SCHEDULED" | "PUBLISHED" | "FAILED",
       publicationState:
         post.publicationState === "ARCHIVED"
           ? "ARCHIVED"
@@ -141,6 +142,7 @@ export default async function ScheduledPostsPage({
           locale={locale}
           dictionary={scheduledPageDictionary}
           generatorDictionary={generatorTableDictionary}
+          highlightPostId={params.highlightPostId}
         />
       </Panel>
     </div>

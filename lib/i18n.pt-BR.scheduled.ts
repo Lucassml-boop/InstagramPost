@@ -16,6 +16,7 @@ scheduledPage: {
   publishedAt: "Publicado em",
   status: "Status",
   fileStatus: "Arquivo",
+  draftStatus: "Rascunho",
   scheduledStatus: "Agendado",
   publishedStatus: "Publicado",
   failedStatus: "Falhou",
@@ -28,11 +29,11 @@ scheduledPage: {
   editSchedule: "Alterar data",
   reschedule: "Reagendar",
   saving: "Salvando...",
+  draftCount: "Rascunhos",
   scheduledCount: "Agendados",
   publishedCount: "Publicados",
-  processedCount: "Processados",
   previewUnavailable: "Sem previa",
-  noPosts: "Ainda nao ha posts agendados ou publicados.",
+  noPosts: "Ainda nao ha posts salvos para revisar.",
   previewAlt: "Previa do post",
   select: "Selecionar",
   selectAll: "Selecionar todos os posts listados",
@@ -46,6 +47,7 @@ scheduledPage: {
   instagramFeedDescription: "Estes sao os itens mais recentes visiveis no feed da sua conta conectada.",
   instagramFeedEmpty: "O Instagram ainda nao retornou itens do feed.",
   instagramFeedError: "Nao foi possivel carregar o feed do Instagram",
-  openOnInstagram: "Abrir no Instagram"
+  openOnInstagram: "Abrir no Instagram",
+  highlightedPost: "O post semelhante encontrado foi destacado na tabela abaixo."
 },
 };

@@ -15,7 +15,8 @@ test("getOllamaTimeoutForInput keeps base timeout for non-carousel posts", () =>
     brandColors: "#101828",
     outputLanguage: "pt-BR",
     customInstructions: "",
-    keywords: ""
+    keywords: "",
+    allowSimilarPost: false
   });
 
   assert.equal(timeoutMs, 480_000);
@@ -34,7 +35,8 @@ test("getOllamaTimeoutForInput adds four minutes per carousel slide", () => {
     brandColors: "#101828",
     outputLanguage: "pt-BR",
     customInstructions: "",
-    keywords: ""
+    keywords: "",
+    allowSimilarPost: false
   });
 
   assert.equal(timeoutMs, 1_440_000);
