@@ -173,6 +173,10 @@ export type AgendaSectionsProps = {
   dismissAutoFillSuggestion: (day: DayLabel, index: number) => void;
   suggestedAutoFillTargets: Record<DayLabel, number[]>;
   postTimesByDay: Record<DayLabel, string[]>;
+  slotRuntimeStatusByKey: Record<
+    string,
+    "awaiting-confirmation" | "queued" | "generating-now" | "generated-and-scheduled" | "published" | "failed"
+  >;
   setAllDaysEnabled: (enabled: boolean) => void;
   saveSettings: () => void;
   generateWeeklyAgenda: () => void;

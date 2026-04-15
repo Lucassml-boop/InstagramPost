@@ -5,9 +5,9 @@ import {
   summarizeWeeklyAgendaUsage,
   upsertWeeklyAgendaState
 } from "@/lib/content-system.agenda-metadata";
-import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
 import { generateWeeklyContentPlan, getContentBrandProfile } from "@/lib/content-system";
 import { countConfirmedWeeklyPosts } from "@/lib/content-system.schedule";
+import { materializeConfirmedAgendaPosts } from "@/lib/weekly-agenda-scheduler";
 import { jsonError } from "@/lib/server-utils";
 
 export async function POST() {
@@ -19,23 +19,26 @@ export async function POST() {
 
   try {
     const result = await generateWeeklyContentPlan();
-    const [agendaWithStatus, metadata, profile] = await Promise.all([
-      attachAgendaPostStatuses(user.id, result.agenda),
+    const [metadata, profile] = await Promise.all([
       upsertWeeklyAgendaState(user.id, result.agenda),
       getContentBrandProfile()
     ]);
+    const materialized = await materializeConfirmedAgendaPosts(user);
     const totalExpectedPosts = countConfirmedWeeklyPosts(profile);
     const agendaSummary = summarizeWeeklyAgendaUsage({
-      agenda: agendaWithStatus,
+      agenda: materialized.agenda,
       totalExpectedPosts,
       metadata: serializeWeeklyAgendaState(metadata)
     });
 
     return NextResponse.json({
       ok: true,
-      agenda: agendaWithStatus,
+      agenda: materialized.agenda,
+      weekPosts: materialized.weekPosts,
       agendaSummary,
-      currentTopics: result.currentTopics
+      currentTopics: result.currentTopics,
+      prepared: materialized.prepared,
+      scanned: materialized.scanned
     });
   } catch (error) {
     return jsonError(

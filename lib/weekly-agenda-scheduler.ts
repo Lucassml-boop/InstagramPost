@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { createDraftPost, schedulePost } from "@/lib/posts";
+import type { AuthUser } from "@/lib/auth";
 import {
   getContentBrandProfile,
   getCurrentWeeklyAgenda
 } from "@/lib/content-system.storage";
-import { attachAgendaPostStatuses } from "@/lib/content-system.agenda-status";
+import {
+  attachAgendaPostStatuses,
+  getWeeklyPostsForAgenda
+} from "@/lib/content-system.agenda-status";
 import { isConfirmedDaySlot } from "@/lib/content-system.schedule";
 import type { DayLabel } from "@/lib/content-system.constants";
 import { generateInstagramCarouselPosts, generateInstagramPost } from "@/lib/openai";
@@ -156,29 +160,46 @@ async function createScheduledDraftFromAgendaItem(input: {
   return draft.id;
 }
 
-export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
-  const automationUser = await findAutomationUser();
-  if (!automationUser) {
-    return { prepared: 0, scanned: 0 };
-  }
+function sortAgendaItemsByScheduledTime(
+  items: Awaited<ReturnType<typeof attachAgendaPostStatuses>>
+) {
+  return [...items].sort((left, right) => {
+    return getAgendaItemDateTime(left.date, left.time).getTime() - getAgendaItemDateTime(right.date, right.time).getTime();
+  });
+}
 
+async function materializeAgendaItems(input: {
+  user: Pick<AuthUser, "id" | "preferredOutputLanguage" | "preferredCustomInstructions">;
+  referenceDate?: Date;
+  requirePreGenerationWindow: boolean;
+}) {
+  const referenceDate = input.referenceDate ?? new Date();
   const [agenda, brandProfile] = await Promise.all([
     getCurrentWeeklyAgenda(),
     getContentBrandProfile()
   ]);
 
   if (agenda.length === 0) {
-    return { prepared: 0, scanned: 0 };
+    return {
+      prepared: 0,
+      scanned: 0,
+      agenda: [],
+      weekPosts: []
+    };
   }
 
-  const agendaWithStatus = await attachAgendaPostStatuses(automationUser.id, agenda);
-  const dueItems = agendaWithStatus.filter((item) => {
+  const agendaWithStatus = await attachAgendaPostStatuses(input.user.id, agenda);
+  const dueItems = sortAgendaItemsByScheduledTime(agendaWithStatus).filter((item) => {
     if (item.postGenerationStatus !== "not-generated") {
       return false;
     }
 
     if (!isConfirmedDaySlot(brandProfile, item.day as DayLabel, item.time)) {
       return false;
+    }
+
+    if (!input.requirePreGenerationWindow) {
+      return getAgendaItemDateTime(item.date, item.time).getTime() > referenceDate.getTime();
     }
 
     const scheduledTime = getAgendaItemDateTime(item.date, item.time);
@@ -190,7 +211,7 @@ export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
 
   for (const item of dueItems) {
     const runtimeKey = buildAgendaRuntimeKey({
-      userId: automationUser.id,
+      userId: input.user.id,
       date: item.date,
       time: item.time,
       theme: item.theme
@@ -204,11 +225,11 @@ export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
 
     try {
       await createScheduledDraftFromAgendaItem({
-        userId: automationUser.id,
+        userId: input.user.id,
         item,
         brandBrief: brandProfile.editableBrief,
-        preferredOutputLanguage: automationUser.preferredOutputLanguage,
-        preferredCustomInstructions: automationUser.preferredCustomInstructions,
+        preferredOutputLanguage: input.user.preferredOutputLanguage === "pt-BR" ? "pt-BR" : "en",
+        preferredCustomInstructions: input.user.preferredCustomInstructions,
         scheduledTime: getAgendaItemDateTime(item.date, item.time)
       });
       prepared += 1;
@@ -224,8 +245,40 @@ export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
     }
   }
 
+  const refreshedAgenda = await attachAgendaPostStatuses(input.user.id, agenda);
+  const weekPosts = await getWeeklyPostsForAgenda(input.user.id, agenda);
+
   return {
     prepared,
-    scanned: dueItems.length
+    scanned: dueItems.length,
+    agenda: refreshedAgenda,
+    weekPosts
   };
+}
+
+export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
+  const automationUser = await findAutomationUser();
+  if (!automationUser) {
+    return { prepared: 0, scanned: 0 };
+  }
+  const result = await materializeAgendaItems({
+    user: automationUser,
+    referenceDate,
+    requirePreGenerationWindow: true
+  });
+  return {
+    prepared: result.prepared,
+    scanned: result.scanned
+  };
+}
+
+export async function materializeConfirmedAgendaPosts(
+  user: Pick<AuthUser, "id" | "preferredOutputLanguage" | "preferredCustomInstructions">,
+  referenceDate = new Date()
+) {
+  return materializeAgendaItems({
+    user,
+    referenceDate,
+    requirePreGenerationWindow: false
+  });
 }

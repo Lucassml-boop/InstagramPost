@@ -20,7 +20,9 @@ export function GeneratedAgendaSection({
   totalExpectedPosts,
   agendaSummary,
   keepUsingStaleAgenda,
-  isResolvingStaleAgenda
+  isResolvingStaleAgenda,
+  activeQueueFilter,
+  slotRuntimeStatusByKey
 }: {
   dictionary: AppDictionary;
   groupedAgenda: AgendaGroup[];
@@ -34,8 +36,37 @@ export function GeneratedAgendaSection({
   };
   keepUsingStaleAgenda: () => void;
   isResolvingStaleAgenda: boolean;
+  activeQueueFilter: "queued" | "generating" | "scheduled" | null;
+  slotRuntimeStatusByKey: Record<
+    string,
+    "awaiting-confirmation" | "queued" | "generating-now" | "generated-and-scheduled" | "published" | "failed"
+  >;
 }) {
-  const generatedCount = groupedAgenda.reduce((total, group) => {
+  const filteredGroups = activeQueueFilter
+    ? groupedAgenda.filter((group) => {
+        const matchingCount = group.expectedTimes.reduce((total, _, index) => {
+          const key = `${group.day}-${index}`;
+          const status = slotRuntimeStatusByKey[key];
+
+          if (activeQueueFilter === "queued" && status === "queued") {
+            return total + 1;
+          }
+
+          if (activeQueueFilter === "generating" && status === "generating-now") {
+            return total + 1;
+          }
+
+          if (activeQueueFilter === "scheduled" && status === "generated-and-scheduled") {
+            return total + 1;
+          }
+
+          return total;
+        }, 0);
+
+        return matchingCount > 0;
+      })
+    : groupedAgenda;
+  const generatedCount = filteredGroups.reduce((total, group) => {
     return total + buildAgendaSlides(group).filter((slide) => slide.kind !== "missing").length;
   }, 0);
   const pendingCount = Math.max(totalExpectedPosts - generatedCount, 0);
@@ -60,7 +91,7 @@ export function GeneratedAgendaSection({
               {dictionary.contentAutomation.generatedAgendaDescription}
             </p>
           </div>
-          {groupedAgenda.length > 0 ? (
+          {filteredGroups.length > 0 ? (
             <div className="flex flex-wrap gap-3">
               <SummaryPill
                 label={dictionary.contentAutomation.generatedPostsCount}
@@ -106,11 +137,11 @@ export function GeneratedAgendaSection({
             </div>
           </div>
         ) : null}
-        {groupedAgenda.length === 0 ? (
+        {filteredGroups.length === 0 ? (
           <p className="mt-5 text-sm text-slate-500">{dictionary.contentAutomation.noAgenda}</p>
         ) : (
           <div className="mt-6 grid gap-4">
-            {groupedAgenda.map((item) => (
+            {filteredGroups.map((item) => (
               <AgendaGroupCard key={`${item.date}-${item.day}`} dictionary={dictionary} item={item} />
             ))}
           </div>

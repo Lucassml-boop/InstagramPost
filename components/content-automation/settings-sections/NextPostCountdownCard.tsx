@@ -218,11 +218,21 @@ function formatPlannedDate(value: Date) {
 export function NextPostCountdownCard({
   dictionary,
   groupedAgenda,
-  weekPosts
+  weekPosts,
+  queueSummary,
+  activeQueueFilter,
+  onQueueFilterChange
 }: {
   dictionary: AppDictionary;
   groupedAgenda: AgendaGroup[];
   weekPosts: WeeklyPostSummary[];
+  queueSummary: {
+    queued: number;
+    generating: number;
+    scheduled: number;
+  };
+  activeQueueFilter: "queued" | "generating" | "scheduled" | null;
+  onQueueFilterChange: (filter: "queued" | "generating" | "scheduled" | null) => void;
 }) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -286,6 +296,26 @@ export function NextPostCountdownCard({
         </p>
       </div>
       <div className="p-6">
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <QueueSummaryPill
+            label={dictionary.contentAutomation.nextPostQueueQueuedCount}
+            value={queueSummary.queued}
+            active={activeQueueFilter === "queued"}
+            onClick={() => onQueueFilterChange(activeQueueFilter === "queued" ? null : "queued")}
+          />
+          <QueueSummaryPill
+            label={dictionary.contentAutomation.nextPostQueueGeneratingCount}
+            value={queueSummary.generating}
+            active={activeQueueFilter === "generating"}
+            onClick={() => onQueueFilterChange(activeQueueFilter === "generating" ? null : "generating")}
+          />
+          <QueueSummaryPill
+            label={dictionary.contentAutomation.nextPostQueueScheduledCount}
+            value={queueSummary.scheduled}
+            active={activeQueueFilter === "scheduled"}
+            onClick={() => onQueueFilterChange(activeQueueFilter === "scheduled" ? null : "scheduled")}
+          />
+        </div>
         {nextPost ? (
           <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-3xl border border-slate-200 bg-white/90 p-5">
@@ -333,5 +363,30 @@ export function NextPostCountdownCard({
         )}
       </div>
     </Panel>
+  );
+}
+
+function QueueSummaryPill({
+  label,
+  value,
+  active,
+  onClick
+}: {
+  label: string;
+  value: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border px-4 py-4 text-left transition ${active ? "border-ink bg-slate-900 text-white" : "border-slate-200 bg-white/90 hover:border-slate-400"}`}
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </p>
+      <p className={`mt-2 text-2xl font-semibold ${active ? "text-white" : "text-ink"}`}>{value}</p>
+    </button>
   );
 }

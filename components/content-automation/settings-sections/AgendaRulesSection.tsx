@@ -61,7 +61,8 @@ function ExpandedDayEditor({
   suggestedAutoFillTargets,
   autoFillKey,
   updateDayPostIdea,
-  toggleDayPostConfirmation
+  toggleDayPostConfirmation,
+  slotRuntimeStatusByKey
 }: AgendaSectionsProps & { day: keyof AgendaSectionsProps["daySettings"]; autoFillKey?: string | null }) {
   return (
     <>
@@ -74,6 +75,31 @@ function ExpandedDayEditor({
       <div className="mt-4 space-y-4">
         {daySettings[day].postIdeas.map((idea, index) => {
           const isAutoFilling = autoFillKey === `${String(day)}-${index}`;
+          const slotRuntimeStatus = slotRuntimeStatusByKey[`${String(day)}-${index}`] ?? "awaiting-confirmation";
+          const slotRuntimeLabel =
+            slotRuntimeStatus === "generated-and-scheduled"
+              ? dictionary.contentAutomation.slotQueueGeneratedAndScheduled
+              : slotRuntimeStatus === "generating-now"
+                ? dictionary.contentAutomation.slotQueueGeneratingNow
+                : slotRuntimeStatus === "queued"
+                  ? dictionary.contentAutomation.slotQueueQueued
+                  : slotRuntimeStatus === "published"
+                    ? dictionary.contentAutomation.slotQueuePublished
+                    : slotRuntimeStatus === "failed"
+                      ? dictionary.contentAutomation.slotQueueFailed
+                      : dictionary.contentAutomation.slotQueueAwaiting;
+          const slotRuntimeClass =
+            slotRuntimeStatus === "generated-and-scheduled"
+              ? "border-sky-200 bg-sky-50 text-sky-800"
+              : slotRuntimeStatus === "generating-now"
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : slotRuntimeStatus === "queued"
+                  ? "border-slate-200 bg-slate-100 text-slate-700"
+                  : slotRuntimeStatus === "published"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : slotRuntimeStatus === "failed"
+                      ? "border-rose-200 bg-rose-50 text-rose-800"
+                      : "border-slate-200 bg-slate-100 text-slate-700";
 
           return (
           <div key={`${String(day)}-idea-${index}`} className={`rounded-3xl border bg-white p-5 transition ${isAutoFilling ? "border-amber-300 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]" : "border-slate-200"}`}>
@@ -84,6 +110,9 @@ function ExpandedDayEditor({
                   {idea.confirmed
                     ? dictionary.contentAutomation.slotConfirmed
                     : dictionary.contentAutomation.slotAwaitingConfirmation}
+                </span>
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${slotRuntimeClass}`}>
+                  {slotRuntimeLabel}
                 </span>
               </div>
               {isAutoFilling ? (

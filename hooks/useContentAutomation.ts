@@ -7,7 +7,7 @@ import {
   generateAutomaticPostIdea as generateAutomaticPostIdeaService,
   generateWeeklyAgenda as generateWeeklyAgendaService,
   keepUsingStaleAgenda as keepUsingStaleAgendaService,
-  saveBrandProfile as saveBrandProfileService
+  saveBrandProfileWithAgenda as saveBrandProfileService
 } from "@/services/frontend/content-system";
 import type { DayLabel, Props } from "@/components/content-automation/types";
 import {
@@ -55,7 +55,7 @@ export function useContentAutomation(input: {
   const [presets, setPresets] = useState(buildPresetsState(input.initialProfile));
   const [daySettings, setDaySettings] = useState(buildDayState(input.initialProfile));
   const [agenda, setAgenda] = useState(input.initialAgenda);
-  const [weekPosts] = useState(input.initialWeekPosts);
+  const [weekPosts, setWeekPosts] = useState(input.initialWeekPosts);
   const [agendaSummary, setAgendaSummary] = useState(input.initialAgendaSummary);
   const [topicsHistory, setTopicsHistory] = useState(input.initialTopicsHistory);
   const [currentTopics, setCurrentTopics] = useState<string[]>([]);
@@ -341,7 +341,12 @@ export function useContentAutomation(input: {
 
     startSaving(async () => {
       try {
-        await saveBrandProfileService(builtProfile);
+        const json = await saveBrandProfileService(builtProfile);
+        setAgenda(json.agenda ?? []);
+        setWeekPosts(json.weekPosts ?? []);
+        if (json.agendaSummary) {
+          setAgendaSummary(json.agendaSummary);
+        }
         setMessage(input.dictionary.saveSuccess);
       } catch (requestError) {
         setError(
@@ -357,10 +362,16 @@ export function useContentAutomation(input: {
 
     startGenerating(async () => {
       try {
-        await saveBrandProfileService(builtProfile);
+        const saved = await saveBrandProfileService(builtProfile);
+        setAgenda(saved.agenda ?? []);
+        setWeekPosts(saved.weekPosts ?? []);
+        if (saved.agendaSummary) {
+          setAgendaSummary(saved.agendaSummary);
+        }
         const json = await generateWeeklyAgendaService();
 
         setAgenda(json.agenda ?? []);
+        setWeekPosts(json.weekPosts ?? []);
         if (json.agendaSummary) {
           setAgendaSummary(json.agendaSummary);
         }

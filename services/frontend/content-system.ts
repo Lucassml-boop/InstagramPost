@@ -1,7 +1,10 @@
 import { parseJsonOrThrow, parseJsonResponse } from "@/lib/client/http";
 import type { AutomaticPostIdea, BrandProfile } from "@/lib/content-system";
 import type { WeeklyAgendaUsageSummary } from "@/lib/content-system.agenda-metadata";
-import type { ContentPlanItemWithStatus } from "@/lib/content-system.agenda-status";
+import type {
+  ContentPlanItemWithStatus,
+  WeeklyPostSummary
+} from "@/lib/content-system.agenda-status";
 
 export async function saveBrandProfile(profile: BrandProfile) {
   const response = await fetch("/api/content-system/brand-profile", {
@@ -16,6 +19,27 @@ export async function saveBrandProfile(profile: BrandProfile) {
   );
 }
 
+export async function saveBrandProfileWithAgenda(profile: BrandProfile) {
+  const response = await fetch("/api/content-system/brand-profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile)
+  });
+
+  return parseJsonOrThrow<{
+    profile?: BrandProfile;
+    agenda?: ContentPlanItemWithStatus[];
+    weekPosts?: WeeklyPostSummary[];
+    agendaSummary?: WeeklyAgendaUsageSummary;
+    prepared?: number;
+    scanned?: number;
+    error?: string;
+  }>(
+    response,
+    "Unable to save content automation settings."
+  );
+}
+
 export async function generateWeeklyAgenda() {
   const response = await fetch("/api/content-system/generate-weekly", {
     method: "POST"
@@ -24,8 +48,11 @@ export async function generateWeeklyAgenda() {
   return parseJsonOrThrow<
     {
       agenda?: ContentPlanItemWithStatus[];
+      weekPosts?: WeeklyPostSummary[];
       agendaSummary?: WeeklyAgendaUsageSummary;
       currentTopics?: string[];
+      prepared?: number;
+      scanned?: number;
       error?: string;
     }
   >(response, "Unable to generate the weekly content agenda.");
