@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { Panel } from "@/components/shared";
+import { publishNow } from "@/services/frontend/posts";
 import type { WeeklyPostSummary } from "@/lib/content-system.agenda-status";
 import type { AgendaGroup, AppDictionary } from "./types";
 
@@ -86,14 +89,21 @@ type NextCountdownCandidate = {
   day: string;
   slot: number;
   title: string;
-  status: "scheduled" | "publishing" | "published";
+  status: "scheduled" | "publishing";
   plannedAt: Date;
 };
 
 function isSchedulableStatus(
   status: string
 ): status is NextCountdownCandidate["status"] {
-  return status === "scheduled" || status === "publishing" || status === "published";
+  return status === "scheduled" || status === "publishing";
+}
+
+function startOfNextDay(value: Date) {
+  const next = new Date(value);
+  next.setHours(0, 0, 0, 0);
+  next.setDate(next.getDate() + 1);
+  return next;
 }
 
 function buildGroupCandidates(item: AgendaGroup): NextCountdownCandidate[] {
@@ -220,8 +230,14 @@ export function NextPostCountdownCard({
   groupedAgenda,
   weekPosts,
   queueSummary,
+  queueDetails,
   activeQueueFilter,
-  onQueueFilterChange
+  onQueueFilterChange,
+  onClearQueued,
+  onClearGenerating,
+  onClearScheduled,
+  isClearingQueue,
+  clearingQueueStatus
 }: {
   dictionary: AppDictionary;
   groupedAgenda: AgendaGroup[];
@@ -231,10 +247,29 @@ export function NextPostCountdownCard({
     generating: number;
     scheduled: number;
   };
+  queueDetails: {
+    queued: Array<{ id: string; title: string; meta: string }>;
+    generating: Array<{ id: string; title: string; meta: string }>;
+    scheduled: Array<{ id: string; title: string; meta: string }>;
+  };
   activeQueueFilter: "queued" | "generating" | "scheduled" | null;
   onQueueFilterChange: (filter: "queued" | "generating" | "scheduled" | null) => void;
+  onClearQueued: () => void;
+  onClearGenerating: () => void;
+  onClearScheduled: () => void;
+  isClearingQueue: boolean;
+  clearingQueueStatus: "queued" | "generating" | "scheduled" | null;
 }) {
+  const router = useRouter();
   const [now, setNow] = useState(() => Date.now());
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [skipBeforeTimestamp, setSkipBeforeTimestamp] = useState<number | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -243,6 +278,12 @@ export function NextPostCountdownCard({
 
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!activeQueueFilter) {
+      setIsQueueModalOpen(false);
+    }
+  }, [activeQueueFilter]);
 
   const nextPost = useMemo(() => {
     const linkedPostIds = new Set(
@@ -256,12 +297,18 @@ export function NextPostCountdownCard({
 
     const agendaCandidates = groupedAgenda
       .flatMap((group) => buildGroupCandidates(group))
-      .filter((item) => Number.isFinite(item.plannedAt.getTime()) && item.plannedAt.getTime() >= now);
+      .filter(
+        (item) =>
+          Number.isFinite(item.plannedAt.getTime()) &&
+          item.plannedAt.getTime() >= now &&
+          (skipBeforeTimestamp === null || item.plannedAt.getTime() >= skipBeforeTimestamp)
+      );
 
     const manualCandidates = weekPosts
       .filter(
         (post) =>
           post.scheduledTime &&
+          isSchedulableStatus(post.status) &&
           !linkedPostIds.has(post.id) &&
           !groupedExtraPostIds.has(post.id)
       )
@@ -274,16 +321,27 @@ export function NextPostCountdownCard({
         status: post.status,
         plannedAt: parseAgendaDateTime(post.localDate, post.localTime)
       }))
-      .filter((item) => Number.isFinite(item.plannedAt.getTime()) && item.plannedAt.getTime() >= now);
+      .filter(
+        (item) =>
+          Number.isFinite(item.plannedAt.getTime()) &&
+          item.plannedAt.getTime() >= now &&
+          (skipBeforeTimestamp === null || item.plannedAt.getTime() >= skipBeforeTimestamp)
+      );
 
     return [...agendaCandidates, ...manualCandidates]
       .sort((left, right) => left.plannedAt.getTime() - right.plannedAt.getTime())[0] ?? null;
-  }, [groupedAgenda, now, weekPosts]);
+  }, [groupedAgenda, now, skipBeforeTimestamp, weekPosts]);
 
   const countdown = nextPost ? formatCountdown(nextPost.plannedAt.getTime() - now) : null;
   const creationStatus = nextPost
     ? dictionary.contentAutomation.nextPostCreationReady
     : null;
+
+  const toggleQueueFilter = (filter: "queued" | "generating" | "scheduled") => {
+    const nextFilter = activeQueueFilter === filter ? null : filter;
+    onQueueFilterChange(nextFilter);
+    setIsQueueModalOpen(nextFilter !== null);
+  };
 
   return (
     <Panel className="overflow-hidden border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.06),_transparent_40%),linear-gradient(135deg,_#ffffff,_#f8fafc)] p-0">
@@ -296,24 +354,61 @@ export function NextPostCountdownCard({
         </p>
       </div>
       <div className="p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+            {dictionary.contentAutomation.nextPostQueueSummaryLabel}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onClearQueued}
+              disabled={isClearingQueue || queueSummary.queued === 0}
+              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isClearingQueue && clearingQueueStatus === "queued"
+                ? dictionary.contentAutomation.clearingQueue
+                : dictionary.contentAutomation.clearQueuedButton}
+            </button>
+            <button
+              type="button"
+              onClick={onClearGenerating}
+              disabled={isClearingQueue || queueSummary.generating === 0}
+              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isClearingQueue && clearingQueueStatus === "generating"
+                ? dictionary.contentAutomation.clearingQueue
+                : dictionary.contentAutomation.clearGeneratingButton}
+            </button>
+            <button
+              type="button"
+              onClick={onClearScheduled}
+              disabled={isClearingQueue || queueSummary.scheduled === 0}
+              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isClearingQueue && clearingQueueStatus === "scheduled"
+                ? dictionary.contentAutomation.clearingQueue
+                : dictionary.contentAutomation.clearScheduledButton}
+            </button>
+          </div>
+        </div>
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
           <QueueSummaryPill
             label={dictionary.contentAutomation.nextPostQueueQueuedCount}
             value={queueSummary.queued}
             active={activeQueueFilter === "queued"}
-            onClick={() => onQueueFilterChange(activeQueueFilter === "queued" ? null : "queued")}
+            onClick={() => toggleQueueFilter("queued")}
           />
           <QueueSummaryPill
             label={dictionary.contentAutomation.nextPostQueueGeneratingCount}
             value={queueSummary.generating}
             active={activeQueueFilter === "generating"}
-            onClick={() => onQueueFilterChange(activeQueueFilter === "generating" ? null : "generating")}
+            onClick={() => toggleQueueFilter("generating")}
           />
           <QueueSummaryPill
             label={dictionary.contentAutomation.nextPostQueueScheduledCount}
             value={queueSummary.scheduled}
             active={activeQueueFilter === "scheduled"}
-            onClick={() => onQueueFilterChange(activeQueueFilter === "scheduled" ? null : "scheduled")}
+            onClick={() => toggleQueueFilter("scheduled")}
           />
         </div>
         {nextPost ? (
@@ -349,6 +444,30 @@ export function NextPostCountdownCard({
                     : `${nextPost.day} · ${dictionary.contentAutomation.postLabel} ${nextPost.slot}`}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!nextPost.id) return;
+                  setIsPublishing(true);
+                  try {
+                    await publishNow(nextPost.id);
+                    setSkipBeforeTimestamp(startOfNextDay(nextPost.plannedAt).getTime());
+                    router.refresh();
+                  } catch (error) {
+                    alert(
+                      error instanceof Error ? error.message : "Erro ao publicar o post."
+                    );
+                  } finally {
+                    setIsPublishing(false);
+                  }
+                }}
+                disabled={isPublishing || !nextPost.id}
+                className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-4 transition hover:border-emerald-400 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                  {isPublishing ? dictionary.contentAutomation.publishingNow : dictionary.contentAutomation.publishNowButton}
+                </p>
+              </button>
             </div>
           </div>
         ) : (
@@ -362,6 +481,67 @@ export function NextPostCountdownCard({
           </div>
         )}
       </div>
+      {isClient && isQueueModalOpen && activeQueueFilter
+        ? createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <button
+                type="button"
+                aria-label={dictionary.contentAutomation.closeQueueModal}
+                onClick={() => {
+                  setIsQueueModalOpen(false);
+                  onQueueFilterChange(null);
+                }}
+                className="absolute inset-0 bg-slate-900/25 backdrop-blur-md"
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                className="relative z-10 w-full max-w-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-6 rounded-2xl mx-4"
+              >
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    {dictionary.contentAutomation.queueModalTitle}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsQueueModalOpen(false);
+                      onQueueFilterChange(null);
+                    }}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
+                  >
+                    {dictionary.contentAutomation.closeQueueModal}
+                  </button>
+                </div>
+                <p className="text-sm font-semibold text-ink">
+                  {activeQueueFilter === "queued"
+                    ? dictionary.contentAutomation.nextPostQueueQueuedCount
+                    : activeQueueFilter === "generating"
+                    ? dictionary.contentAutomation.nextPostQueueGeneratingCount
+                    : dictionary.contentAutomation.nextPostQueueScheduledCount}
+                </p>
+                {queueDetails[activeQueueFilter].length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-500">
+                    {dictionary.contentAutomation.queueItemsEmpty}
+                  </p>
+                ) : (
+                  <div className="mt-3 max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+                    {queueDetails[activeQueueFilter].map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                      >
+                        <p className="text-sm font-medium text-ink">{item.title}</p>
+                        <p className="mt-1 text-xs text-slate-500">{item.meta}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </Panel>
   );
 }

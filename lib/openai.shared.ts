@@ -264,6 +264,56 @@ export function buildPrompt(
     .join("\n");
 }
 
+/**
+ * Tenta corrigir JSON malformado comum gerado por LLMs
+ * - Remove quebras de linha não escapadas dentro de strings
+ * - Remove comentários JSON5
+ * - Adiciona aspas faltantes em propriedades
+ */
+export function fixMalformedJSON(jsonString: string): string {
+  let fixed = jsonString;
+
+  // Remove comentários JSON5 (// e /* */)
+  fixed = fixed
+    .replace(/\/\/.*?$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // Tenta corrigir quebras de linha não escapadas em strings
+  // Procura por padrões como: "...conteúdo\nconteúdo..." e os corrige
+  fixed = fixed.replace(
+    /"([^"]*(?:\\.[^"]*)*)":/g,
+    (match, content) => {
+      // Escapar quebras de linha e caracteres de controle dentro do valor
+      const escaped = content
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
+      return `"${escaped}":`;
+    }
+  );
+
+  // Corrigir valores de string com quebras de linha
+  fixed = fixed.replace(
+    /:\s*"([^"]*(?:\\.[^"]*)*)"/g,
+    (match, content) => {
+      const escaped = content
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
+      return `: "${escaped}"`;
+    }
+  );
+
+  // Remover espaços em branco desnecessários entre chaves/colchetes e vírgulas
+  fixed = fixed
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\s*:\s*/g, ": ")
+    .replace(/\s*}\s*/g, "}")
+    .replace(/\s*]\s*/g, "]");
+
+  return fixed;
+}
+
 export function extractJsonPayload(content: string) {
   const trimmed = content.trim();
   if (!trimmed.startsWith("```")) {

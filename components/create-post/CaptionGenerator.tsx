@@ -23,7 +23,6 @@ export function CaptionGenerator({
   const router = useRouter();
   const { dictionary } = useI18n();
   const [isAutoGenerateModalOpen, setIsAutoGenerateModalOpen] = useState(false);
-  const [isGeneratePostModalOpen, setIsGeneratePostModalOpen] = useState(false);
   const {
     topic,
     setTopic,
@@ -31,8 +30,6 @@ export function CaptionGenerator({
     setMessage,
     lastAutoGenerateTopicHint,
     setLastAutoGenerateTopicHint,
-    lastGeneratePostTopicHint,
-    setLastGeneratePostTopicHint,
     postType,
     setPostType,
     carouselSlideCount,
@@ -135,12 +132,6 @@ export function CaptionGenerator({
     generateAllCreatePostInputs(userTopicHint.trim());
   }
 
-  async function handleGeneratePostSubmit(userTopicHint: string) {
-    setLastGeneratePostTopicHint(userTopicHint);
-    setIsGeneratePostModalOpen(false);
-    await generatePost(userTopicHint.trim());
-  }
-
   return (
     <>
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -189,10 +180,11 @@ export function CaptionGenerator({
             cancelGeneration={cancelGeneration}
             isAutoGeneratingAll={isAutoGeneratingAll}
             openAutoGenerateAllModal={() => setIsAutoGenerateModalOpen(true)}
-            openGeneratePostModal={() => setIsGeneratePostModalOpen(true)}
+            generatePost={() => {
+              void generatePost();
+            }}
             generatePostIgnoringSimilar={generatePostIgnoringSimilar}
             lastAutoGenerateTopicHint={lastAutoGenerateTopicHint}
-            lastGeneratePostTopicHint={lastGeneratePostTopicHint}
             clearFocusHints={clearFocusHints}
             topic={topic}
             message={message}
@@ -238,25 +230,6 @@ export function CaptionGenerator({
         onClose={() => setIsAutoGenerateModalOpen(false)}
         onSubmit={(value, _submitMode) => {
           void handleAutoGenerateAllSubmit(value);
-        }}
-      />
-
-      <AutoGenerateAllModal
-        isOpen={isGeneratePostModalOpen}
-        isSubmitting={isGenerating}
-        initialValue={lastGeneratePostTopicHint}
-        dictionary={{
-          title: dictionary.generator.generatePostModalTitle,
-          description: dictionary.generator.generatePostModalDescription,
-          fieldLabel: dictionary.generator.generatePostModalFieldLabel,
-          fieldPlaceholder: dictionary.generator.generatePostModalFieldPlaceholder,
-          cancel: dictionary.generator.generatePostModalCancel,
-          submit: dictionary.generator.generatePostModalSubmit,
-          skip: dictionary.generator.generatePostModalSkip
-        }}
-        onClose={() => setIsGeneratePostModalOpen(false)}
-        onSubmit={(value, _submitMode) => {
-          void handleGeneratePostSubmit(value);
         }}
       />
     </>

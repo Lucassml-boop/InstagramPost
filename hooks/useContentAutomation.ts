@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import {
+  clearAgenda as clearAgendaService,
   clearTopicsHistory as clearTopicsHistoryService,
   fetchTopicsHistory as fetchTopicsHistoryService,
   generateAutomaticPostIdea as generateAutomaticPostIdeaService,
@@ -9,6 +10,7 @@ import {
   keepUsingStaleAgenda as keepUsingStaleAgendaService,
   saveBrandProfileWithAgenda as saveBrandProfileService
 } from "@/services/frontend/content-system";
+import { deletePosts } from "@/services/frontend/posts";
 import type { DayLabel, Props } from "@/components/content-automation/types";
 import {
   buildDayState,
@@ -30,6 +32,12 @@ export function useContentAutomation(input: {
     saveError: string;
     generateSuccess: string;
     generateError: string;
+    clearAgendaSuccess: string;
+    clearAgendaError: string;
+    clearQueuedSuccess: string;
+    clearGeneratingSuccess: string;
+    clearScheduledSuccess: string;
+    clearQueueError: string;
     clearTopicsHistorySuccess: string;
     clearTopicsHistoryError: string;
   };
@@ -42,6 +50,12 @@ export function useContentAutomation(input: {
   const [topicsHistoryCleanupFrequency, setTopicsHistoryCleanupFrequency] = useState<
     "disabled" | "daily" | "weekly" | "monthly"
   >(input.initialProfile.topicsHistoryCleanupFrequency);
+  const [generationRigor, setGenerationRigor] = useState<"strict" | "balanced" | "flexible">(
+    input.initialProfile.generationRigor
+  );
+  const [historyLookbackDays, setHistoryLookbackDays] = useState(
+    input.initialProfile.historyLookbackDays
+  );
   const [services, setServices] = useState(toTextareaValue(input.initialProfile.services));
   const [carouselDefaultStructure, setCarouselDefaultStructure] = useState(
     toTextareaValue(input.initialProfile.carouselDefaultStructure)
@@ -76,6 +90,11 @@ export function useContentAutomation(input: {
     Domingo: []
   });
   const [isResolvingStaleAgenda, startResolvingStaleAgenda] = useTransition();
+  const [isClearingAgenda, startClearingAgenda] = useTransition();
+  const [isClearingQueue, startClearingQueue] = useTransition();
+  const [clearingQueueStatus, setClearingQueueStatus] = useState<
+    "queued" | "generating" | "scheduled" | null
+  >(null);
 
   const builtProfile = useMemo(
     () =>
@@ -84,6 +103,8 @@ export function useContentAutomation(input: {
         editableBrief,
         automationLoopEnabled,
         topicsHistoryCleanupFrequency,
+        generationRigor,
+        historyLookbackDays,
         services,
         carouselDefaultStructure,
         contentRules,
@@ -96,6 +117,8 @@ export function useContentAutomation(input: {
       editableBrief,
       automationLoopEnabled,
       topicsHistoryCleanupFrequency,
+      generationRigor,
+      historyLookbackDays,
       services,
       carouselDefaultStructure,
       contentRules,
@@ -330,7 +353,18 @@ export function useContentAutomation(input: {
   function setAllDaysEnabled(enabled: boolean) {
     setDaySettings((current) =>
       Object.fromEntries(
-        Object.entries(current).map(([day, config]) => [day, { ...config, enabled }])
+        Object.entries(current).map(([day, config]) => {
+          if (!enabled) {
+            // Desabilitar: apenas mudar enabled para false
+            return [day, { ...config, enabled: false }];
+          }
+          // Habilitar: mudar enabled para true E confirmar pelo menos o primeiro slot
+          const updatedPostIdeas = config.postIdeas.map((idea, index) => ({
+            ...idea,
+            confirmed: index === 0 ? true : idea.confirmed // Confirma o primeiro slot
+          }));
+          return [day, { ...config, enabled: true, postIdeas: updatedPostIdeas }];
+        })
       ) as typeof current
     );
   }
@@ -424,6 +458,135 @@ export function useContentAutomation(input: {
     });
   }
 
+  function clearAgenda() {
+    setMessage(null);
+    setError(null);
+
+    startClearingAgenda(async () => {
+      try {
+        const json = await clearAgendaService();
+        setAgenda(json.agenda ?? []);
+        setWeekPosts(json.weekPosts ?? []);
+        if (json.profile) {
+          setDaySettings(buildDayState(json.profile));
+        }
+        if (json.agendaSummary) {
+          setAgendaSummary(json.agendaSummary);
+        }
+        setMessage(input.dictionary.clearAgendaSuccess);
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : input.dictionary.clearAgendaError
+        );
+      }
+    });
+  }
+
+  function clearQueueByStatus(inputValue: {
+    status: "queued" | "generating" | "scheduled";
+    slotKeys: string[];
+    postIds?: string[];
+  }) {
+    const { status, slotKeys, postIds = [] } = inputValue;
+    if (slotKeys.length === 0) {
+      if (status === "queued") {
+        setMessage(input.dictionary.clearQueuedSuccess);
+        return;
+      }
+
+      if (status === "generating") {
+        setMessage(input.dictionary.clearGeneratingSuccess);
+        return;
+      }
+
+      setMessage(input.dictionary.clearScheduledSuccess);
+      return;
+    }
+
+    setMessage(null);
+    setError(null);
+    setClearingQueueStatus(status);
+
+    startClearingQueue(async () => {
+      try {
+        const uniquePostIds = Array.from(new Set(postIds.filter(Boolean)));
+        if (uniquePostIds.length > 0) {
+          await deletePosts(uniquePostIds);
+        }
+
+        const queuedKeySet = new Set(slotKeys);
+        const nextDaySettings = (Object.keys(daySettings) as DayLabel[]).reduce(
+          (acc, day) => {
+            acc[day] = {
+              ...daySettings[day],
+              postIdeas: daySettings[day].postIdeas.map((idea, index) => {
+                const slotKey = `${day}-${index}`;
+                if (!queuedKeySet.has(slotKey)) {
+                  return idea;
+                }
+
+                return {
+                  ...idea,
+                  confirmed: false
+                };
+              })
+            };
+
+            return acc;
+          },
+          {} as typeof daySettings
+        );
+
+        const nextProfile = buildProfileFromState({
+          brandName,
+          editableBrief,
+          automationLoopEnabled,
+          topicsHistoryCleanupFrequency,
+          generationRigor,
+          historyLookbackDays,
+          services,
+          carouselDefaultStructure,
+          contentRules,
+          researchQueries,
+          daySettings: nextDaySettings,
+          presets
+        });
+
+        const json = await saveBrandProfileService(nextProfile);
+
+        if (json.profile) {
+          setDaySettings(buildDayState(json.profile));
+        } else {
+          setDaySettings(nextDaySettings);
+        }
+
+        setAgenda(json.agenda ?? []);
+        setWeekPosts(json.weekPosts ?? []);
+        if (json.agendaSummary) {
+          setAgendaSummary(json.agendaSummary);
+        }
+
+        if (status === "queued") {
+          setMessage(input.dictionary.clearQueuedSuccess);
+        } else if (status === "generating") {
+          setMessage(input.dictionary.clearGeneratingSuccess);
+        } else {
+          setMessage(input.dictionary.clearScheduledSuccess);
+        }
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : input.dictionary.clearQueueError
+        );
+      } finally {
+        setClearingQueueStatus(null);
+      }
+    });
+  }
+
   return {
     brandName,
     setBrandName,
@@ -433,6 +596,10 @@ export function useContentAutomation(input: {
     setAutomationLoopEnabled,
     topicsHistoryCleanupFrequency,
     setTopicsHistoryCleanupFrequency,
+    generationRigor,
+    setGenerationRigor,
+    historyLookbackDays,
+    setHistoryLookbackDays,
     services,
     setServices,
     carouselDefaultStructure,
@@ -458,6 +625,9 @@ export function useContentAutomation(input: {
     autoFillKey,
     suggestedAutoFillTargets,
     isResolvingStaleAgenda,
+    isClearingAgenda,
+    isClearingQueue,
+    clearingQueueStatus,
     uniqueTopicsHistory,
     updateDay,
     updateDayPostIdea,
@@ -470,6 +640,8 @@ export function useContentAutomation(input: {
     setAllDaysEnabled,
     saveSettings,
     generateWeeklyAgenda,
+    clearAgenda,
+    clearQueueByStatus,
     keepUsingStaleAgenda,
     clearTopicsHistory
   };

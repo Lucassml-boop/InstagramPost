@@ -8,11 +8,17 @@ export const contentPlanItemSchema = z.object({
   type: z.string().min(1),
   format: z.string().min(1),
   theme: z.string().min(1),
-  structure: z.array(z.string().min(1)).min(3),
+  structure: z.union([
+    z.array(z.string().min(1)).min(3),
+    z.string().min(1).transform((str) => str.split(" | ").map((s) => s.trim()).filter(Boolean))
+  ]),
   caption: z.string().min(1),
   visualIdea: z.string().min(1),
   cta: z.string().min(1),
-  topicKeywords: z.array(z.string().min(1)).min(1)
+  topicKeywords: z.union([
+    z.array(z.string().min(1)).min(1),
+    z.string().min(1).transform((str) => str.split(",").map((s) => s.trim()).filter(Boolean))
+  ])
 });
 
 export function createWeeklyAgendaSchema(expectedCount: number) {
@@ -52,7 +58,9 @@ export const brandProfileSchema = z.object({
   researchQueries: z.array(z.string().min(1)).min(1),
   goalPresets: z.array(z.string().min(1)).default([]),
   contentTypePresets: z.array(z.string().min(1)).default([]),
-  formatPresets: z.array(z.string().min(1)).default([])
+  formatPresets: z.array(z.string().min(1)).default([]),
+  generationRigor: z.enum(["strict", "balanced", "flexible"]).default("balanced"),
+  historyLookbackDays: z.number().int().min(1).max(365).default(60)
 });
 
 export const historyItemSchema = z.object({

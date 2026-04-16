@@ -19,7 +19,7 @@ import {
   writeJsonFile
 } from "./content-system.storage.ts";
 
-const MAX_WEEKLY_AGENDA_ATTEMPTS = 3;
+const MAX_WEEKLY_AGENDA_ATTEMPTS = 5;
 
 function extractGoogleNewsTitles(xml: string) {
   return [...xml.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)]
@@ -98,11 +98,12 @@ function buildWeeklyPrompt(input: {
     "- theme: tema do post",
     "- type: tipo de conteúdo",
     "- format: formato sugerido",
-    "- structure: lista de seções/slides",
+    "- structure: ARRAY JSON com 3+ seções/slides (ex: [\"Capa\", \"Exemplo\", \"CTA\"])",
     "- caption: legenda completa",
     "- visualIdea: ideia visual do post",
     "- cta: chamada para ação",
-    "- topicKeywords: 3 a 6 palavras-chave curtas para o histórico",
+    "- topicKeywords: ARRAY JSON com 3-6 palavras-chave (ex: [\"automacao\", \"ecommerce\", \"ia\"])",
+    "- IMPORTANTE: structure e topicKeywords DEVEM ser arrays JSON, não strings!",
     "",
     "Regras críticas:",
     "- nao repita o mesmo tema em mais de um slot da semana",
@@ -126,17 +127,39 @@ function dedupeAgendaAgainstHistory(
   topicsHistory: string[]
 ) {
   const normalizedTopicHistory = topicsHistory.map(normalizeTopic).filter(Boolean);
+  return performDeduplication(agenda, normalizedTopicHistory, "balanced");
+}
+
+function performDeduplication(
+  agenda: ReturnType<typeof buildAgendaWithWeekSlots>,
+  topicsHistory: string[],
+  rigor: "strict" | "balanced" | "flexible"
+) {
   const generatedTopics = new Set<string>();
   const rejectedThemes = new Set<string>();
+  const hasHistory = topicsHistory.length > 0;
+  
+  const thresholds: Record<typeof rigor, number> = {
+    strict: 2,
+    balanced: hasHistory ? 2 : 3,
+    flexible: 4
+  };
+  const similarityThreshold = thresholds[rigor];
 
   const dedupedAgenda = agenda.filter((item) => {
     const normalizedTheme = normalizeTopic(item.theme);
     const normalizedEntries = buildTopicsHistoryEntries([item]);
-    const hasInternalDuplicate =
-      generatedTopics.has(normalizedTheme) ||
-      Array.from(generatedTopics).some((entry) =>
-        normalizedEntries.some((topic) => isSameOrSimilarTopic(topic, entry))
-      );
+    
+    const hasInternalDuplicate = Array.from(generatedTopics).some((entry) => {
+      const overlap = calculateWordOverlap(normalizedTheme, entry);
+      return overlap >= similarityThreshold;
+    }) ||
+    Array.from(generatedTopics).some((entry) =>
+      normalizedEntries.some((topic) => {
+        const overlap = calculateWordOverlap(topic, entry);
+        return overlap >= similarityThreshold;
+      })
+    );
 
     if (hasInternalDuplicate) {
       rejectedThemes.add(item.theme);
@@ -144,7 +167,8 @@ function dedupeAgendaAgainstHistory(
       return false;
     }
 
-    const collidesWithHistory = normalizedTopicHistory.some(
+    // Verificação contra histórico
+    const collidesWithHistory = topicsHistory.some(
       (historyEntry) =>
         isSameOrSimilarTopic(normalizedTheme, historyEntry) ||
         normalizedEntries.some((entry) => isSameOrSimilarTopic(entry, historyEntry))
@@ -167,6 +191,20 @@ function dedupeAgendaAgainstHistory(
   };
 }
 
+function calculateWordOverlap(str1: string, str2: string): number {
+  const words1 = new Set(str1.split(" ").filter((word) => word.length >= 4));
+  const words2 = new Set(str2.split(" ").filter((word) => word.length >= 4));
+  let overlap = 0;
+
+  for (const word of words1) {
+    if (words2.has(word)) {
+      overlap += 1;
+    }
+  }
+
+  return overlap;
+}
+
 export async function generateWeeklyContentPlan(referenceDate = new Date()) {
   const brandProfile = await getBrandProfile();
   const weekSlots = buildWeekSlots(brandProfile, referenceDate);
@@ -180,18 +218,25 @@ export async function generateWeeklyContentPlan(referenceDate = new Date()) {
   let rejectedThemes: string[] = [];
 
   for (let attempt = 1; attempt <= MAX_WEEKLY_AGENDA_ATTEMPTS; attempt += 1) {
+    // Calcular janela de histórico baseado em configuração do usuário e tentativa
+    const baseLookback = Math.ceil((brandProfile.historyLookbackDays || 60) * 7 / 30);
+    const recentTopicsWindow = Math.max(
+      Math.ceil(baseLookback * (1 - (attempt - 1) * 0.2)),
+      7
+    );
+
     const generatedAgenda = await requestWeeklyAgenda(
       buildWeeklyPrompt({
         brandProfile,
         weekSlots,
         currentTopics,
-        recentTopics: topicsHistory.slice(-120),
+        recentTopics: topicsHistory.slice(-recentTopicsWindow),
         rejectedThemes
       }),
       weekSlots.length
     );
     const agenda = buildAgendaWithWeekSlots(generatedAgenda, weekSlots);
-    const dedupeResult = dedupeAgendaAgainstHistory(agenda, topicsHistory);
+    const dedupeResult = performDeduplication(agenda, topicsHistory, brandProfile.generationRigor || "balanced");
 
     if (dedupeResult.dedupedAgenda.length === agenda.length) {
       dedupedAgenda = dedupeResult.dedupedAgenda;
@@ -201,12 +246,13 @@ export async function generateWeeklyContentPlan(referenceDate = new Date()) {
     rejectedThemes = Array.from(new Set([...rejectedThemes, ...dedupeResult.rejectedThemes]));
     console.warn("[content-system] Weekly agenda attempt rejected due to repeated themes", {
       attempt,
-      rejectedThemes
+      topicsWindow: recentTopicsWindow,
+      totalRejected: rejectedThemes.length
     });
   }
 
   if (!dedupedAgenda) {
-    throw new Error("Weekly agenda generation produced repeated themes after multiple attempts. Try again.");
+    throw new Error(`Weekly agenda generation failed after ${MAX_WEEKLY_AGENDA_ATTEMPTS} attempts. Your brand might have overlapping topics. Try clearing the topics history or adjusting content rules.`);
   }
 
   await writeJsonFile(AGENDA_PATH, dedupedAgenda);

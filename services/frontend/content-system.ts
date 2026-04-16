@@ -41,21 +41,35 @@ export async function saveBrandProfileWithAgenda(profile: BrandProfile) {
 }
 
 export async function generateWeeklyAgenda() {
-  const response = await fetch("/api/content-system/generate-weekly", {
-    method: "POST"
-  });
+  // AbortController com timeout de 30 minutos para gerar agenda (pode ser longa)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30 * 60 * 1000);
 
-  return parseJsonOrThrow<
-    {
-      agenda?: ContentPlanItemWithStatus[];
-      weekPosts?: WeeklyPostSummary[];
-      agendaSummary?: WeeklyAgendaUsageSummary;
-      currentTopics?: string[];
-      prepared?: number;
-      scanned?: number;
-      error?: string;
+  try {
+    const response = await fetch("/api/content-system/generate-weekly", {
+      method: "POST",
+      signal: controller.signal
+    });
+
+    return parseJsonOrThrow<
+      {
+        agenda?: ContentPlanItemWithStatus[];
+        weekPosts?: WeeklyPostSummary[];
+        agendaSummary?: WeeklyAgendaUsageSummary;
+        currentTopics?: string[];
+        prepared?: number;
+        scanned?: number;
+        error?: string;
+      }
+    >(response, "Unable to generate the weekly content agenda.");
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Geração de agenda excedeu o tempo limite de 30 minutos. Tente novamente.");
     }
-  >(response, "Unable to generate the weekly content agenda.");
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function generateAutomaticPostIdea(input: {
@@ -151,6 +165,20 @@ export async function fetchAgenda() {
     agenda?: ContentPlanItemWithStatus[];
     agendaSummary?: WeeklyAgendaUsageSummary;
   }>(response);
+}
+
+export async function clearAgenda() {
+  const response = await fetch("/api/content-system/agenda", {
+    method: "DELETE"
+  });
+
+  return parseJsonOrThrow<{
+    profile?: BrandProfile;
+    agenda?: ContentPlanItemWithStatus[];
+    weekPosts?: WeeklyPostSummary[];
+    agendaSummary?: WeeklyAgendaUsageSummary;
+    error?: string;
+  }>(response, "Unable to clear the weekly agenda.");
 }
 
 export async function keepUsingStaleAgenda() {

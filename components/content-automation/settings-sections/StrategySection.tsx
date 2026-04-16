@@ -41,6 +41,50 @@ export function StrategySection(props: SettingsSectionsProps) {
               </select>
               <span className="mt-2 block text-sm text-slate-600">{dictionary.contentAutomation.topicsHistoryCleanupDescription}</span>
             </label>
+            <label className="block text-sm font-medium text-slate-700">
+              <span>{dictionary.contentAutomation.generationRigorLabel}</span>
+              <select
+                value={props.generationRigor}
+                onChange={(event) =>
+                  props.setGenerationRigor(
+                    event.target.value as "strict" | "balanced" | "flexible"
+                  )
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-slate-400"
+              >
+                <option value="strict">{dictionary.contentAutomation.generationRigorStrict}</option>
+                <option value="balanced">{dictionary.contentAutomation.generationRigorBalanced}</option>
+                <option value="flexible">{dictionary.contentAutomation.generationRigorFlexible}</option>
+              </select>
+              <span className="mt-2 block text-sm text-slate-600">
+                {dictionary.contentAutomation.generationRigorDescription}
+              </span>
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              <span>{dictionary.contentAutomation.historyLookbackDaysLabel}</span>
+              <div className="mt-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <span>1</span>
+                  <span>{props.historyLookbackDays} dias</span>
+                  <span>365</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={365}
+                  step={1}
+                  value={props.historyLookbackDays}
+                  onChange={(event) => {
+                    const nextValue = Number.parseInt(event.target.value, 10);
+                    props.setHistoryLookbackDays(Number.isFinite(nextValue) ? nextValue : 60);
+                  }}
+                  className="w-full accent-slate-700"
+                />
+              </div>
+              <span className="mt-2 block text-sm text-slate-600">
+                {dictionary.contentAutomation.historyLookbackDaysDescription}
+              </span>
+            </label>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
             <p className="text-sm font-semibold text-ink">{dictionary.contentAutomation.howItWorksTitle}</p>

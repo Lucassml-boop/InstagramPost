@@ -91,6 +91,8 @@ export function buildProfileFromState(input: {
   editableBrief: string;
   automationLoopEnabled: boolean;
   topicsHistoryCleanupFrequency: "disabled" | "daily" | "weekly" | "monthly";
+  generationRigor: "strict" | "balanced" | "flexible";
+  historyLookbackDays: number;
   services: string;
   carouselDefaultStructure: string;
   contentRules: string;
@@ -129,6 +131,8 @@ export function buildProfileFromState(input: {
     researchQueries: fromTextareaValue(input.researchQueries),
     goalPresets: fromTextareaValue(input.presets.goalPresets),
     contentTypePresets: fromTextareaValue(input.presets.contentTypePresets),
-    formatPresets: fromTextareaValue(input.presets.formatPresets)
+    formatPresets: fromTextareaValue(input.presets.formatPresets),
+    generationRigor: input.generationRigor,
+    historyLookbackDays: Math.max(1, Math.min(365, Math.trunc(input.historyLookbackDays || 60)))
   };
 }

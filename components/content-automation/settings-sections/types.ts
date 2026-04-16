@@ -103,6 +103,10 @@ export type SettingsSectionsProps = {
   setAutomationLoopEnabled: (value: boolean) => void;
   topicsHistoryCleanupFrequency: "disabled" | "daily" | "weekly" | "monthly";
   setTopicsHistoryCleanupFrequency: (value: "disabled" | "daily" | "weekly" | "monthly") => void;
+  generationRigor: "strict" | "balanced" | "flexible";
+  setGenerationRigor: (value: "strict" | "balanced" | "flexible") => void;
+  historyLookbackDays: number;
+  setHistoryLookbackDays: (value: number) => void;
   services: string;
   setServices: (value: string) => void;
   contentRules: string;

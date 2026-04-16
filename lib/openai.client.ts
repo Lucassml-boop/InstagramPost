@@ -3,6 +3,7 @@ import {
   buildPrompt,
   coerceGeneratedPost,
   extractJsonPayload,
+  fixMalformedJSON,
   getFallbackModels,
   getOllamaTimeoutForInput,
   ollamaResponseSchema,
@@ -10,6 +11,76 @@ import {
   type AutomationContext,
   type GeneratePostInput
 } from "./openai.shared.ts";
+
+const MAX_RETRIES_ON_503 = 3;
+const INITIAL_RETRY_DELAY_MS = 2000;
+
+function isTemporarilyUnavailable(statusCode: number): boolean {
+  // 503 = Service Unavailable, 429 = Too Many Requests
+  return statusCode === 503 || statusCode === 429;
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Tenta a requisição novamente com backoff exponencial em caso de erros temporários
+ */
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+  maxRetries = MAX_RETRIES_ON_503
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      
+      try {
+        const response = await fetch(url, {
+          ...init,
+          signal: controller.signal
+        });
+        
+        // Se for erro 503/429 e não for a última tentativa, aguardar e tentar novamente
+        if (isTemporarilyUnavailable(response.status) && attempt < maxRetries) {
+          const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+          console.warn(`[openai] Service temporarily unavailable (${response.status}), retrying in ${delayMs}ms...`, {
+            attempt: attempt + 1,
+            maxRetries: maxRetries + 1
+          });
+          await sleep(delayMs);
+          continue;
+        }
+        
+        return response;
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Se for AbortError (timeout) e não for a última tentativa, tentar novamente
+      if (lastError.name === "AbortError" && attempt < maxRetries) {
+        const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+        console.warn(`[openai] Request timeout, retrying in ${delayMs}ms...`, {
+          attempt: attempt + 1,
+          maxRetries: maxRetries + 1
+        });
+        await sleep(delayMs);
+        continue;
+      }
+      
+      throw lastError;
+    }
+  }
+  
+  throw lastError ?? new Error("Fetch with retry failed unexpectedly");
+}
 
 export async function requestInstagramPostGeneration(
   input: GeneratePostInput,
@@ -31,8 +102,6 @@ export async function requestInstagramPostGeneration(
   const requestStartedAt = Date.now();
 
   for (const [index, model] of modelsToTry.entries()) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const attemptStartedAt = Date.now();
 
     console.info("[openai] Generation attempt started", {
@@ -47,33 +116,37 @@ export async function requestInstagramPostGeneration(
     });
 
     try {
-      const response = await fetch("https://ollama.com/api/chat", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model,
-          stream: false,
-          format: "json",
-          options: {
-            temperature: 0.4
+      const response = await fetchWithRetry(
+        "https://ollama.com/api/chat",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
           },
-          messages: [
-            {
-              role: "system",
-              content:
-                "You generate structured Instagram content payloads for direct rendering and publishing."
+          body: JSON.stringify({
+            model,
+            stream: false,
+            format: "json",
+            options: {
+              temperature: 0.4
             },
-            {
-              role: "user",
-              content: prompt
-            }
-          ]
-        }),
-        signal: controller.signal
-      });
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You generate structured Instagram content payloads for direct rendering and publishing."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ]
+          })
+        },
+        timeoutMs
+      );
+
       const responseText = await response.text();
       if (!response.ok) {
         throw new Error(`Ollama request failed: ${response.status} ${responseText}`.trim());
@@ -86,8 +159,10 @@ export async function requestInstagramPostGeneration(
         totalDurationMs: Date.now() - requestStartedAt,
         responseBytes: responseText.length
       });
+      const extractedJson = extractJsonPayload(parsedResponse.message.content);
+      const fixedJson = fixMalformedJSON(extractedJson);
       return sanitizeGeneratedPost(
-        coerceGeneratedPost(JSON.parse(extractJsonPayload(parsedResponse.message.content))),
+        coerceGeneratedPost(JSON.parse(fixedJson)),
         input
       );
     } catch (error) {
@@ -108,8 +183,6 @@ export async function requestInstagramPostGeneration(
       if (index === modelsToTry.length - 1) {
         throw new Error(message);
       }
-    } finally {
-      clearTimeout(timeout);
     }
   }
 

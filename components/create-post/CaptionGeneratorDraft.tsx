@@ -32,10 +32,9 @@ export function CaptionGeneratorDraft(input: {
   cancelGeneration: () => void;
   isAutoGeneratingAll: boolean;
   openAutoGenerateAllModal: () => void;
-  openGeneratePostModal: () => void;
+  generatePost: () => void;
   generatePostIgnoringSimilar: (userTopicHint?: string) => void;
   lastAutoGenerateTopicHint: string;
-  lastGeneratePostTopicHint: string;
   clearFocusHints: () => void;
   topic: string;
   message: string;
@@ -78,7 +77,7 @@ export function CaptionGeneratorDraft(input: {
               </button>
               <button
                 type="button"
-                onClick={input.openGeneratePostModal}
+                onClick={input.generatePost}
                 disabled={input.isGenerating}
                 className="rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
               >
@@ -119,7 +118,7 @@ export function CaptionGeneratorDraft(input: {
             <span className="font-semibold text-ink">
               {dictionary.generator.focusSummaryGenerateLabel}:
             </span>{" "}
-            {input.lastGeneratePostTopicHint || dictionary.generator.focusSummaryNone}
+            {dictionary.generator.focusSummaryNone}
           </p>
           <p className="mt-1">
             <span className="font-semibold text-ink">

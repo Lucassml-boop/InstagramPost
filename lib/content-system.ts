@@ -6,6 +6,7 @@ export type {
 } from "./content-system.schemas.ts";
 
 export {
+  clearCurrentWeeklyAgenda,
   clearTopicsHistory,
   getContentBrandProfile,
   getContentTopicsHistory,

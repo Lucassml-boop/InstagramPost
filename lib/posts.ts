@@ -59,6 +59,31 @@ function getStoredPostType(postType: string | null | undefined): InstagramPostTy
   return "feed";
 }
 
+function ensureHashPrefix(tag: string) {
+  const cleaned = tag.trim();
+  if (!cleaned) {
+    return "";
+  }
+
+  return cleaned.startsWith("#") ? cleaned : `#${cleaned}`;
+}
+
+function buildFallbackCaption(post: { topic: string; message: string; hashtags: string }) {
+  const topic = post.topic.trim();
+  const message = post.message.trim();
+  const hashtags = post.hashtags
+    .split(/\s+/)
+    .map(ensureHashPrefix)
+    .filter((tag) => tag.length > 0)
+    .slice(0, 10)
+    .join(" ");
+
+  const body = [topic, message].filter((value) => value.length > 0).join("\n\n");
+  const captionBody = body || "Novo conteudo publicado automaticamente.";
+
+  return hashtags ? `${captionBody}\n\n${hashtags}` : captionBody;
+}
+
 function normalizeManualField(value: string | null | undefined) {
   return normalizeTopic(value ?? "");
 }
@@ -232,7 +257,7 @@ export async function createDraftPost(input: {
 export async function publishPostNow(input: {
   postId: string;
   userId: string;
-  caption: string;
+  caption?: string;
   postType?: InstagramPostType;
   mediaItems?: PublishableMediaItem[];
   imageUrl?: string;
@@ -249,6 +274,15 @@ export async function publishPostNow(input: {
   if (!post) {
     throw new Error("Post not found.");
   }
+
+  const providedCaption = input.caption?.trim() ?? "";
+  const storedCaption = post.caption.trim();
+  const finalCaption =
+    providedCaption.length > 0
+      ? providedCaption
+      : storedCaption.length > 0
+        ? storedCaption
+        : buildFallbackCaption(post);
 
   const fallbackMediaItem = {
     imageUrl: input.imageUrl ?? post.imageUrl,
@@ -278,7 +312,7 @@ export async function publishPostNow(input: {
   await prisma.post.update({
     where: { id: post.id },
     data: {
-      caption: input.caption,
+      caption: finalCaption,
       postType: finalPostType.toUpperCase() as "FEED" | "STORY" | "CAROUSEL",
       mediaItems,
       imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
@@ -292,7 +326,7 @@ export async function publishPostNow(input: {
     const published = await publishInstagramPost({
       userId: input.userId,
       postType: finalPostType,
-      caption: input.caption,
+      caption: finalCaption,
       mediaItems: normalizedMediaItems
     });
 
@@ -302,7 +336,7 @@ export async function publishPostNow(input: {
         status: PostStatus.PUBLISHED,
         postType: finalPostType.toUpperCase() as "FEED" | "STORY" | "CAROUSEL",
         mediaItems,
-        caption: input.caption,
+        caption: finalCaption,
         imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
         imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
         publicationState: "PUBLISHED",
@@ -315,7 +349,7 @@ export async function publishPostNow(input: {
       where: { id: post.id },
       data: {
         status: PostStatus.FAILED,
-        caption: input.caption,
+        caption: finalCaption,
         publicationState: null
       }
     });

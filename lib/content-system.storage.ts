@@ -70,3 +70,11 @@ export async function clearTopicsHistory() {
     clearedEntries: current.length
   };
 }
+
+export async function clearCurrentWeeklyAgenda() {
+  const current = await getCurrentWeeklyAgenda();
+  await writeJsonFile(AGENDA_PATH, []);
+  return {
+    clearedEntries: current.length
+  };
+}

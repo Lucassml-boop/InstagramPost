@@ -94,6 +94,19 @@ export async function schedulePost(input: {
   return parseJsonOrThrow<{ ok: true; error?: string }>(response, "Unable to schedule.");
 }
 
+export async function publishNow(postId: string) {
+  const response = await fetch("/api/posts/publish-now", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ postId })
+  });
+
+  return parseJsonOrThrow<{ ok: true; error?: string }>(
+    response,
+    "Unable to publish post now."
+  );
+}
+
 export async function deletePosts(postIds: string[]) {
   const response = await fetch("/api/posts/delete", {
     method: "POST",

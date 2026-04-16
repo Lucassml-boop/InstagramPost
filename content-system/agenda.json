@@ -1,132 +1,184 @@
 [
   {
-    "date": "2026-04-13",
+    "date": "2026-04-20",
     "day": "Segunda",
-    "goal": "Mostrar autoridade ensinando algo util",
-    "type": "tutorial",
+    "time": "09:00",
+    "goal": "Geração de leads",
+    "type": "Educacional",
     "format": "Carrossel",
-    "theme": "Sincronização Inteligente: Como unificar estoque entre Mercado Livre e Shopee sem conflitos de venda",
+    "theme": "Como sincronizar estoque entre Mercado Livre e Shopee sem perder vendas",
     "structure": [
-      "Capa / Hook: 'Vendeu o que não tinha? Esse erro custa caro' + Visual de estoque zerado",
-      "Contexto / Problema: O desafio de gerenciar estoque em múltiplos marketplaces manualmente",
-      "Desenvolvimento / Conteúdo: 3 camadas de proteção na integração (API, webhook e validação cruzada)",
-      "Insight / Conclusão: Diferença entre sincronização em tempo real vs. batch e impacto no algoritmo",
-      "CTA / Call To Action: 'Comente ESTOQUE para receber o checklist técnico'"
+      "Capa: O pesadelo do estoque duplicado",
+      "Problema: Vender em múltiplos marketplaces sem integração",
+      "Solução: Sistema centralizado em tempo real",
+      "Benefício: Zero ruptura e mais vendas",
+      "CTA: Automatize sua operação"
     ],
-    "caption": "🚨 Alerta para quem vende em mais de um lugar!\n\nVocê já perdeu reputação no Mercado Livre ou Shopee porque vendeu um produto que na verdade tinha acabado no outro canal?\n\nEsse é o pesadelo de quem não tem integração inteligente de estoque.\n\nNa EcomForge desenvolvemos uma arquitetura em três camadas que elimina 100% dos conflitos:\n\n1️⃣ Webhook instantâneo (atualização em segundos)\n2️⃣ Validação cruzada antes da confirmação de venda\n3️⃣ Buffer de segurança configurável\n\nO resultado? Zero cancelamentos por falta de estoque e algoritmo dos marketplaces te favorecendo.\n\n💡 Insight: O Mercado Livre prioriza vendedores com índice de cancelamento abaixo de 2%. Uma sincronização batch (atualização a cada 30min) já é o suficiente para você perder posicionamento.\n\n👉 Quer implementar isso na sua operação? Comente ESTOQUE aqui embaixo que enviamos o checklist técnico completo.\n\n#Automação #Ecommerce #MercadoLivre #Shopee #Integração",
-    "visualIdea": "Design clean com fundo branco e azul corporativo, ícones 3D do Mercado Livre e Shopee conectados por linhas de fluxo de dados animadas, destaque para números de estoque sincronizados em verde",
-    "cta": "Comente 'ESTOQUE' para receber o checklist técnico de integração",
+    "caption": "Você vende no Mercado Livre e Shopee mas ainda atualiza o estoque manualmente em cada plataforma? Esse é o caminho mais curto para vender o que não tem, cancelar pedidos e perder reputação.\n\nA EcomForge resolve isso com integração em tempo real: quando vende em uma plataforma, o estoque cai automaticamente em todas as outras. Sem planilha, sem erro humano, sem noites em claro conferindo saldo.\n\nAlém disso, nosso sistema unifica o controle de SKUs, variações e reservas. Você finalmente dorme tranquilo sabendo que seu estoque está sincronizado 24/7.\n\nQuer ver como funciona na prática?",
+    "visualIdea": "Mockup de dashboard mostrando sincronização em tempo real entre logos do ML e Shopee com indicadores de estoque piscando em verde",
+    "cta": "Link na bio para auditoria gratuita do seu estoque",
     "topicKeywords": [
-      "integração",
       "estoque",
-      "mercado livre",
+      "mercado-livre",
       "shopee",
-      "sincronização",
-      "webhook"
+      "integracao",
+      "sincronizacao"
     ]
   },
   {
-    "date": "2026-04-14",
-    "day": "Terça",
-    "goal": "Mostrar que a empresa realmente desenvolve tecnologia",
-    "type": "desenvolvimento",
-    "format": "Reels",
-    "theme": "Por trás do código: Arquitetura de um robô de atendimento que responde em 30 segundos",
-    "structure": [
-      "Hook: Tela de código sendo digitado em velocidade + texto 'Isso responde mais rápido que humano'",
-      "Contexto: O problema da latência no atendimento de e-commerce",
-      "Desenvolvimento: Mostrando fluxograma da arquitetura (NLP -> Análise de Intenção -> Busca em Base de Conhecimento -> Resposta)",
-      "Insight: Por que usamos processamento assíncrono para não travar o sistema",
-      "CTA: 'Siga para ver mais bastidores'"
-    ],
-    "caption": "👨‍💻 Terça é dia de mostrar o que acontece nos bastidores da EcomForge.\n\nEsse é o core de um sistema que desenvolvemos para atender leads automaticamente em 30 segundos (sim, menos que um minuto).\n\n🔧 Stack utilizada:\n• Node.js para alta performance\n• NLP (Processamento de Linguagem Natural) para entender a pergunta\n• Fila de processamento assíncrono (não trava mesmo com milhares de chats)\n• Integração direta com WhatsApp Business API e Instagram DM\n\n⚡ O segredo está na arquitetura: em vez de processar tudo na hora, usamos microsserviços que trabalham em paralelo. Enquanto o robô responde uma pergunta, outro módulo já está buscando informações de estoque atualizado.\n\nResultado para o cliente: 90% das perguntas frequentes resolvidas sem intervenção humana, e equipe focada apenas nos atendimentos que realmente geram valor.\n\n💾 Salve esse Reels se você curte tecnologia aplicada a negócios.\n\n#Desenvolvimento #Automação #IA #Backend #Ecommerce",
-    "visualIdea": "Vídeo tela dividida: lado esquerdo mostra código sendo escrito em VS Code com tema escuro, lado direito mostra diagrama de fluxo da arquitetura sendo desenhado em tempo real, transições rápidas com zoom nos pontos críticos do sistema",
-    "cta": "Salve este conteúdo e siga a página para mais bastidores técnicos",
-    "topicKeywords": [
-      "arquitetura",
-      "ia",
-      "automação",
-      "atendimento",
-      "backend",
-      "microsserviços"
-    ]
-  },
-  {
-    "date": "2026-04-15",
-    "day": "Quarta",
-    "goal": "Gerar confianca mostrando resultados",
-    "type": "caso de cliente",
+    "date": "2026-04-21",
+    "day": "Terca",
+    "time": "09:00",
+    "goal": "Atração de empresas",
+    "type": "Educacional",
     "format": "Carrossel",
-    "theme": "Caso Real: Como a TechGadgets reduziu 36 horas semanais de trabalho manual em apenas 2 semanas",
+    "theme": "IA respondendo leads enquanto você dorme: automatização inteligente de atendimento",
     "structure": [
-      "Capa / Hook: 'De 40h para 4h semanais' + Foto do antes e depois da operação",
-      "Contexto / Problema: Empresa com 3 funcionários só copiando dados entre sistemas",
-      "Desenvolvimento / Conteúdo: Quais automações foram implementadas (planilha → sistema, emissão de NF, rastreamento automático)",
-      "Insight / Conclusão: Números: 36h economizadas, zero erros de digitação, +15% vendas por tempo focado em estratégia",
-      "CTA / Call To Action: 'Quer resultados assim? Clique no link'"
+      "Hook: 3x mais vendas enquanto dormia",
+      "Problema: Leads perdidos no WhatsApp após 5 min",
+      "Solução: Chatbot com IA contextual treinada no seu catálogo",
+      "Funcionamento: Integração com ERP e histórico do cliente",
+      "CTA: Quer vender 24h sem equipe noturna?"
     ],
-    "caption": "📊 Quarta é dia de prova social e números reais.\n\nHá 3 meses a TechGadgets (nome fictício para proteger o cliente, mas os números são reais) estava sufocada.\n\n3 funcionários passavam 40 horas semanais só:\n❌ Copiando pedidos do Mercado Livre para planilha\n❌ Consultando CEP para frete manualmente  \n❌ Digitando notas fiscais uma a uma\n❌ Respondendo 'quando chega meu pedido?' 200x por dia\n\nImplementamos um ecossistema integrado:\n✅ Sincronização automática ML → ERP\n✅ Emissão de NF em lote com um clique\n✅ Rastreamento automático via WhatsApp\n✅ Dashboard unificado de vendas\n\n⏱️ Resultado em 15 dias:\n• 36 horas semanais economizadas (equipe redirecionada para marketing)\n• Zero erros de digitação de endereço\n• Tempo de resposta ao cliente: de 3h para 30 segundos\n• Aumento de 15% no faturamento (mesmo mês, mesmo estoque)\n\n🎯 O dono falou: 'Parece que contratei 5 funcionários, mas na verdade só automatizamos o que era robótico.'\n\n💼 Sua operação também está sugando tempo que deveria ir para estratégia?\n\n👉 Link na bio para diagnóstico gratuito.\n\n#Case #Resultados #Automação #Produtividade #Ecommerce",
-    "visualIdea": "Infográfico profissional com split screen: lado esquerdo mostra planilha Excel bagunçada e funcionário estressado (foto ilustrativa), lado direito mostra dashboard clean da EcomForge e equipe sorrindo, gráfico de barras mostrando queda drástica de horas trabalhadas em verde, selo '36h economizadas/semana' em destaque",
-    "cta": "Clique no link da bio para solicitar diagnóstico gratuito da sua operação",
+    "caption": "80% dos leads que não são respondidos em 5 minutos nunca mais compram. E quando o cliente pergunta sobre estoque às 23h?\n\nA automação de respostas da EcomForge usa IA contextual que entende o catálogo da sua loja, consulta estoque em tempo real e responde perguntas complexas sem parecer robô.\n\nDiferente dos chatbots tradicionais, nosso sistema aprende com o histórico de vendas e personaliza a comunicação. Ele sabe quando oferecer frete grátis, quando sugerir produtos complementares e quando escalar para um humano.\n\nResultado: você acorda com vendas feitas automaticamente durante a madrugada.\n\nComenta 'IA' abaixo que te explico como implementar sem perder a humanização.",
+    "visualIdea": "Print simulado de conversa WhatsApp mostrando IA respondendo perguntas sobre tamanho e cor disponível automaticamente às 2h da manhã",
+    "cta": "Comente 'IA' que te envio o case completo no direct",
     "topicKeywords": [
-      "resultados",
-      "produtividade",
-      "automação",
-      "case",
-      "roi",
-      "eficiência"
+      "ia",
+      "chatbot",
+      "atendimento",
+      "automatizacao",
+      "leads"
     ]
   },
   {
-    "date": "2026-04-16",
+    "date": "2026-04-22",
+    "day": "Quarta",
+    "time": "09:00",
+    "goal": "Demonstração de autoridade",
+    "type": "Técnico",
+    "format": "Carrossel",
+    "theme": "Dashboard preditivo: saiba quanto estoque comprar antes de esgotar",
+    "structure": [
+      "Capa: O crystal ball do e-commerce",
+      "Problema: Comprar demais (prejuízo) ou de menos (ruptura)",
+      "Tecnologia: Machine learning analisando sazonalidade",
+      "Visualização: Gráficos de curva de demanda por SKU",
+      "CTA: Tenha visibilidade total da sua operação"
+    ],
+    "caption": "Adivinhação não é estratégia. Comprar estoque no achismo é o maior vilão da lucratividade no e-commerce.\n\nO dashboard preditivo da EcomForge cruza seu histórico de vendas, sazonalidade, eventos promocionais e tendências de mercado para dizer exatamente o quanto comprar de cada SKU nos próximos 30, 60 e 90 dias.\n\nNossa IA identifica padrões que humanos não enxergam: aquele produto que vende 40% mais toda terça-feira, ou a correlação entre chuva e vendas de determinada categoria.\n\nVocê deixa de ser reativo e se torna preemptivo. O estoque vira ciência, não arte.\n\nQuer ver seu dashboard preditivo?",
+    "visualIdea": "Interface futurista de dashboard mostrando gráfico de previsão de demanda com linha azul (histórico) e linha laranja (predição IA) convergindo",
+    "cta": "Agende uma demo personalizada do dashboard preditivo - link na bio",
+    "topicKeywords": [
+      "dashboard",
+      "predicao",
+      "analytics",
+      "machine-learning",
+      "estoque"
+    ]
+  },
+  {
+    "date": "2026-04-23",
     "day": "Quinta",
-    "goal": "Alcance e descoberta",
-    "type": "erro comum",
-    "format": "Reels",
-    "theme": "O erro silencioso que custa R$ 5 mil por mês aos vendedores do Mercado Livre (e como corrigir em 24h)",
+    "time": "09:00",
+    "goal": "Educação sobre produtividade",
+    "type": "Educacional",
+    "format": "Carrossel",
+    "theme": "A dor de atualizar preço em 5 marketplaces: centralização inteligente",
     "structure": [
-      "Hook: Alerta vermelho piscando + texto 'Se você vende no ML, pare agora'",
-      "Problema: A demora na resposta às perguntas (mais de 1h) derruba seu anúncio no algoritmo",
-      "Dado: 68% dos compradores desistem se não respondem em 15 min",
-      "Solução: Automação de respostas com inteligência contextual",
-      "CTA: 'Comente CORRIGIR para saber mais'"
+      "Hook: 2 horas para mudar um preço?",
+      "O caos: ML, Shopee, Amazon, Magalu e Loja Própria desencontrados",
+      "A automação: Um clique, todos atualizados instantaneamente",
+      "Regras: Reajuste automático por concorrência ou custo",
+      "CTA: Centralize seus preços agora"
     ],
-    "caption": "⚠️ ATENÇÃO: Se você vende no Mercado Livre, esse erro está te custando dinheiro agora.\n\nVocê responde as perguntas dos clientes só quando sobra tempo? Ou pior: deixa acumular para responder à noite?\n\n🚨 O algoritmo do Mercado Livre monitora isso. Anúncios com tempo médio de resposta acima de 1h perdem posicionamento no ranking.\n\n💸 O custo disso:\n• 68% dos compradores desistem se não recebem resposta em 15 minutos\n• Cada pergunta não respondida = potencial venda perdida\n• Perda de reputação → menos exposição → menos vendas\n\n💡 A solução não é contratar mais gente para ficar olhando celular. É automação inteligente.\n\nNossos sistemas respondem automaticamente:\n✅ Perguntas sobre estoque ('Tem pronta entrega?')\n✅ Prazos de entrega por CEP\n✅ Dimensões e especificações técnicas\n✅ Status do pedido\n\nE quando precisa de humano? Transfere suavemente com todo o contexto.\n\n⏰ Resultado: Tempo médio de resposta de 30 segundos, 24h por dia.\n\n👉 Comente CORRIGIR aqui embaixo se você quer eliminar esse gargalo na sua operação.\n\n#MercadoLivre #Erros #Algoritmo #Automação #Vendas",
-    "visualIdea": "Reels dinâmico com texto animado em amarelo/vermelho, simulação de tela do celular mostrando notificação de pergunta no ML marcando 3h sem resposta, cronômetro correndo em vermelho, transição abrupta para tela verde mostrando 'Respondido em 30s' com selo de ouro, efeito sonoro de notificação positiva",
-    "cta": "Comente 'CORRIGIR' se você comete esse erro e quer a solução",
+    "caption": "Promoção relâmpago saindo e você ainda atualizando preço marketplace por marketplace? Enquanto você muda no segundo, o primeiro já vendeu 50 unidades com preço errado.\n\nA EcomForge oferece gestão centralizada de preços: altera uma vez, sincroniza em todos os canais automaticamente, respeitando as regras específicas de cada plataforma (taxas, frete, comissões).\n\nMelhor ainda: configuramos regras automáticas. Se o concorrente baixar o preço, você acompanha. Se o custo do insumo subir, a margem se protege. Se o estoque estiver baixo, o preço sobe sozinho para controlar velocidade de saída.\n\nOperação inteligente é operação que se auto-regula.\n\nVamos conversar sobre sua estrutura atual?",
+    "visualIdea": "Comparativo lado a lado: esquerda mostra planilha caótica com 5 abas diferentes (ML, Shopee, etc), direita mostra painel clean único com botão 'Sincronizar Tudo'",
+    "cta": "Quer centralizar seus preços? Clique no link da bio",
     "topicKeywords": [
-      "mercado livre",
-      "erros",
-      "algoritmo",
-      "respostas",
-      "vendas",
-      "chat"
+      "precos",
+      "multi-marketplace",
+      "sincronizacao",
+      "produtividade",
+      "automacao"
     ]
   },
   {
-    "date": "2026-04-17",
+    "date": "2026-04-24",
     "day": "Sexta",
-    "goal": "Gerar leads",
-    "type": "apresentação de serviço",
-    "format": "Imagem + CTA",
-    "theme": "Diagnóstico Gratuito: Mapeamento Completo de Gargalos da sua Operação de E-commerce",
+    "time": "09:00",
+    "goal": "Autoridade técnica",
+    "type": "Educacional",
+    "format": "Carrossel",
+    "theme": "Regra de ouro: Nunca escale sua operação na base de planilhas",
     "structure": [
-      "Imagem principal: Mockup de relatório profissional com selo 'Gratuito'",
-      "O que inclui: Análise de 5 pontos críticos (estoque, atendimento, emissão de NF, logística, integração)",
-      "Benefício: Plano de ação personalizado em 48h",
-      "Urgência: Apenas 3 vagas por semana",
-      "Forma de contato: Link na bio ou Direct"
+      "Capa: Planilhas não escalam - elas quebram",
+      "O erro crítico: 10 mil pedidos/mês no Excel",
+      "O colapso: Fórmulas quebradas, erros humanos, retrabalho",
+      "A solução: WMS integrado com rastreabilidade total",
+      "CTA: Saia das planilhas antes que ela te saia"
     ],
-    "caption": "🎯 SEXTA-FEIRA É DIA DE OPORTUNIDADE\n\nVocê sabe exatamente onde sua operação está perdendo dinheiro hoje?\n\nNa EcomForge estamos abrindo 3 vagas essa semana para Diagnóstico Gratuito de Automação.\n\n📋 O que você recebe:\n• Mapeamento dos 3 maiores gargalos da sua operação\n• Análise de quantas horas semanais você pode economizar com automação\n• Plano de implementação em 3 fases (do básico ao avançado)\n• Orçamento detalhado (sem surpresas)\n\n⏱️ Entrega em 48 horas.\n\n💡 É de graça, mas não é para todo mundo. Só atendemos quem:\n✅ Fatura acima de 30k/mês em e-commerce\n✅ Vende em pelo menos 2 canais (ML, Shopee, site, etc)\n✅ Tem real interesse em escalar sem aumentar a equipe proporcionalmente\n\n🚀 As 3 vagas dessa semana costumam preencher em 24h.\n\n👉 Clique no link da bio ou envie 'DIAGNÓSTICO' no Direct agora.\n\n#Consultoria #Gratuito #Automação #Ecommerce #Diagnóstico",
-    "visualIdea": "Post estético minimalista, fundo gradiente azul escuro para preto, ícone 3D de checklist branco flutuando no centro, texto 'Diagnóstico Gratuito' em tipografia bold branca, selo vermelho 'Apenas 3 vagas' no canto superior direito, mockup sutil de relatório PDF no fundo desfocado",
-    "cta": "Clique no link da bio ou envie 'DIAGNÓSTICO' no Direct para garantir sua vaga",
+    "caption": "Planilha é ótima para começar. Perigosa para crescer. Quando você passa de 100 para 1000 pedidos por mês, aquela fórmula linda vira um monstro que come seu lucro em silêncio.\n\nErros de digitação, conflitos de versão, células corrompidas, gente diferente usando modelos diferentes. A operação vira caos e você gasta mais tempo consertando planilha do que vendendo.\n\nA EcomForge migra operações presas em Excel para sistemas WMS (Warehouse Management System) integrados. Rastreabilidade total: quem fez, quando fez, onde está cada SKU. Automação de notas fiscais, etiquetas de envio e conferência de pedidos.\n\nEscalar com planilha é como tentar correr de Ferrari em estrada de terra.\n\nEstá na hora de subir de nível?",
+    "visualIdea": "Imagem dividida: topo mostra tela de Excel gigante e confusa cheia de #N/A e erro de fórmula; base mostra interface limpa de sistema WMS com fluxo visual organizado",
+    "cta": "Solicite diagnóstico gratuito da sua operação - link na bio",
     "topicKeywords": [
-      "diagnóstico",
-      "consultoria",
-      "gratuito",
-      "leads",
-      "mapeamento",
-      "gargalos"
+      "planilhas",
+      "wms",
+      "escalabilidade",
+      "operacao",
+      "sistemas"
+    ]
+  },
+  {
+    "date": "2026-04-25",
+    "day": "Sabado",
+    "time": "09:00",
+    "goal": "Conversão através de prova social",
+    "type": "Case de Sucesso",
+    "format": "Carrossel",
+    "theme": "Case real: Como a TechStore cortou 70% do tempo de envio com automação EcomForge",
+    "structure": [
+      "Capa: De 3 dias para 4 horas - resultado real",
+      "O antes: Gargalo no despacho e pedidos atrasados",
+      "A implementação: Automação de notas, etiquetas e picking",
+      "Os números: 70% mais rápido, zero erros de separação",
+      "CTA: Seja o próximo case de sucesso"
+    ],
+    "caption": "A TechStore (nome alterado para sigilo) vendia em 4 marketplaces simultâneos. O gargalo? O despacho. Pedido ficava 3 dias na fila para emissão de nota e separação.\n\nImplementamos a automação EcomForge: integração total entre venda, estoque, fiscalidade e logística. Notas fiscais emitidas automaticamente em segundos. Etiquetas impressas no momento da compra. Picking otimizado por proximidade no CD.\n\nResultado em 60 dias: tempo médio de envio caiu de 72h para 4h. Capacidade de processamento triplicou sem contratar mais gente. Taxa de erro de separação: zero.\n\nO dono da TechStore disse: 'Parece mágica, mas é tecnologia aplicada direito.'\n\nSua operação aguenta mais um mês de crescimento sem estrutura?\n\nQuer resultados assim?",
+    "visualIdea": "Infográfico clean mostrando 'Antes 72h' em vermelho com ícone de relógio vs 'Depois 4h' em verde com foguete, foto de centro de distribuição organizado ao fundo",
+    "cta": "Quer resultados assim? Fale com nosso time comercial",
+    "topicKeywords": [
+      "case",
+      "resultados",
+      "logistica",
+      "automatizacao",
+      "eficiencia"
+    ]
+  },
+  {
+    "date": "2026-04-26",
+    "day": "Domingo",
+    "time": "09:00",
+    "goal": "Engajamento e visão estratégica",
+    "type": "Inspiracional",
+    "format": "Carrossel",
+    "theme": "O planejamento de 2026: colocando a IA no centro do seu e-commerce",
+    "structure": [
+      "Capa: E-commerce 2.0 começa na segunda-feira",
+      "Tendência: IA generativa criando descrições e anúncios otimizados",
+      "Automação: Compras preditivas de estoque sem intervenção",
+      "Experiência: Personalização em escala para cada cliente",
+      "CTA: Prepare-se para o futuro agora"
+    ],
+    "caption": "2025 foi o ano da IA generativa. 2026 será o ano da IA operacional no e-commerce brasileiro.\n\nAs empresas que vencerão não são as que usam ChatGPT para escrever legenda. São as que integram IA na operação inteira: comprando estoque automaticamente baseado em predição, ajustando preços em tempo real por demanda, personalizando a jornada de cada cliente sem equipe enorme.\n\nA EcomForge está construindo essa infraestrutura hoje. Nossos clientes já operam com vantagem competitiva de 2 a 3 anos frente ao mercado.\n\nO e-commerce tradicional está morrendo. Nasce o e-commerce inteligente, auto-regulado, preditivo.\n\nVocê vai liderar essa onda ou ser engolido por ela?\n\nComece a semana decidindo.",
+    "visualIdea": "Ilustração moderna mostrando e-commerce futurista integrado com símbolos de IA, robôs sutis e fluxos de dados conectando todas as áreas da operação",
+    "cta": "Comece 2026 com a operação automatizada - agende sua consultoria estratégica",
+    "topicKeywords": [
+      "tendencias",
+      "2026",
+      "ia-generativa",
+      "estrategia",
+      "futuro"
     ]
   }
 ]

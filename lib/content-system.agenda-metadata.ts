@@ -55,6 +55,7 @@ async function getWeeklyAgendaDelegate() {
   const delegate = (prisma as unknown as {
     weeklyAgendaState?: {
       findUnique: (input: { where: { userId: string } }) => Promise<WeeklyAgendaStateRecord | null>;
+      deleteMany?: (input: { where: { userId: string } }) => Promise<{ count: number }>;
       upsert: (input: {
         where: { userId: string };
         create: Record<string, unknown>;
@@ -159,6 +160,26 @@ export async function updateWeeklyAgendaResolution(
         resolution,
         resolutionUpdatedAt: new Date()
       }
+    });
+  } catch (error) {
+    if (isMissingWeeklyAgendaStateTableError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function clearWeeklyAgendaState(userId: string) {
+  const delegate = await getWeeklyAgendaDelegate();
+
+  if (!delegate?.deleteMany) {
+    return null;
+  }
+
+  try {
+    return await delegate.deleteMany({
+      where: { userId }
     });
   } catch (error) {
     if (isMissingWeeklyAgendaStateTableError(error)) {
