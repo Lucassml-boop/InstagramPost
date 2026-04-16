@@ -60,6 +60,8 @@ export async function runWeeklyContentAutomationLoop(referenceDate = new Date())
   return {
     ok: true as const,
     skipped: false as const,
-    ...(await generateWeeklyContentPlan(referenceDate))
+    ...(await generateWeeklyContentPlan(referenceDate, {
+      windowMode: "next-week"
+    }))
   };
 }

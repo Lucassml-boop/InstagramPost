@@ -35,10 +35,10 @@ contentAutomation: {
     "The agent uses this configuration as its operating brief. You can keep the default EcomForge positioning or rewrite everything to match another business. Repetition control now uses a compact topics history instead of storing full posts.",
   agendaTab: "Agenda",
   settingsTab: "Settings",
-  scheduleLabel: "Weekly schedule",
+  scheduleLabel: "Next 7 days schedule",
   scheduleDescription:
     "Every Sunday the system researches current topics, checks the last 60 days of history, and generates the next plan based on the active days and times configured here.",
-  weeklyAgendaTitle: "Weekly agenda rules",
+  weeklyAgendaTitle: "Next 7 days agenda rules",
   weeklyAgendaDescription:
     "Define the goal, content angles, preferred formats, active days, daily posting volume, and schedule times. The AI will follow this structure when building the next weekly plan.",
   enableAllDays: "Enable all days",
@@ -135,10 +135,10 @@ contentAutomation: {
   saving: "Saving...",
   saveSuccess: "Content automation settings saved successfully.",
   saveError: "Unable to save content automation settings.",
-  generateButton: "Generate weekly agenda now",
+  generateButton: "Generate next 7 days agenda",
   generating: "Generating...",
   generateHint:
-    "When you generate now, the system saves this configuration first and then creates a fresh weekly agenda with current topics.",
+    "When you generate now, the system saves this configuration first and then builds an agenda for the next 7 days, starting today, with current topics.",
   generateSuccess: "Weekly content agenda generated successfully.",
   generateError: "Unable to generate the weekly content agenda.",
   currentTopics: "Current topics found",

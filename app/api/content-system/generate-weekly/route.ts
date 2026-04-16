@@ -18,7 +18,9 @@ export async function POST() {
   }
 
   try {
-    const result = await generateWeeklyContentPlan();
+    const result = await generateWeeklyContentPlan(new Date(), {
+      windowMode: "rolling-7d"
+    });
     const [metadata, profile] = await Promise.all([
       upsertWeeklyAgendaState(user.id, result.agenda),
       getContentBrandProfile()

@@ -37,10 +37,10 @@ contentAutomation: {
     "O agente usa esta configuracao como briefing operacional. Voce pode manter o posicionamento padrao da EcomForge ou reescrever tudo para outra empresa. O controle de repeticao agora usa um historico compacto de temas em vez de salvar posts completos.",
   agendaTab: "Agenda",
   settingsTab: "Configuracoes",
-  scheduleLabel: "Agenda semanal",
+  scheduleLabel: "Agenda dos proximos 7 dias",
   scheduleDescription:
     "Todo domingo o sistema pesquisa temas atuais, verifica o historico dos ultimos 60 dias e gera o proximo planejamento com base nos dias e horarios ativos configurados aqui.",
-  weeklyAgendaTitle: "Regras da agenda semanal",
+  weeklyAgendaTitle: "Regras da agenda dos proximos 7 dias",
   weeklyAgendaDescription:
     "Defina o objetivo, os angulos de conteudo, os formatos preferidos, os dias ativos, a quantidade de posts por dia e os horarios de publicacao. A IA segue essa estrutura ao montar o proximo planejamento.",
   enableAllDays: "Ativar todos os dias",
@@ -137,10 +137,10 @@ contentAutomation: {
   saving: "Salvando...",
   saveSuccess: "Configuracoes da automacao salvas com sucesso.",
   saveError: "Nao foi possivel salvar as configuracoes da automacao.",
-  generateButton: "Gerar agenda semanal agora",
+  generateButton: "Gerar agenda dos proximos 7 dias",
   generating: "Gerando...",
   generateHint:
-    "Ao gerar agora, o sistema salva primeiro esta configuracao e depois monta uma agenda nova com temas atuais.",
+    "Ao gerar agora, o sistema salva primeiro esta configuracao e monta uma agenda para os proximos 7 dias, a partir de hoje, com temas atuais.",
   generateSuccess: "Agenda semanal gerada com sucesso.",
   generateError: "Nao foi possivel gerar a agenda semanal.",
   currentTopics: "Temas atuais encontrados",

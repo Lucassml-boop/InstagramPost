@@ -61,6 +61,29 @@ function getUpcomingWeekDays(referenceDate = new Date()) {
   });
 }
 
+function getDayLabelFromDate(value: Date): DayLabel {
+  const dayIndex = value.getDay();
+  if (dayIndex === 0) {
+    return "Domingo";
+  }
+
+  return DAY_ORDER[dayIndex - 1] ?? "Segunda";
+}
+
+function getRollingWeekDays(referenceDate = new Date()) {
+  const start = new Date(referenceDate);
+  start.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const current = new Date(start);
+    current.setDate(start.getDate() + index);
+    return {
+      label: getDayLabelFromDate(current),
+      date: current.toISOString().slice(0, 10)
+    };
+  });
+}
+
 export function getDayConfig(profile: BrandProfile, day: DayLabel): DayConfig {
   const config = profile.weeklyAgenda[day];
   const postsPerDay = Math.min(Math.max(config?.postsPerDay ?? 1, 1), 10);
@@ -119,9 +142,20 @@ export function expandPostTimes(postTimes: string[], postsPerDay: number) {
   return times.slice(0, postsPerDay);
 }
 
-export function buildWeekSlots(profile: BrandProfile, referenceDate = new Date()) {
+export function buildWeekSlots(
+  profile: BrandProfile,
+  referenceDate = new Date(),
+  options?: {
+    windowMode?: "next-week" | "rolling-7d";
+  }
+) {
   const slots: WeekSlot[] = [];
-  for (const day of getUpcomingWeekDays(referenceDate)) {
+  const weekDays =
+    options?.windowMode === "rolling-7d"
+      ? getRollingWeekDays(referenceDate)
+      : getUpcomingWeekDays(referenceDate);
+
+  for (const day of weekDays) {
     const config = getDayConfig(profile, day.label);
     if (!config.enabled) {
       continue;

@@ -71,7 +71,7 @@ function buildWeeklyPrompt(input: {
     .join("\n\n");
   return [
     "Você é um agente especialista em marketing digital, social media e automação de conteúdo.",
-    "Seu objetivo é gerar automaticamente conteúdos para Instagram para a próxima semana.",
+    "Seu objetivo é gerar automaticamente conteúdos para Instagram para a janela de 7 dias solicitada.",
     "Retorne somente JSON válido, sem markdown, com um array chamado week.",
     "Cada item de week deve conter: date, day, time, goal, type, format, theme, structure, caption, visualIdea, cta, topicKeywords.",
     "As strings devem vir em português do Brasil.",
@@ -205,9 +205,16 @@ function calculateWordOverlap(str1: string, str2: string): number {
   return overlap;
 }
 
-export async function generateWeeklyContentPlan(referenceDate = new Date()) {
+export async function generateWeeklyContentPlan(
+  referenceDate = new Date(),
+  options?: {
+    windowMode?: "next-week" | "rolling-7d";
+  }
+) {
   const brandProfile = await getBrandProfile();
-  const weekSlots = buildWeekSlots(brandProfile, referenceDate);
+  const weekSlots = buildWeekSlots(brandProfile, referenceDate, {
+    windowMode: options?.windowMode
+  });
   if (weekSlots.length === 0) {
     throw new Error("At least one active day with a valid post schedule is required.");
   }
