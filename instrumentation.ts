@@ -8,7 +8,12 @@ export async function register() {
       return;
     }
 
-    const { startPostScheduler } = await import("@/lib/scheduler");
-    startPostScheduler();
+    try {
+      const { startPostScheduler } = await import("@/lib/scheduler");
+      startPostScheduler();
+    } catch (error) {
+      console.error("[scheduler] Failed to start scheduler during initialization:", error);
+      // Don't throw - allow app to start even if scheduler fails
+    }
   }
 }

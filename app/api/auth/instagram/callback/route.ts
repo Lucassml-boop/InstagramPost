@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getCurrentUser, OAUTH_STATE_COOKIE_NAME } from "@/lib/auth";
-import { getBaseUrl } from "@/lib/env";
+import { getBaseUrl, getInstagramRedirectUri } from "@/lib/env";
 import {
   exchangeCodeForAccessToken,
   exchangeForLongLivedAccessToken,
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const requestOrigin = requestUrl.origin;
   const baseUrl = getBaseUrl(requestOrigin);
-  const redirectUri = `${requestOrigin}/api/auth/instagram/callback`;
+  const redirectUri = getInstagramRedirectUri(requestOrigin);
 
   if (!user) {
     console.warn("[instagram-callback] Anonymous callback, redirecting to login", {

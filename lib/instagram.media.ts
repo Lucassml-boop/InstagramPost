@@ -5,6 +5,20 @@ import {
 } from "./instagram.constants.ts";
 import { getInstagramAccessToken, getStoredInstagramUserId } from "./instagram.access-token.ts";
 
+const MEDIA_PUBLISH_MAX_RETRIES = 3;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientMediaIdUnavailable(message: string | null | undefined) {
+  if (!message) {
+    return false;
+  }
+
+  return message.toLowerCase().includes("media id is not available");
+}
+
 async function assertImageUrlIsReachable(imageUrl: string) {
   let imageProbeResponse: Response | null = null;
   let lastProbeError: unknown = null;
@@ -129,22 +143,40 @@ export async function publishInstagramCreation(input: {
   creationId: string;
 }) {
   await waitForInstagramMediaContainer(input);
-  const publishResponse = await fetch(
-    `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${input.instagramUserId}/media_publish`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${input.accessToken}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({ creation_id: input.creationId }).toString()
+
+  for (let attempt = 0; attempt <= MEDIA_PUBLISH_MAX_RETRIES; attempt += 1) {
+    const publishResponse = await fetch(
+      `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${input.instagramUserId}/media_publish`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${input.accessToken}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ creation_id: input.creationId }).toString()
+      }
+    );
+    const publishJson = await publishResponse.json();
+
+    if (publishResponse.ok && publishJson.id) {
+      return { mediaId: String(publishJson.id) };
     }
-  );
-  const publishJson = await publishResponse.json();
-  if (!publishResponse.ok || !publishJson.id) {
-    throw new Error(publishJson.error?.message ?? "Unable to publish Instagram media.");
+
+    const errorMessage = publishJson.error?.message ?? "Unable to publish Instagram media.";
+    const canRetry =
+      attempt < MEDIA_PUBLISH_MAX_RETRIES &&
+      isTransientMediaIdUnavailable(errorMessage);
+
+    if (!canRetry) {
+      throw new Error(errorMessage);
+    }
+
+    // Meta can return this transient error even after FINISHED; wait and retry publish.
+    await waitForInstagramMediaContainer(input);
+    await sleep(MEDIA_CONTAINER_POLL_INTERVAL_MS);
   }
-  return { mediaId: String(publishJson.id) };
+
+  throw new Error("Unable to publish Instagram media.");
 }
 
 export { assertImageUrlIsReachable };

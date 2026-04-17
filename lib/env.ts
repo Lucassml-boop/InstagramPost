@@ -37,3 +37,13 @@ export function getBaseUrl(fallbackOrigin?: string) {
 
   return "http://localhost:3020";
 }
+
+export function getInstagramRedirectUri(fallbackOrigin?: string) {
+  const explicitRedirectUri = process.env.INSTAGRAM_REDIRECT_URI?.trim();
+
+  if (explicitRedirectUri) {
+    return explicitRedirectUri;
+  }
+
+  return `${getBaseUrl(fallbackOrigin)}/api/auth/instagram/callback`;
+}

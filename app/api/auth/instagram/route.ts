@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getCurrentUser, OAUTH_STATE_COOKIE_NAME } from "@/lib/auth";
-import { getBaseUrl } from "@/lib/env";
+import { getBaseUrl, getInstagramRedirectUri } from "@/lib/env";
 import { getInstagramAuthUrl } from "@/lib/instagram";
 
 export async function GET(request: Request) {
@@ -10,7 +10,24 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const requestOrigin = requestUrl.origin;
   const baseUrl = getBaseUrl(requestOrigin);
-  const redirectUri = `${requestOrigin}/api/auth/instagram/callback`;
+  const redirectUri = getInstagramRedirectUri(requestOrigin);
+
+  if (
+    process.env.NODE_ENV !== "production" &&
+    redirectUri.includes(".trycloudflare.com/")
+  ) {
+    const helpMessage =
+      "Instagram OAuth bloqueado em desenvolvimento: o callback atual usa um dominio trycloudflare temporario, que nao esta cadastrado no Meta App. Defina FIXED_PUBLIC_URL em .env.local, reinicie npm run dev e cadastre exatamente a nova callback no Meta.";
+
+    console.warn("[instagram-auth] Blocking OAuth with temporary trycloudflare callback", {
+      redirectUri,
+      baseUrl
+    });
+
+    return NextResponse.redirect(
+      new URL(`/dashboard?error=${encodeURIComponent(helpMessage)}`, baseUrl)
+    );
+  }
 
   if (!user) {
     console.warn("[instagram-auth] Redirecting anonymous user to login", {
