@@ -16,7 +16,6 @@ let tunnelProcess;
 function log(message) {
   process.stdout.write(`[dev-with-tunnel] ${message}\n`);
 }
-
 function readEnvFile() {
   try {
     return fs.readFileSync(envPath, "utf8");
@@ -29,6 +28,20 @@ function readEnvFile() {
   }
 }
 
+function readEnvEntries() {
+  return readEnvFile()
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#") && line.includes("="))
+    .reduce((env, line) => {
+      const separatorIndex = line.indexOf("=");
+      const key = line.slice(0, separatorIndex).trim();
+      const rawValue = line.slice(separatorIndex + 1).trim();
+      const quoted = rawValue.startsWith('"') && rawValue.endsWith('"');
+      env[key] = quoted ? rawValue.slice(1, -1) : rawValue;
+      return env;
+    }, {});
+}
 function upsertEnvValue(content, key, value) {
   const line = `${key}=${value}`;
   const pattern = new RegExp(`^${key}=.*$`, "m");
@@ -48,7 +61,6 @@ function updateEnvFile(publicUrl) {
   fs.writeFileSync(envPath, content, "utf8");
   log(`.env.local atualizado com a URL do tunel: ${publicUrl}`);
 }
-
 function cleanupAndExit(exitCode = 0) {
   if (shuttingDown) {
     return;
@@ -66,12 +78,14 @@ function cleanupAndExit(exitCode = 0) {
 
   setTimeout(() => process.exit(exitCode), 300);
 }
-
 function startNext() {
   try {
     nextProcess = spawn(process.execPath, ["./node_modules/next/dist/bin/next", "dev", "-p", String(localPort)], {
       cwd: projectRoot,
-      env: process.env,
+      env: {
+        ...process.env,
+        ...readEnvEntries()
+      },
       stdio: "inherit"
     });
   } catch (error) {
@@ -89,7 +103,6 @@ function startNext() {
     cleanupAndExit(code ?? 0);
   });
 }
-
 function startTunnel() {
   try {
     tunnelProcess = spawn(
@@ -110,7 +123,6 @@ function startTunnel() {
       startNext();
       return;
     }
-
     throw error;
   }
 
@@ -160,7 +172,6 @@ function startTunnel() {
       startNext();
       return;
     }
-
     log(`Falha ao iniciar o tunel: ${error instanceof Error ? error.message : String(error)}`);
     startNext();
   });
@@ -173,7 +184,6 @@ function startTunnel() {
       resolved = true;
       return;
     }
-
     if (!shuttingDown) {
       log("cloudflared foi encerrado. Finalizando o servidor local tambem.");
       cleanupAndExit(code ?? 0);

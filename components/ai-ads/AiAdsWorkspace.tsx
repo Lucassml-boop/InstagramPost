@@ -23,7 +23,7 @@ export function AiAdsWorkspace({ initialData }: { initialData: AiAdsDashboardDat
           <div className="grid gap-3 sm:grid-cols-2">
             <MetricCard label="Fluxo" value="coletar -> decidir" accent />
             <MetricCard label="Fonte" value="Meta Ads API" />
-            <MetricCard label="Persistencia" value="Prisma" />
+            <MetricCard label="Persistencia" value="Supabase Postgres" />
             <MetricCard label="Foco" value="lucro" />
           </div>
         </div>
