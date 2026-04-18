@@ -10,6 +10,8 @@ It demonstrates:
 - rendering a 1080x1080 post image with Puppeteer
 - previewing content before approval
 - publishing immediately or scheduling for later
+- analyzing paid traffic opportunities with an AI Ads cockpit focused on profit
+- syncing Meta Ads campaigns into persisted snapshots and decision logs
 
 ## Stack
 
@@ -41,6 +43,7 @@ CRON_SECRET=replace-with-a-long-random-secret
 `APP_BASE_URL` is strongly recommended for publishing because Instagram must be able to fetch the generated image from a public URL. For real publishing, use a public URL or tunnel.
 `OLLAMA_TIMEOUT_MS` is optional and controls how long the server waits for Ollama Cloud before aborting the request.
 `CRON_SECRET` is strongly recommended and required in production for the cron routes unless you only invoke them from an authenticated in-app session.
+`META_ADS_API_VERSION` is optional and defaults to `v23.0` for the AI Ads sync endpoints.
 
 ## How To Run
 
@@ -182,7 +185,19 @@ The main technical references for architecture, API contracts, and database desi
 - [docs/ARCHITECTURE_AND_BUSINESS_RULES.md](docs/ARCHITECTURE_AND_BUSINESS_RULES.md)
 - [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md)
 - [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)
+- [docs/AI_ADS_ARCHITECTURE.md](docs/AI_ADS_ARCHITECTURE.md)
 - [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md)
+
+## AI Ads Sync
+
+The `/ai-ads` module now supports:
+
+- saving a Meta Ads ad account ID and access token per local user
+- syncing campaign, ad set, and creative signals from the Meta Ads API
+- persisting sync runs, campaign snapshots, and AI decision logs in Postgres
+- converting the latest snapshot batch into the structured AI decision payload
+
+To use it, save an ad account plus a token with `ads_read` or `ads_management`, then run a sync from the UI.
 
 ## Review Flow
 

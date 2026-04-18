@@ -22,7 +22,11 @@ model User {
   updatedAt        DateTime           @updatedAt
   sessions         Session[]
   instagramAccount InstagramAccount?
+  metaAdsAccount   MetaAdsAccount?
   posts            Post[]
+  metaAdsSyncRuns  MetaAdsSyncRun[]
+  metaAdsCampaignSnapshots MetaAdsCampaignSnapshot[]
+  metaAdsDecisionLogs MetaAdsDecisionLog[]
 }
 
 model Session {
@@ -86,6 +90,115 @@ model Post {
   user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status, scheduledTime])
+}
+
+model MetaAdsAccount {
+  id                    String     @id @default(cuid())
+  userId                String     @unique
+  adAccountId           String?    @unique
+  adAccountIdHash       String?    @unique
+  adAccountIdEncrypted  String?
+  adAccountIdIv         String?
+  adAccountIdTag        String?
+  accessToken           String
+  accessTokenIv         String
+  accessTokenTag        String
+  connected             Boolean    @default(true)
+  lastSyncedAt          DateTime?
+  defaultTargetCpa      Float      @default(40)
+  defaultTargetRoas     Float      @default(2.4)
+  defaultTicketAverage  Float      @default(150)
+  defaultProfitMargin   Float      @default(0.5)
+  defaultStockLevel     Int?
+  defaultSeasonality    String?    @default("normal")
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  syncRuns              MetaAdsSyncRun[]
+  campaignSnapshots     MetaAdsCampaignSnapshot[]
+  decisionLogs          MetaAdsDecisionLog[]
+
+  @@index([connected, lastSyncedAt])
+}
+
+model MetaAdsSyncRun {
+  id                String     @id @default(cuid())
+  userId            String
+  metaAdsAccountId  String
+  status            String
+  datePreset        String
+  startedAt         DateTime   @default(now())
+  finishedAt        DateTime?
+  campaignsFetched  Int        @default(0)
+  rawSummary        Json?
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metaAdsAccount    MetaAdsAccount @relation(fields: [metaAdsAccountId], references: [id], onDelete: Cascade)
+  campaignSnapshots MetaAdsCampaignSnapshot[]
+  decisionLogs      MetaAdsDecisionLog[]
+
+  @@index([userId, startedAt])
+  @@index([metaAdsAccountId, startedAt])
+}
+
+model MetaAdsCampaignSnapshot {
+  id                 String     @id @default(cuid())
+  userId             String
+  metaAdsAccountId   String
+  syncRunId          String
+  externalCampaignId String
+  name               String
+  objective          String
+  status             String
+  platform           String     @default("meta")
+  daysActive         Int        @default(0)
+  budgetDaily        Float      @default(0)
+  spend              Float      @default(0)
+  impressions        Int        @default(0)
+  clicks             Int        @default(0)
+  ctr                Float      @default(0)
+  cpc                Float      @default(0)
+  cpm                Float      @default(0)
+  conversions        Int        @default(0)
+  cpa                Float?
+  roas               Float?
+  revenue            Float?
+  frequency          Float      @default(0)
+  trend              String     @default("stable")
+  ticketAverage      Float
+  profitMargin       Float
+  stockLevel         Int?
+  seasonality        String     @default("normal")
+  audiences          Json?
+  creatives          Json?
+  rawCampaign        Json?
+  rawCurrentInsights Json?
+  rawPreviousInsights Json?
+  syncedAt           DateTime   @default(now())
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metaAdsAccount     MetaAdsAccount @relation(fields: [metaAdsAccountId], references: [id], onDelete: Cascade)
+  syncRun            MetaAdsSyncRun @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+
+  @@index([userId, syncedAt])
+  @@index([metaAdsAccountId, externalCampaignId, syncedAt])
+  @@index([syncRunId, syncedAt])
+}
+
+model MetaAdsDecisionLog {
+  id               String     @id @default(cuid())
+  userId           String
+  metaAdsAccountId String
+  syncRunId        String?
+  objective        String
+  executionMode    String
+  inputPayload     Json
+  analysis         Json
+  createdAt        DateTime   @default(now())
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metaAdsAccount   MetaAdsAccount @relation(fields: [metaAdsAccountId], references: [id], onDelete: Cascade)
+  syncRun          MetaAdsSyncRun? @relation(fields: [syncRunId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([metaAdsAccountId, createdAt])
 }
 
 enum PostStatus {

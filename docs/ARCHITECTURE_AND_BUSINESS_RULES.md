@@ -32,15 +32,18 @@ The system is an Instagram publishing workspace focused on:
 
 - authenticating users locally
 - connecting one Instagram Professional account per user
+- optionally connecting one Meta Ads account per user
 - generating captions, hashtags, and layouts with AI
 - rendering post images
 - publishing immediately or scheduling publication
 - reviewing local publishing history and the live Instagram feed
+- analyzing paid traffic snapshots with AI and safety rules
 
 ### 1.2 Main Functionalities
 
 - local login and session management
 - Instagram OAuth connection
+- Meta Ads account configuration and sync
 - AI post generation for feed, story, and carousel
 - image rendering and storage
 - manual media upload
@@ -49,6 +52,7 @@ The system is an Instagram publishing workspace focused on:
 - automated scheduled publishing through cron routes
 - automation diagnostics
 - local queue/history cleanup from the scheduled posts screen
+- AI Ads recommendation logging and snapshot persistence
 
 ### 1.3 Main User Flow
 
@@ -321,6 +325,10 @@ Current core tables from Prisma schema:
 - `Session`
 - `InstagramAccount`
 - `Post`
+- `MetaAdsAccount`
+- `MetaAdsSyncRun`
+- `MetaAdsCampaignSnapshot`
+- `MetaAdsDecisionLog`
 
 ### 4.2 Relationships
 
@@ -534,6 +542,12 @@ Recommended addition:
 - `camelCase` for variables and functions
 - `PascalCase` for React components and types representing entities/components
 - `UPPER_SNAKE_CASE` for constants that represent immutable global values
+
+### 8.2.1 File Size Rule
+
+- source files should stay at or below 200 lines whenever reasonably possible
+- if a file grows past that limit, split it by responsibility instead of accumulating more concerns
+- preferred split points are schema, service, fetcher, helpers, hooks, and presentational components
 
 ### 8.3 Imports
 

@@ -30,6 +30,10 @@ User
  |- Session (1:N)
  |- Post (1:N)
  |- InstagramAccount (1:1)
+ |- MetaAdsAccount (1:1)
+    |- MetaAdsSyncRun (1:N)
+    |- MetaAdsCampaignSnapshot (1:N)
+    |- MetaAdsDecisionLog (1:N)
 ```
 
 ## Tables
@@ -194,6 +198,116 @@ Indexes and constraints:
 - index on `userId, status, scheduledTime`
 - foreign key `userId -> User.id`
 
+### 5. MetaAdsAccount
+
+Purpose:
+
+- stores the connected Meta Ads account reference per local user
+- stores the encrypted Meta Ads access token
+- stores default business context used to enrich campaign analysis
+
+Main fields:
+
+- `id`
+- `userId`
+- `adAccountId`
+- `adAccountIdHash`
+- `adAccountIdEncrypted`
+- `adAccountIdIv`
+- `adAccountIdTag`
+- `accessToken`
+- `accessTokenIv`
+- `accessTokenTag`
+- `connected`
+- `lastSyncedAt`
+- `defaultTargetCpa`
+- `defaultTargetRoas`
+- `defaultTicketAverage`
+- `defaultProfitMargin`
+- `defaultStockLevel`
+- `defaultSeasonality`
+
+Business rules:
+
+- each user may have at most one Meta Ads account connected in this MVP
+- ad account identifiers are persisted with the same privacy strategy used for Instagram identity data
+- account-level business defaults are reused to enrich every synced campaign snapshot
+
+### 6. MetaAdsSyncRun
+
+Purpose:
+
+- records each sync attempt against the Meta Ads API
+- groups the campaign snapshots fetched in a single batch
+
+Main fields:
+
+- `id`
+- `userId`
+- `metaAdsAccountId`
+- `status`
+- `datePreset`
+- `startedAt`
+- `finishedAt`
+- `campaignsFetched`
+- `rawSummary`
+
+### 7. MetaAdsCampaignSnapshot
+
+Purpose:
+
+- stores one persisted campaign snapshot per sync batch
+- keeps normalized metrics ready for analysis plus the raw payload fragments used to derive them
+
+Main fields:
+
+- `syncRunId`
+- `externalCampaignId`
+- `name`
+- `objective`
+- `status`
+- `budgetDaily`
+- `spend`
+- `impressions`
+- `clicks`
+- `ctr`
+- `cpc`
+- `cpm`
+- `conversions`
+- `cpa`
+- `roas`
+- `revenue`
+- `frequency`
+- `trend`
+- `ticketAverage`
+- `profitMargin`
+- `stockLevel`
+- `seasonality`
+- `audiences`
+- `creatives`
+- `rawCampaign`
+- `rawCurrentInsights`
+- `rawPreviousInsights`
+
+### 8. MetaAdsDecisionLog
+
+Purpose:
+
+- persists the exact AI payload and resulting analysis used in each recommendation cycle
+- supports future audit, learning, and before/after comparison
+
+Main fields:
+
+- `id`
+- `userId`
+- `metaAdsAccountId`
+- `syncRunId`
+- `objective`
+- `executionMode`
+- `inputPayload`
+- `analysis`
+- `createdAt`
+
 ## Enums
 
 ### PostStatus
@@ -227,6 +341,26 @@ CAROUSEL
 - delete behavior: cascade
 
 ### User -> Post
+
+- cardinality: `1:N`
+- delete behavior: cascade
+
+### User -> MetaAdsAccount
+
+- cardinality: `1:1`
+- delete behavior: cascade
+
+### MetaAdsAccount -> MetaAdsSyncRun
+
+- cardinality: `1:N`
+- delete behavior: cascade
+
+### MetaAdsAccount -> MetaAdsCampaignSnapshot
+
+- cardinality: `1:N`
+- delete behavior: cascade
+
+### MetaAdsAccount -> MetaAdsDecisionLog
 
 - cardinality: `1:N`
 - delete behavior: cascade
@@ -310,6 +444,8 @@ Sensitive data currently protected at rest includes:
 - Instagram user id
 - Instagram username
 - Instagram access token
+- Meta Ads ad account id
+- Meta Ads access token
 
 Security design rules:
 

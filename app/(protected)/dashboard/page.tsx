@@ -135,6 +135,12 @@ export default async function DashboardPage({
             >
               {dictionary.dashboard.viewScheduledPosts}
             </Link>
+            <Link
+              href="/ai-ads"
+              className="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
+            >
+              AI Ads Cockpit
+            </Link>
           </div>
         </Panel>
       </div>

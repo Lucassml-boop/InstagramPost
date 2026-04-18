@@ -22,6 +22,9 @@ type Dictionary = {
     ptBR: string;
   };
   sidebar: {
+    switchLabel: string;
+    postSystem: string;
+    aiAdsSystem: string;
     dashboard: string;
     connectInstagram: string;
     createPost: string;
@@ -358,6 +361,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       ptBR: "Portuguese (Brazil)"
     },
     sidebar: {
+      switchLabel: "Workspace mode",
+      postSystem: "Post System",
+      aiAdsSystem: "AI Ads System",
       dashboard: "Dashboard",
       connectInstagram: "Connect Instagram",
       createPost: "Create Post",
@@ -730,6 +736,9 @@ const dictionaries: Record<Locale, Dictionary> = {
       ptBR: "Portugues (Brasil)"
     },
     sidebar: {
+      switchLabel: "Modo do workspace",
+      postSystem: "Sistema de Posts",
+      aiAdsSystem: "Sistema AI Ads",
       dashboard: "Painel",
       connectInstagram: "Conectar Instagram",
       createPost: "Criar Post",

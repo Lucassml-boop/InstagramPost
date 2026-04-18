@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { requireEnv } from "@/lib/env";
-import { generatePostSchema } from "@/lib/validators";
-import type { BrandProfile } from "@/lib/content-system";
+import { requireEnv } from "./env.ts";
+import { generatePostSchema } from "./validators.ts";
+import type { BrandProfile } from "./content-system.ts";
 
 const ollamaResponseSchema = z.object({
   message: z.object({
