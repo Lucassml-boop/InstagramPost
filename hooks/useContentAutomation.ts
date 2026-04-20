@@ -47,6 +47,7 @@ export function useContentAutomation(input: {
 }) {
   const [brandName, setBrandName] = useState(input.initialProfile.brandName);
   const [editableBrief, setEditableBrief] = useState(input.initialProfile.editableBrief);
+  const [brandColors, setBrandColors] = useState(input.initialProfile.brandColors);
   const [automationLoopEnabled, setAutomationLoopEnabled] = useState(
     input.initialProfile.automationLoopEnabled
   );
@@ -181,6 +182,7 @@ export function useContentAutomation(input: {
       buildProfileFromState({
         brandName,
         editableBrief,
+        brandColors,
         automationLoopEnabled,
         topicsHistoryCleanupFrequency,
         generationRigor,
@@ -195,6 +197,7 @@ export function useContentAutomation(input: {
     [
       brandName,
       editableBrief,
+      brandColors,
       automationLoopEnabled,
       topicsHistoryCleanupFrequency,
       generationRigor,
@@ -687,6 +690,7 @@ export function useContentAutomation(input: {
         const nextProfile = buildProfileFromState({
           brandName,
           editableBrief,
+          brandColors,
           automationLoopEnabled,
           topicsHistoryCleanupFrequency,
           generationRigor,
@@ -737,6 +741,8 @@ export function useContentAutomation(input: {
     setBrandName,
     editableBrief,
     setEditableBrief,
+    brandColors,
+    setBrandColors,
     automationLoopEnabled,
     setAutomationLoopEnabled,
     topicsHistoryCleanupFrequency,

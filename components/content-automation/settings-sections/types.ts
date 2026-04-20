@@ -125,6 +125,11 @@ export type SettingsSectionsProps = {
   setBrandName: (value: string) => void;
   editableBrief: string;
   setEditableBrief: (value: string) => void;
+  brandColors: string;
+  setBrandColors: (value: string) => void;
+  brandColorsHistory: string[];
+  saveBrandColorsToHistory: () => void;
+  removeBrandColorsFromHistory: (value: string) => void;
   automationLoopEnabled: boolean;
   setAutomationLoopEnabled: (value: boolean) => void;
   topicsHistoryCleanupFrequency: "disabled" | "daily" | "weekly" | "monthly";

@@ -1,6 +1,7 @@
 {
   "brandName": "EcomForge",
   "editableBrief": "A EcomForge cria sistemas para empresas que vendem online e querem automatizar operacoes, integrar marketplaces e ganhar produtividade.",
+  "brandColors": "Cor principal: #1d4ed8\nCor de fundo: #101828\nCor de apoio: #38bdf8\nCor de destaque: #f8fafc",
   "automationLoopEnabled": true,
   "topicsHistoryCleanupFrequency": "monthly",
   "services": [

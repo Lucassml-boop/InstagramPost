@@ -90,6 +90,7 @@ export function buildPresetsState(profile: BrandProfile): AutomationPresetsState
 export function buildProfileFromState(input: {
   brandName: string;
   editableBrief: string;
+  brandColors: string;
   automationLoopEnabled: boolean;
   topicsHistoryCleanupFrequency: "disabled" | "daily" | "weekly" | "monthly";
   generationRigor: "strict" | "balanced" | "flexible";
@@ -104,6 +105,7 @@ export function buildProfileFromState(input: {
   return {
     brandName: input.brandName.trim(),
     editableBrief: input.editableBrief.trim(),
+    brandColors: input.brandColors.trim(),
     automationLoopEnabled: input.automationLoopEnabled,
     topicsHistoryCleanupFrequency: input.topicsHistoryCleanupFrequency,
     services: fromTextareaValue(input.services),
