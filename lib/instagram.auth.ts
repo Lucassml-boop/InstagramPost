@@ -72,15 +72,14 @@ export async function exchangeCodeForAccessToken(code: string, redirectUri?: str
 
 async function requestGraphToken(
   endpoint: string,
-  body: URLSearchParams,
+  params: URLSearchParams,
   failureMessage: string
 ) {
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: body.toString(),
+  const url = new URL(endpoint);
+  url.search = params.toString();
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
     cache: "no-store"
   });
   const json = await response.json();
