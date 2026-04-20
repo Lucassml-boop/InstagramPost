@@ -18,12 +18,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]
@@ -34,12 +37,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]
@@ -50,12 +56,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]
@@ -66,12 +75,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]
@@ -82,12 +94,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]
@@ -98,12 +113,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]
@@ -114,12 +132,15 @@
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [],
+      "postTimes": [
+        "09:00"
+      ],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
+          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
           "confirmed": true
         }
       ]

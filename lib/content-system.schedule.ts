@@ -9,6 +9,7 @@ type DayConfig = {
     goal: string;
     contentTypes: string[];
     formats: string[];
+    brandColors: string;
     confirmed: boolean;
   }>;
 };
@@ -103,6 +104,7 @@ export function getDayConfig(profile: BrandProfile, day: DayLabel): DayConfig {
         formats: (savedIdea?.formats ?? (index === 0 ? config?.formats : []) ?? [])
           .map((item) => item.trim())
           .filter(Boolean),
+        brandColors: savedIdea?.brandColors?.trim() ?? "",
         confirmed: savedIdea?.confirmed ?? (
           index === 0 ||
           Boolean(savedIdea?.goal?.trim()) ||
@@ -196,4 +198,16 @@ export function isConfirmedDaySlot(profile: BrandProfile, day: DayLabel, time: s
   }
 
   return config.postIdeas[slotIndex]?.confirmed ?? false;
+}
+
+export function getDaySlotBrandColors(profile: BrandProfile, day: DayLabel, time: string) {
+  const config = getDayConfig(profile, day);
+  const expandedTimes = expandPostTimes(config.postTimes, config.postsPerDay);
+  const slotIndex = expandedTimes.findIndex((candidate) => candidate === time);
+
+  if (slotIndex === -1) {
+    return "";
+  }
+
+  return config.postIdeas[slotIndex]?.brandColors?.trim() ?? "";
 }

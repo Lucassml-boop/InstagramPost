@@ -26,6 +26,21 @@ export type PresetPickerRenderer = (input: {
 
 export type BriefingFieldDefinition = [BriefingFieldId, string];
 
+export type AgendaGenerationStatus = {
+  state: "idle" | "running" | "completed" | "failed";
+  phase: "saving-settings" | "generating-plan" | "refreshing-data" | null;
+  startedAt: number | null;
+  phaseStartedAt: number | null;
+  completedAt: number | null;
+  detailMessage: string | null;
+  preparedCount: number | null;
+  scannedCount: number | null;
+  activeTheme: string | null;
+  currentPostIndex: number | null;
+  totalPosts: number | null;
+  errorMessage: string | null;
+};
+
 export type AgendaGroup = {
   day: string;
   date: string;
@@ -43,12 +58,18 @@ export type AgendaGroup = {
   linkedScheduledTime: string | null;
   linkedPublishedAt: string | null;
   linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
+  linkedPostCaption?: string | null;
+  linkedPostImageUrl?: string | null;
+  linkedPostPreviewUrl?: string | null;
+  linkedPostBrandColors?: string | null;
+  linkedPostType?: "FEED" | "STORY" | "CAROUSEL" | null;
   expectedPostsCount: number;
   expectedTimes: string[];
   expectedIdeas: Array<{
     goal: string;
     contentTypes: string;
     formats: string;
+    brandColors: string;
   }>;
   items: Array<{
     date: string;
@@ -67,6 +88,11 @@ export type AgendaGroup = {
     linkedScheduledTime: string | null;
     linkedPublishedAt: string | null;
     linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
+    linkedPostCaption?: string | null;
+    linkedPostImageUrl?: string | null;
+    linkedPostPreviewUrl?: string | null;
+    linkedPostBrandColors?: string | null;
+    linkedPostType?: "FEED" | "STORY" | "CAROUSEL" | null;
   }>;
   extraPosts: WeeklyPostSummary[];
 };
@@ -140,6 +166,7 @@ export type SettingsSectionsProps = {
   }) => Promise<void>;
   saveSettings: () => void;
   generateWeeklyAgenda: () => void;
+  cancelWeeklyGeneration: () => void;
   isSaving: boolean;
   isGenerating: boolean;
   currentTopics: string[];
@@ -153,7 +180,13 @@ export type AgendaSectionsProps = {
     enabled: boolean;
     postsPerDay: string;
     postTimes: string;
-    postIdeas: Array<{ goal: string; contentTypes: string; formats: string; confirmed: boolean }>;
+    postIdeas: Array<{
+      goal: string;
+      contentTypes: string;
+      formats: string;
+      brandColors: string;
+      confirmed: boolean;
+    }>;
   }>;
   expandedDays: Record<DayLabel, boolean>;
   toggleExpandedDay: (day: DayLabel) => void;
@@ -163,7 +196,7 @@ export type AgendaSectionsProps = {
   updateDayPostIdea: (
     day: DayLabel,
     index: number,
-    field: "goal" | "contentTypes" | "formats",
+    field: "goal" | "contentTypes" | "formats" | "brandColors",
     value: string
   ) => void;
   toggleDayPostConfirmation: (day: DayLabel, index: number, confirmed: boolean) => void;
@@ -184,6 +217,7 @@ export type AgendaSectionsProps = {
   setAllDaysEnabled: (enabled: boolean) => void;
   saveSettings: () => void;
   generateWeeklyAgenda: () => void;
+  cancelWeeklyGeneration: () => void;
   isSaving: boolean;
   isGenerating: boolean;
   currentTopics: string[];
@@ -192,4 +226,5 @@ export type AgendaSectionsProps = {
   agendaSummary: WeeklyAgendaUsageSummary;
   keepUsingStaleAgenda: () => void;
   isResolvingStaleAgenda: boolean;
+  generationStatus: AgendaGenerationStatus;
 };

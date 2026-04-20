@@ -18,6 +18,11 @@ export function AutomationSection(props: SettingsSectionsProps) {
           <button type="button" onClick={props.generateWeeklyAgenda} disabled={props.isSaving || props.isGenerating} className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60">
             {props.isGenerating ? dictionary.contentAutomation.generating : dictionary.contentAutomation.generateButton}
           </button>
+          {props.isGenerating ? (
+            <button type="button" onClick={props.cancelWeeklyGeneration} className="rounded-full border border-rose-300 bg-white px-5 py-3 text-sm font-semibold text-rose-700 transition hover:border-rose-400 hover:text-rose-800">
+              {dictionary.contentAutomation.cancelGeneration ?? "Cancelar"}
+            </button>
+          ) : null}
         </div>
         <p className="mt-4 text-sm text-slate-600">{dictionary.contentAutomation.generateHint}</p>
         {props.currentTopics.length > 0 ? (

@@ -52,6 +52,7 @@ function buildPostIdeas(profile: BrandProfile, day: DayLabel) {
       goal: saved?.goal ?? fallbackGoal,
       contentTypes: toTextareaValue(saved?.contentTypes ?? fallbackTypes),
       formats: toTextareaValue(saved?.formats ?? fallbackFormats),
+      brandColors: saved?.brandColors ?? "",
       confirmed: saved?.confirmed ?? (
         index === 0 ||
         Boolean(saved?.goal?.trim()) ||
@@ -119,6 +120,7 @@ export function buildProfileFromState(input: {
             goal: idea.goal.trim(),
             contentTypes: fromTextareaValue(idea.contentTypes),
             formats: fromTextareaValue(idea.formats),
+            brandColors: idea.brandColors.trim(),
             confirmed: idea.confirmed
           }))
         };

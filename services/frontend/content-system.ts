@@ -72,6 +72,48 @@ export async function generateWeeklyAgenda() {
   }
 }
 
+export async function fetchGenerationProgress() {
+  const response = await fetch("/api/content-system/generation-progress", {
+    cache: "no-store"
+  });
+
+  return parseJsonResponse<{
+    progress?: {
+      state: "idle" | "running" | "completed" | "failed";
+      stage:
+        | "saving-settings"
+        | "generating-weekly-plan"
+        | "materializing-posts"
+        | "summarizing-response"
+        | "completed"
+        | "failed"
+        | null;
+      startedAt: number | null;
+      updatedAt: number | null;
+      completedAt: number | null;
+      message: string | null;
+      prepared: number;
+      scanned: number;
+      activeTheme: string | null;
+      currentPostIndex: number | null;
+      totalPosts: number | null;
+      errorMessage: string | null;
+    };
+    error?: string;
+  }>(response);
+}
+
+export async function cancelGenerationProgress() {
+  const response = await fetch("/api/content-system/generation-progress/cancel", {
+    method: "POST"
+  });
+
+  return parseJsonOrThrow<{ ok: true; error?: string }>(
+    response,
+    "Unable to cancel the weekly content generation."
+  );
+}
+
 export async function generateAutomaticPostIdea(input: {
   profile: BrandProfile;
   day: string;

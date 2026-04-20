@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { Panel } from "@/components/shared";
 import { publishNow } from "@/services/frontend/posts";
 import type { WeeklyPostSummary } from "@/lib/content-system.agenda-status";
+import { PostPreviewDialog } from "./PostPreviewDialog";
 import type { AgendaGroup, AppDictionary } from "./types";
 
 const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";
@@ -91,6 +92,11 @@ type NextCountdownCandidate = {
   title: string;
   status: "scheduled" | "publishing";
   plannedAt: Date;
+  caption: string | null;
+  imageUrl: string | null;
+  previewUrl: string | null;
+  brandColors: string | null;
+  postType: string | null;
 };
 
 function isSchedulableStatus(
@@ -147,7 +153,12 @@ function buildGroupCandidates(item: AgendaGroup): NextCountdownCandidate[] {
       slot: slotIndex === -1 ? slots.length + 1 : slotIndex + 1,
       title: agendaItem.theme,
       status: agendaItem.postGenerationStatus,
-      plannedAt: new Date(agendaItem.linkedScheduledTime ?? `${agendaItem.date}T${agendaItem.time}:00-03:00`)
+      plannedAt: new Date(agendaItem.linkedScheduledTime ?? `${agendaItem.date}T${agendaItem.time}:00-03:00`),
+      caption: agendaItem.linkedPostCaption ?? null,
+      imageUrl: agendaItem.linkedPostImageUrl ?? null,
+      previewUrl: agendaItem.linkedPostPreviewUrl ?? null,
+      brandColors: agendaItem.linkedPostBrandColors ?? null,
+      postType: agendaItem.linkedPostType ?? null
     };
 
     if (slotIndex === -1) {
@@ -171,7 +182,12 @@ function buildGroupCandidates(item: AgendaGroup): NextCountdownCandidate[] {
       slot: slotIndex === -1 ? slots.length + 1 : slotIndex + 1,
       title: post.topic,
       status: post.status,
-      plannedAt: new Date(post.scheduledTime ?? `${post.localDate}T${post.localTime}:00-03:00`)
+      plannedAt: new Date(post.scheduledTime ?? `${post.localDate}T${post.localTime}:00-03:00`),
+      caption: post.caption,
+      imageUrl: post.imageUrl,
+      previewUrl: post.previewUrl,
+      brandColors: post.brandColors,
+      postType: post.postType
     };
 
     if (slotIndex === -1) {
@@ -266,6 +282,7 @@ export function NextPostCountdownCard({
   const [isClient, setIsClient] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [skipBeforeTimestamp, setSkipBeforeTimestamp] = useState<number | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -319,7 +336,12 @@ export function NextPostCountdownCard({
         slot: 1,
         title: post.topic,
         status: post.status,
-        plannedAt: parseAgendaDateTime(post.localDate, post.localTime)
+        plannedAt: parseAgendaDateTime(post.localDate, post.localTime),
+        caption: post.caption,
+        imageUrl: post.imageUrl,
+        previewUrl: post.previewUrl,
+        brandColors: post.brandColors,
+        postType: post.postType
       }))
       .filter(
         (item) =>
@@ -432,7 +454,16 @@ export function NextPostCountdownCard({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   {dictionary.contentAutomation.nextPostCreationStatusLabel}
                 </p>
-                <p className="mt-2 text-sm font-semibold text-ink">{creationStatus}</p>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="mt-2 w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left transition hover:border-emerald-300 hover:bg-emerald-100"
+                >
+                  <p className="text-sm font-semibold text-emerald-950">{creationStatus}</p>
+                  <p className="mt-1 text-sm text-emerald-800">
+                    {dictionary.contentAutomation.previewCreatedPost}
+                  </p>
+                </button>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -542,6 +573,19 @@ export function NextPostCountdownCard({
             document.body
           )
         : null}
+      {nextPost ? (
+        <PostPreviewDialog
+          dictionary={dictionary}
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          title={nextPost.title}
+          caption={nextPost.caption}
+          imageUrl={nextPost.imageUrl}
+          previewUrl={nextPost.previewUrl}
+          brandColors={nextPost.brandColors}
+          postType={nextPost.postType}
+        />
+      ) : null}
     </Panel>
   );
 }

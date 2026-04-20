@@ -1,41 +1,467 @@
 [
-  "como sincronizar estoque entre mercado livre e shopee sem perder vendas",
-  "estoque",
-  "mercado livre",
-  "shopee",
-  "integracao",
-  "sincronizacao",
-  "ia respondendo leads enquanto voce dorme automatizacao inteligente de atendimento",
-  "ia",
-  "chatbot",
-  "atendimento",
-  "automatizacao",
-  "leads",
-  "dashboard preditivo saiba quanto estoque comprar antes de esgotar",
-  "dashboard",
-  "predicao",
-  "analytics",
-  "machine learning",
-  "a dor de atualizar preco em 5 marketplaces centralizacao inteligente",
-  "precos",
-  "multi marketplace",
-  "produtividade",
-  "automacao",
-  "regra de ouro nunca escale sua operacao na base de planilhas",
-  "planilhas",
-  "wms",
-  "escalabilidade",
-  "operacao",
-  "sistemas",
-  "case real como a techstore cortou 70 do tempo de envio com automacao ecomforge",
-  "case",
-  "resultados",
-  "logistica",
-  "eficiencia",
-  "o planejamento de 2026 colocando a ia no centro do seu e commerce",
-  "tendencias",
-  "2026",
-  "ia generativa",
-  "estrategia",
-  "futuro"
+  {
+    "theme": "como sincronizar estoque entre mercado livre e shopee sem perder vendas",
+    "normalizedTheme": "como sincronizar estoque entre mercado livre e shopee sem perder vendas",
+    "themeCategory": "estoque",
+    "contentAngle": "erro-operacional",
+    "keywords": [
+      "como sincronizar estoque entre mercado livre e shopee sem perder vendas"
+    ],
+    "fingerprint": "estoque|erro operacional|como-sincronizar-estoque-entre"
+  },
+  {
+    "theme": "estoque",
+    "normalizedTheme": "estoque",
+    "themeCategory": "estoque",
+    "contentAngle": "educacional",
+    "keywords": [
+      "estoque"
+    ],
+    "fingerprint": "estoque|educacional|estoque"
+  },
+  {
+    "theme": "mercado livre",
+    "normalizedTheme": "mercado livre",
+    "themeCategory": "marketplaces",
+    "contentAngle": "educacional",
+    "keywords": [
+      "mercado livre"
+    ],
+    "fingerprint": "marketplaces|educacional|livre"
+  },
+  {
+    "theme": "shopee",
+    "normalizedTheme": "shopee",
+    "themeCategory": "marketplaces",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "marketplaces|educacional|shopee"
+  },
+  {
+    "theme": "integracao",
+    "normalizedTheme": "integracao",
+    "themeCategory": "integracao",
+    "contentAngle": "educacional",
+    "keywords": [
+      "integracao"
+    ],
+    "fingerprint": "integracao|educacional|integracao"
+  },
+  {
+    "theme": "sincronizacao",
+    "normalizedTheme": "sincronizacao",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "sincronizacao"
+    ],
+    "fingerprint": "geral|educacional|sincronizacao"
+  },
+  {
+    "theme": "ia respondendo leads enquanto voce dorme automatizacao inteligente de atendimento",
+    "normalizedTheme": "ia respondendo leads enquanto voce dorme automatizacao inteligente de atendimento",
+    "themeCategory": "atendimento",
+    "contentAngle": "alerta",
+    "keywords": [
+      "ia respondendo leads enquanto voce dorme automatizacao inteligente de atendimento"
+    ],
+    "fingerprint": "atendimento|alerta|respondendo-enquanto-voce-dorme"
+  },
+  {
+    "theme": "ia",
+    "normalizedTheme": "ia",
+    "themeCategory": "automacao",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "automacao|educacional|ia"
+  },
+  {
+    "theme": "chatbot",
+    "normalizedTheme": "chatbot",
+    "themeCategory": "atendimento",
+    "contentAngle": "educacional",
+    "keywords": [
+      "chatbot"
+    ],
+    "fingerprint": "atendimento|educacional|chatbot"
+  },
+  {
+    "theme": "atendimento",
+    "normalizedTheme": "atendimento",
+    "themeCategory": "atendimento",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "atendimento|educacional|atendimento"
+  },
+  {
+    "theme": "automatizacao",
+    "normalizedTheme": "automatizacao",
+    "themeCategory": "automacao",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "automacao|educacional|automatizacao"
+  },
+  {
+    "theme": "leads",
+    "normalizedTheme": "leads",
+    "themeCategory": "atendimento",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "atendimento|educacional|leads"
+  },
+  {
+    "theme": "dashboard preditivo saiba quanto estoque comprar antes de esgotar",
+    "normalizedTheme": "dashboard preditivo saiba quanto estoque comprar antes de esgotar",
+    "themeCategory": "estoque",
+    "contentAngle": "previsao-planejamento",
+    "keywords": [
+      "dashboard preditivo saiba quanto estoque comprar antes de esgotar"
+    ],
+    "fingerprint": "estoque|previsao planejamento|preditivo-saiba-quanto-estoque"
+  },
+  {
+    "theme": "dashboard",
+    "normalizedTheme": "dashboard",
+    "themeCategory": "analytics",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "analytics|educacional|dashboard"
+  },
+  {
+    "theme": "predicao",
+    "normalizedTheme": "predicao",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "predicao"
+    ],
+    "fingerprint": "geral|educacional|predicao"
+  },
+  {
+    "theme": "analytics",
+    "normalizedTheme": "analytics",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "analytics"
+    ],
+    "fingerprint": "geral|educacional|analytics"
+  },
+  {
+    "theme": "machine learning",
+    "normalizedTheme": "machine learning",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "machine learning"
+    ],
+    "fingerprint": "geral|educacional|machine-learning"
+  },
+  {
+    "theme": "a dor de atualizar preco em 5 marketplaces centralizacao inteligente",
+    "normalizedTheme": "a dor de atualizar preco em 5 marketplaces centralizacao inteligente",
+    "themeCategory": "precificacao",
+    "contentAngle": "alerta",
+    "keywords": [
+      "a dor de atualizar preco em 5 marketplaces centralizacao inteligente"
+    ],
+    "fingerprint": "precificacao|alerta|atualizar-preco-centralizacao"
+  },
+  {
+    "theme": "precos",
+    "normalizedTheme": "precos",
+    "themeCategory": "precificacao",
+    "contentAngle": "educacional",
+    "keywords": [
+      "precos"
+    ],
+    "fingerprint": "precificacao|educacional|precos"
+  },
+  {
+    "theme": "multi marketplace",
+    "normalizedTheme": "multi marketplace",
+    "themeCategory": "marketplaces",
+    "contentAngle": "educacional",
+    "keywords": [
+      "multi marketplace"
+    ],
+    "fingerprint": "marketplaces|educacional|multi"
+  },
+  {
+    "theme": "produtividade",
+    "normalizedTheme": "produtividade",
+    "themeCategory": "geral",
+    "contentAngle": "ganho-eficiencia",
+    "keywords": [],
+    "fingerprint": "geral|ganho eficiencia|produtividade"
+  },
+  {
+    "theme": "automacao",
+    "normalizedTheme": "automacao",
+    "themeCategory": "automacao",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "automacao|educacional|automacao"
+  },
+  {
+    "theme": "regra de ouro nunca escale sua operacao na base de planilhas",
+    "normalizedTheme": "regra de ouro nunca escale sua operacao na base de planilhas",
+    "themeCategory": "geral",
+    "contentAngle": "alerta",
+    "keywords": [
+      "regra de ouro nunca escale sua operacao na base de planilhas"
+    ],
+    "fingerprint": "geral|alerta|regra-ouro-nunca-escale"
+  },
+  {
+    "theme": "planilhas",
+    "normalizedTheme": "planilhas",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "planilhas"
+    ],
+    "fingerprint": "geral|educacional|planilhas"
+  },
+  {
+    "theme": "wms",
+    "normalizedTheme": "wms",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "geral|educacional|wms"
+  },
+  {
+    "theme": "escalabilidade",
+    "normalizedTheme": "escalabilidade",
+    "themeCategory": "geral",
+    "contentAngle": "oportunidade",
+    "keywords": [
+      "escalabilidade"
+    ],
+    "fingerprint": "geral|oportunidade|escalabilidade"
+  },
+  {
+    "theme": "operacao",
+    "normalizedTheme": "operacao",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "geral|educacional|operacao"
+  },
+  {
+    "theme": "sistemas",
+    "normalizedTheme": "sistemas",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "geral|educacional|sistemas"
+  },
+  {
+    "theme": "case real como a techstore cortou 70 do tempo de envio com automacao ecomforge",
+    "normalizedTheme": "case real como a techstore cortou 70 do tempo de envio com automacao ecomforge",
+    "themeCategory": "logistica",
+    "contentAngle": "ganho-eficiencia",
+    "keywords": [
+      "case real como a techstore cortou 70 do tempo de envio com automacao ecomforge"
+    ],
+    "fingerprint": "logistica|ganho eficiencia|real-como-techstore-cortou"
+  },
+  {
+    "theme": "case",
+    "normalizedTheme": "case",
+    "themeCategory": "geral",
+    "contentAngle": "case-real",
+    "keywords": [],
+    "fingerprint": "geral|case real|case"
+  },
+  {
+    "theme": "resultados",
+    "normalizedTheme": "resultados",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "geral|educacional|resultados"
+  },
+  {
+    "theme": "logistica",
+    "normalizedTheme": "logistica",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "logistica"
+    ],
+    "fingerprint": "geral|educacional|logistica"
+  },
+  {
+    "theme": "eficiencia",
+    "normalizedTheme": "eficiencia",
+    "themeCategory": "automacao",
+    "contentAngle": "ganho-eficiencia",
+    "keywords": [
+      "eficiencia"
+    ],
+    "fingerprint": "automacao|ganho eficiencia|eficiencia"
+  },
+  {
+    "theme": "o planejamento de 2026 colocando a ia no centro do seu e commerce",
+    "normalizedTheme": "o planejamento de 2026 colocando a ia no centro do seu e commerce",
+    "themeCategory": "previsao",
+    "contentAngle": "previsao-planejamento",
+    "keywords": [
+      "o planejamento de 2026 colocando a ia no centro do seu e commerce"
+    ],
+    "fingerprint": "previsao|previsao planejamento|planejamento-2026-colocando-centro"
+  },
+  {
+    "theme": "tendencias",
+    "normalizedTheme": "tendencias",
+    "themeCategory": "automacao",
+    "contentAngle": "educacional",
+    "keywords": [
+      "tendencias"
+    ],
+    "fingerprint": "automacao|educacional|tendencias"
+  },
+  {
+    "theme": "2026",
+    "normalizedTheme": "2026",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "2026"
+    ],
+    "fingerprint": "geral|educacional|2026"
+  },
+  {
+    "theme": "ia generativa",
+    "normalizedTheme": "ia generativa",
+    "themeCategory": "automacao",
+    "contentAngle": "educacional",
+    "keywords": [
+      "ia generativa"
+    ],
+    "fingerprint": "automacao|educacional|generativa"
+  },
+  {
+    "theme": "estrategia",
+    "normalizedTheme": "estrategia",
+    "themeCategory": "automacao",
+    "contentAngle": "educacional",
+    "keywords": [],
+    "fingerprint": "automacao|educacional|estrategia"
+  },
+  {
+    "theme": "futuro",
+    "normalizedTheme": "futuro",
+    "themeCategory": "geral",
+    "contentAngle": "educacional",
+    "keywords": [
+      "futuro"
+    ],
+    "fingerprint": "geral|educacional|futuro"
+  },
+  {
+    "theme": "3 erros fatais na precificação manual no Mercado Livre que quebram sua margem",
+    "normalizedTheme": "3 erros fatais na precificacao manual no mercado livre que quebram sua margem",
+    "themeCategory": "precificacao",
+    "contentAngle": "erro-operacional",
+    "keywords": [
+      "precificacao dinamica",
+      "repricing",
+      "competencia precos",
+      "erro manual",
+      "margem quebrada"
+    ],
+    "fingerprint": "precificacao|erro operacional|erros-fatais-precificacao-manual-dinamica-repricing",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "Como configurar respostas automáticas inteligentes na Shopee sem parecer robô",
+    "normalizedTheme": "como configurar respostas automaticas inteligentes na shopee sem parecer robo",
+    "themeCategory": "atendimento",
+    "contentAngle": "passo-a-passo",
+    "keywords": [
+      "chatbot shopee",
+      "perguntas frequentes",
+      "resposta automatica",
+      "atendimento shopper",
+      "tempo de resposta"
+    ],
+    "fingerprint": "atendimento|passo a passo|como-configurar-respostas-automaticas-chatbot-perguntas",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "API Oficial vs RPA: qual método usar para integrar seu ERP com marketplaces",
+    "normalizedTheme": "api oficial vs rpa qual metodo usar para integrar seu erp com marketplaces",
+    "themeCategory": "integracao",
+    "contentAngle": "comparativo",
+    "keywords": [
+      "api oficial",
+      "web scraping",
+      "integracao nativa",
+      "limitacao tecnica"
+    ],
+    "fingerprint": "integracao|comparativo|oficial-qual-metodo-usar-scraping-integracao",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "O perigo do overselling: quando vender demais vira problema sério",
+    "normalizedTheme": "o perigo do overselling quando vender demais vira problema serio",
+    "themeCategory": "estoque",
+    "contentAngle": "alerta",
+    "keywords": [
+      "overselling",
+      "estoque sincronizado",
+      "multicanal",
+      "ruptura virtual",
+      "saldo negativo"
+    ],
+    "fingerprint": "estoque|alerta|perigo-overselling-quando-vender-estoque-sincronizado",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "3 métricas escondidas no Mercado Livre que seus concorrentes ignoram (e você pode explorar)",
+    "normalizedTheme": "3 metricas escondidas no mercado livre que seus concorrentes ignoram e voce pode explorar",
+    "themeCategory": "analytics",
+    "contentAngle": "oportunidade",
+    "keywords": [
+      "taxa de conversao",
+      "visibilidade anuncio",
+      "metricas ocultas",
+      "reputacao tecnica",
+      "alcance organico"
+    ],
+    "fingerprint": "analytics|oportunidade|metricas-escondidas-livre-seus-taxa-conversao",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "Previsão de demanda sazonal: como não ficar com estoque parado ou sem produto na alta",
+    "normalizedTheme": "previsao de demanda sazonal como nao ficar com estoque parado ou sem produto na alta",
+    "themeCategory": "previsao",
+    "contentAngle": "previsao-planejamento",
+    "keywords": [
+      "sazonalidade",
+      "curva de demanda",
+      "estoque inteligente",
+      "planejamento compras"
+    ],
+    "fingerprint": "previsao|previsao planejamento|demanda-sazonal-como-ficar-sazonalidade-curva",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "Dashboard unificado: operando Mercado Livre, Shopee e site próprio numa única tela",
+    "normalizedTheme": "dashboard unificado operando mercado livre shopee e site proprio numa unica tela",
+    "themeCategory": "marketplaces",
+    "contentAngle": "ganho-eficiencia",
+    "keywords": [
+      "dashboard unificado",
+      "gestao centralizada",
+      "multi conta",
+      "painel operacional",
+      "concentrador pedidos"
+    ],
+    "fingerprint": "marketplaces|ganho eficiencia|unificado-operando-livre-site-centralizada-multi",
+    "createdAt": "2026-04-20T02:10:21.393Z"
+  }
 ]

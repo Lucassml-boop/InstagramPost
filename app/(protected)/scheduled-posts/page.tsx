@@ -15,6 +15,8 @@ import {
   isRemoteAssetUrl
 } from "@/lib/storage";
 
+type OptionalPublicationState = "PUBLISHED" | "ARCHIVED" | "DELETED" | null | undefined;
+
 function getStoredPreviewUrl(mediaItems: unknown, fallbackImageUrl: string) {
   if (Array.isArray(mediaItems)) {
     const firstItem = mediaItems[0];
@@ -56,6 +58,21 @@ async function getAssetState(imagePath: string, imageUrl: string) {
   }
 }
 
+function getPublicationStateValue(post: {
+  status: PostStatus;
+  publicationState?: OptionalPublicationState;
+}) {
+  if (post.publicationState === "ARCHIVED" || post.publicationState === "DELETED") {
+    return post.publicationState;
+  }
+
+  if (post.publicationState === "PUBLISHED") {
+    return "PUBLISHED" as const;
+  }
+
+  return post.status === PostStatus.PUBLISHED ? "PUBLISHED" : null;
+}
+
 export default async function ScheduledPostsPage({
   searchParams
 }: {
@@ -92,14 +109,7 @@ export default async function ScheduledPostsPage({
       imagePath: post.imagePath,
       postType: post.postType,
       status: post.status as "DRAFT" | "SCHEDULED" | "PUBLISHED" | "FAILED",
-      publicationState:
-        post.publicationState === "ARCHIVED"
-          ? "ARCHIVED"
-          : post.publicationState === "DELETED"
-            ? "DELETED"
-            : post.status === PostStatus.PUBLISHED
-              ? "PUBLISHED"
-              : null,
+      publicationState: getPublicationStateValue(post),
       scheduledTime: post.scheduledTime?.toISOString() ?? null,
       publishedAt: post.publishedAt?.toISOString() ?? null,
       assetState: await getAssetState(post.imagePath, post.imageUrl)

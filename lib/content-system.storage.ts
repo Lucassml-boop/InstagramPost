@@ -11,8 +11,10 @@ import {
 import {
   brandProfileSchema,
   historyItemSchema,
+  topicHistoryRecordSchema,
   type ContentPlanItem
 } from "./content-system.schemas.ts";
+import { normalizeTopicHistoryRecord } from "./content-system-utils";
 import { normalizeStoredAgenda } from "./content-system.schedule.ts";
 
 export async function ensureContentSystemDir() {
@@ -45,9 +47,18 @@ export async function getContentHistory() {
   return z.array(historyItemSchema).parse(raw);
 }
 
-export async function getTopicsHistory() {
+export async function getTopicsHistoryRecords() {
   const raw = await readJsonFile<unknown>(TOPICS_HISTORY_PATH, []);
-  return z.array(z.string()).parse(raw);
+  return z
+    .array(z.union([z.string(), topicHistoryRecordSchema.partial()]))
+    .parse(raw)
+    .map((entry) => normalizeTopicHistoryRecord(entry))
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+}
+
+export async function getTopicsHistory() {
+  const records = await getTopicsHistoryRecords();
+  return records.map((entry) => entry.theme);
 }
 
 export const getCurrentWeeklyAgenda = cache(async () => {

@@ -119,6 +119,16 @@ contentAutomation: {
   nextPostCreationStatusLabel: "Post status",
   nextPostCreationReady: "Already created",
   nextPostCreationPending: "Not created yet",
+  previewCreatedPost: "Open preview",
+  previewModalEyebrow: "Post preview",
+  previewUnavailable: "Preview unavailable.",
+  previewCaptionFallback: "Caption unavailable.",
+  noColorsSelected: "No colors defined for this post.",
+  colorsForThisPost: "Colors for this post",
+  colorsForThisPostHint:
+    "These colors will be used the next time this slot is generated. If the post already exists, changing them does not update the saved creative automatically.",
+  colorTargetDaysLabel: "Days that will receive this palette",
+  applyColorsToDays: "Apply to selected days",
   nextPostSlotLabel: "Planned slot",
   nextPostManualSlotLabel: "Manual/scheduled post outside plan",
   publishNowButton: "Publish now",
@@ -141,6 +151,37 @@ contentAutomation: {
     "When you generate now, the system saves this configuration first and then builds an agenda for the next 7 days, starting today, with current topics.",
   generateSuccess: "Weekly content agenda generated successfully.",
   generateError: "Unable to generate the weekly content agenda.",
+  invalidAgendaSetupTitle: "The agenda cannot be generated yet",
+  invalidAgendaSetupNoDays:
+    "Enable at least one day in the weekly cadence to unlock agenda generation.",
+  invalidAgendaSetupNoTimes:
+    "Set at least one valid time in HH:mm format on one of the active days.",
+  invalidAgendaSetupNoConfirmedSlots:
+    "Confirm at least one post slot on an active day with a valid schedule before generating the agenda.",
+  cancelGeneration: "Cancel",
+  generationStatusLabel: "Generation status",
+  generationElapsedLabel: "Elapsed time",
+  generationStepSaving: "Saving settings",
+  generationStepPlanning: "Generating agenda",
+  generationStepRefreshing: "Refreshing data",
+  generationSavingTitle: "Saving settings",
+  generationSavingDescription:
+    "Saving the current configuration before building the next 7 days agenda.",
+  generationPlanningTitle: "Generating agenda",
+  generationPlanningDescription:
+    "The AI is researching topics, organizing slots, building the agenda, and preparing the linked posts.",
+  generationRefreshingTitle: "Refreshing final data",
+  generationRefreshingDescription:
+    "Syncing agenda data, discovered topics, and derived state back into the screen.",
+  generationStalledTitle: "Generation is taking longer than usual",
+  generationStalledDescription:
+    "The operation may still be running in the backend. At this stage the system may still be researching topics, generating posts, and rendering images, which can take several minutes.",
+  generationCompletedTitle: "Agenda completed",
+  generationCompletedDescription:
+    "The weekly agenda finished successfully and the screen has been updated.",
+  generationFailedTitle: "Generation failed",
+  generationFailedDescription:
+    "The weekly agenda could not be completed.",
   currentTopics: "Current topics found",
   topicsHistoryTitle: "Topic history",
   topicsHistoryDescription:

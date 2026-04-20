@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Panel } from "@/components/shared";
 import { renderAgendaMeta } from "@/components/content-automation/helpers";
+import type { DayLabel, DaySettingsState } from "@/components/content-automation/types";
+import { parseBrandColors, serializeBrandColors } from "@/components/create-post/utils";
+import { Panel } from "@/components/shared";
+import { DAY_ORDER } from "@/components/content-automation/utils";
+import { PostPreviewDialog } from "./PostPreviewDialog";
 import type { AgendaGroup, AppDictionary } from "./types";
 
 const STATUS_STYLES = {
@@ -14,6 +18,15 @@ const STATUS_STYLES = {
   failed: "border-rose-200 bg-rose-50 text-rose-700"
 } as const;
 
+type PreviewState = {
+  title: string;
+  caption: string | null;
+  imageUrl: string | null;
+  previewUrl: string | null;
+  brandColors: string | null;
+  postType: string | null;
+} | null;
+
 export function GeneratedAgendaSection({
   dictionary,
   groupedAgenda,
@@ -22,7 +35,9 @@ export function GeneratedAgendaSection({
   keepUsingStaleAgenda,
   isResolvingStaleAgenda,
   activeQueueFilter,
-  slotRuntimeStatusByKey
+  slotRuntimeStatusByKey,
+  daySettings,
+  updateDayPostIdea
 }: {
   dictionary: AppDictionary;
   groupedAgenda: AgendaGroup[];
@@ -41,7 +56,20 @@ export function GeneratedAgendaSection({
     string,
     "awaiting-confirmation" | "queued" | "generating-now" | "generated-and-scheduled" | "published" | "failed"
   >;
+  daySettings: DaySettingsState;
+  updateDayPostIdea: (
+    day: DayLabel,
+    index: number,
+    field: "goal" | "contentTypes" | "formats" | "brandColors",
+    value: string
+  ) => void;
 }) {
+  const [previewState, setPreviewState] = useState<PreviewState>(null);
+  const [selectedDays, setSelectedDays] = useState<DayLabel[]>(() =>
+    DAY_ORDER.filter((day) => daySettings[day]?.enabled)
+  );
+  const [bulkBrandColors, setBulkBrandColors] = useState(() => getInitialBulkBrandColors(daySettings));
+
   const filteredGroups = activeQueueFilter
     ? groupedAgenda.filter((group) => {
         const matchingCount = group.expectedTimes.reduce((total, _, index) => {
@@ -137,16 +165,54 @@ export function GeneratedAgendaSection({
             </div>
           </div>
         ) : null}
+        <div className="mt-6">
+          <AgendaPaletteCard
+            dictionary={dictionary}
+            brandColors={bulkBrandColors}
+            onChange={setBulkBrandColors}
+            selectedDays={selectedDays}
+            onToggleDay={(day) =>
+              setSelectedDays((current) =>
+                current.includes(day)
+                  ? current.filter((item) => item !== day)
+                  : [...current, day]
+              )
+            }
+            onApply={() => {
+              for (const day of selectedDays) {
+                daySettings[day].postIdeas.forEach((_, index) => {
+                  updateDayPostIdea(day, index, "brandColors", bulkBrandColors);
+                });
+              }
+            }}
+          />
+        </div>
         {filteredGroups.length === 0 ? (
           <p className="mt-5 text-sm text-slate-500">{dictionary.contentAutomation.noAgenda}</p>
         ) : (
           <div className="mt-6 grid gap-4">
             {filteredGroups.map((item) => (
-              <AgendaGroupCard key={`${item.date}-${item.day}`} dictionary={dictionary} item={item} />
+              <AgendaGroupCard
+                key={`${item.date}-${item.day}`}
+                dictionary={dictionary}
+                item={item}
+                onOpenPreview={setPreviewState}
+              />
             ))}
           </div>
         )}
       </div>
+      <PostPreviewDialog
+        dictionary={dictionary}
+        isOpen={Boolean(previewState)}
+        onClose={() => setPreviewState(null)}
+        title={previewState?.title ?? ""}
+        caption={previewState?.caption ?? null}
+        imageUrl={previewState?.imageUrl ?? null}
+        previewUrl={previewState?.previewUrl ?? null}
+        brandColors={previewState?.brandColors ?? null}
+        postType={previewState?.postType ?? null}
+      />
     </Panel>
   );
 }
@@ -160,10 +226,17 @@ function SummaryPill({ label, value }: { label: string; value: number }) {
   );
 }
 
-function AgendaGroupCard({ dictionary, item }: { dictionary: AppDictionary; item: AgendaGroup }) {
+function AgendaGroupCard({
+  dictionary,
+  item,
+  onOpenPreview
+}: {
+  dictionary: AppDictionary;
+  item: AgendaGroup;
+  onOpenPreview: (value: PreviewState) => void;
+}) {
   const slides = buildAgendaSlides(item);
   const filledPostsCount = slides.filter((slide) => slide.kind !== "missing").length;
-  const missingPostsCount = slides.filter((slide) => slide.kind === "missing").length;
   const hasRealCoverageGap = filledPostsCount < item.expectedPostsCount;
   const [now, setNow] = useState(() => Date.now());
   const [activeIndex, setActiveIndex] = useState(0);
@@ -265,6 +338,7 @@ function AgendaGroupCard({ dictionary, item }: { dictionary: AppDictionary; item
             dictionary={dictionary}
             agendaItem={activeSlide.agendaItem}
             postNumber={activeSlide.postNumber}
+            onOpenPreview={onOpenPreview}
           />
         ) : activeSlide.kind === "existing" ? (
           <ExistingPostCard
@@ -274,6 +348,7 @@ function AgendaGroupCard({ dictionary, item }: { dictionary: AppDictionary; item
             expectedTime={activeSlide.expectedTime}
             expectedIdea={activeSlide.expectedIdea}
             fillsExpectedSlot={activeSlide.fillsExpectedSlot}
+            onOpenPreview={onOpenPreview}
           />
         ) : (
           <MissingPostCard
@@ -295,11 +370,13 @@ function AgendaGroupCard({ dictionary, item }: { dictionary: AppDictionary; item
 function PlannedPostCard({
   dictionary,
   agendaItem,
-  postNumber
+  postNumber,
+  onOpenPreview
 }: {
   dictionary: AppDictionary;
   agendaItem: AgendaGroup["items"][number];
   postNumber: number;
+  onOpenPreview: (value: PreviewState) => void;
 }) {
   return (
     <div className="rounded-2xl border border-white bg-white p-4 shadow-sm">
@@ -332,6 +409,28 @@ function PlannedPostCard({
       <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         {getStatusDescription(dictionary, agendaItem)}
       </div>
+
+      {agendaItem.linkedPostId ? (
+        <CreatedPostStatusCard
+          dictionary={dictionary}
+          title={agendaItem.theme}
+          caption={agendaItem.linkedPostCaption ?? null}
+          imageUrl={agendaItem.linkedPostImageUrl ?? null}
+          previewUrl={agendaItem.linkedPostPreviewUrl ?? null}
+          brandColors={agendaItem.linkedPostBrandColors ?? null}
+          postType={agendaItem.linkedPostType ?? null}
+          onOpen={() =>
+            onOpenPreview({
+              title: agendaItem.theme,
+              caption: agendaItem.linkedPostCaption ?? null,
+              imageUrl: agendaItem.linkedPostImageUrl ?? null,
+              previewUrl: agendaItem.linkedPostPreviewUrl ?? null,
+              brandColors: agendaItem.linkedPostBrandColors ?? null,
+              postType: agendaItem.linkedPostType ?? null
+            })
+          }
+        />
+      ) : null}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <div>
@@ -413,8 +512,8 @@ function MissingPostCard({
                   formatRemainingDuration(generationState.remainingMs)
                 )
               : isPastSlot
-              ? dictionary.contentAutomation.expiredSlotDescription
-              : dictionary.contentAutomation.missingPostCardDescription}
+                ? dictionary.contentAutomation.expiredSlotDescription
+                : dictionary.contentAutomation.missingPostCardDescription}
           </p>
         </div>
         <StatusBadge dictionary={dictionary} status="not-generated" />
@@ -445,6 +544,7 @@ function MissingPostCard({
           expectedIdea?.formats?.trim() || dictionary.contentAutomation.notAvailableLabel
         )}
       </div>
+
     </div>
   );
 }
@@ -455,7 +555,8 @@ function ExistingPostCard({
   postNumber,
   expectedTime,
   expectedIdea,
-  fillsExpectedSlot
+  fillsExpectedSlot,
+  onOpenPreview
 }: {
   dictionary: AppDictionary;
   post: AgendaGroup["extraPosts"][number];
@@ -463,6 +564,7 @@ function ExistingPostCard({
   expectedTime: string;
   expectedIdea?: AgendaGroup["expectedIdeas"][number];
   fillsExpectedSlot: boolean;
+  onOpenPreview: (value: PreviewState) => void;
 }) {
   return (
     <div className="rounded-2xl border border-white bg-white p-4 shadow-sm">
@@ -493,6 +595,26 @@ function ExistingPostCard({
           ? `${dictionary.contentAutomation.slotFilledByScheduledPostDescription} ${expectedTime}.`
           : dictionary.contentAutomation.outsidePlanPostDescription}
       </div>
+
+      <CreatedPostStatusCard
+        dictionary={dictionary}
+        title={post.topic}
+        caption={post.caption}
+        imageUrl={post.imageUrl}
+        previewUrl={post.previewUrl}
+        brandColors={post.brandColors}
+        postType={post.postType}
+        onOpen={() =>
+          onOpenPreview({
+            title: post.topic,
+            caption: post.caption,
+            imageUrl: post.imageUrl,
+            previewUrl: post.previewUrl,
+            brandColors: post.brandColors,
+            postType: post.postType
+          })
+        }
+      />
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         {renderAgendaMeta(
@@ -526,6 +648,215 @@ function ExistingPostCard({
         <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{post.caption}</p>
       </div>
     </div>
+  );
+}
+
+function CreatedPostStatusCard({
+  dictionary,
+  title,
+  caption,
+  imageUrl,
+  previewUrl,
+  brandColors,
+  postType,
+  onOpen
+}: {
+  dictionary: AppDictionary;
+  title: string;
+  caption: string | null;
+  imageUrl: string | null;
+  previewUrl: string | null;
+  brandColors: string | null;
+  postType: string | null;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="mt-4 flex w-full items-start justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-left transition hover:border-emerald-300 hover:bg-emerald-100"
+    >
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          {dictionary.contentAutomation.nextPostCreationStatusLabel}
+        </p>
+        <p className="mt-2 text-base font-semibold text-emerald-950">
+          {dictionary.contentAutomation.nextPostCreationReady}
+        </p>
+        <p className="mt-1 text-sm text-emerald-900">
+          {dictionary.contentAutomation.previewCreatedPost}
+        </p>
+        {caption?.trim() ? (
+          <p className="mt-2 line-clamp-2 text-sm text-emerald-800">{caption}</p>
+        ) : null}
+      </div>
+      <div className="shrink-0 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800">
+        {postType ?? title}
+      </div>
+    </button>
+  );
+}
+
+function AgendaPaletteCard({
+  dictionary,
+  brandColors,
+  onChange,
+  selectedDays,
+  onToggleDay,
+  onApply
+}: {
+  dictionary: AppDictionary;
+  brandColors: string;
+  onChange: (value: string) => void;
+  selectedDays: DayLabel[];
+  onToggleDay: (day: DayLabel) => void;
+  onApply: () => void;
+}) {
+  const palette = parseBrandColors(brandColors);
+  const [optionalFieldsVisible, setOptionalFieldsVisible] = useState(() =>
+    palette.accent ? 2 : palette.support ? 1 : 0
+  );
+
+  useEffect(() => {
+    setOptionalFieldsVisible(palette.accent ? 2 : palette.support ? 1 : 0);
+  }, [palette.support, palette.accent]);
+
+  const updateField = (
+    field: "primary" | "background" | "support" | "accent",
+    value: string
+  ) => {
+    onChange(
+      serializeBrandColors({
+        ...parseBrandColors(brandColors),
+        [field]: value
+      })
+    );
+  };
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+            {dictionary.contentAutomation.colorsForThisPost}
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            {dictionary.contentAutomation.colorsForThisPostHint}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={selectedDays.length === 0}
+          className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {dictionary.contentAutomation.applyColorsToDays ?? "Aplicar aos dias"}
+        </button>
+      </div>
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          {dictionary.contentAutomation.colorTargetDaysLabel ?? "Dias que vao receber essa paleta"}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {DAY_ORDER.map((day) => {
+            const isActive = selectedDays.includes(day);
+
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => onToggleDay(day)}
+                className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                  isActive
+                    ? "border-ink bg-ink text-white"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-ink"
+                }`}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <ColorField
+          label={dictionary.generator.brandColorPrimary}
+          value={palette.primary}
+          onChange={(value) => updateField("primary", value)}
+          placeholder="#101828"
+        />
+        <ColorField
+          label={dictionary.generator.brandColorBackground}
+          value={palette.background}
+          onChange={(value) => updateField("background", value)}
+          placeholder="#f8fafc"
+        />
+        {optionalFieldsVisible >= 1 ? (
+          <ColorField
+            label={dictionary.generator.brandColorSupport}
+            value={palette.support}
+            onChange={(value) => updateField("support", value)}
+            placeholder="#d62976"
+          />
+        ) : null}
+        {optionalFieldsVisible >= 2 ? (
+          <ColorField
+            label={dictionary.generator.brandColorAccent}
+            value={palette.accent}
+            onChange={(value) => updateField("accent", value)}
+            placeholder="#feda75"
+          />
+        ) : null}
+      </div>
+      {optionalFieldsVisible < 2 ? (
+        <button
+          type="button"
+          onClick={() => setOptionalFieldsVisible((current) => Math.min(current + 1, 2))}
+          className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-ink"
+        >
+          <span className="text-base leading-none">+</span>
+          <span>
+            {optionalFieldsVisible === 0
+              ? dictionary.generator.addSupportColor ?? "Adicionar cor de apoio"
+              : dictionary.generator.addAccentColor ?? "Adicionar cor de destaque"}
+          </span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+  placeholder
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  const colorValue = value.startsWith("#") && value.length >= 4 ? value : "#000000";
+
+  return (
+    <label className="rounded-2xl border border-slate-200 bg-white p-3 text-sm font-medium text-slate-700">
+      <span>{label}</span>
+      <div className="mt-3 grid grid-cols-[56px_1fr] gap-3">
+        <input
+          type="color"
+          value={colorValue}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-12 w-14 cursor-pointer rounded-xl border border-slate-300 bg-white"
+        />
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 outline-none focus:border-slate-400"
+        />
+      </div>
+    </label>
   );
 }
 
@@ -688,6 +1019,7 @@ type AgendaSlide =
       agendaItem: AgendaGroup["items"][number];
       postNumber: number;
       expectedTime: string;
+      slotIndex: number;
     }
   | {
       kind: "existing";
@@ -696,12 +1028,14 @@ type AgendaSlide =
       expectedTime: string;
       expectedIdea?: AgendaGroup["expectedIdeas"][number];
       fillsExpectedSlot: boolean;
+      slotIndex: number;
     }
   | {
       kind: "missing";
       postNumber: number;
       expectedTime: string;
       expectedIdea?: AgendaGroup["expectedIdeas"][number];
+      slotIndex: number;
     };
 
 function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
@@ -723,7 +1057,8 @@ function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
         kind: "planned",
         agendaItem,
         postNumber: slots.length + 1,
-        expectedTime: agendaItem.time
+        expectedTime: agendaItem.time,
+        slotIndex: slots.length
       });
       continue;
     }
@@ -732,7 +1067,8 @@ function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
       kind: "planned",
       agendaItem,
       postNumber: slotIndex + 1,
-      expectedTime: slotTimes[slotIndex] ?? agendaItem.time
+      expectedTime: slotTimes[slotIndex] ?? agendaItem.time,
+      slotIndex
     };
   }
 
@@ -744,7 +1080,8 @@ function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
         post,
         postNumber: slots.length + 1,
         expectedTime: post.localTime,
-        fillsExpectedSlot: false
+        fillsExpectedSlot: false,
+        slotIndex: slots.length
       });
       continue;
     }
@@ -755,7 +1092,8 @@ function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
       postNumber: slotIndex + 1,
       expectedTime: slotTimes[slotIndex] ?? post.localTime,
       expectedIdea: item.expectedIdeas[slotIndex],
-      fillsExpectedSlot: slotIndex < item.expectedPostsCount
+      fillsExpectedSlot: slotIndex < item.expectedPostsCount,
+      slotIndex
     };
   }
 
@@ -763,7 +1101,8 @@ function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
     if (slide) {
       return {
         ...slide,
-        postNumber: index + 1
+        postNumber: index + 1,
+        slotIndex: index
       };
     }
 
@@ -771,7 +1110,8 @@ function buildAgendaSlides(item: AgendaGroup): AgendaSlide[] {
       kind: "missing",
       postNumber: index + 1,
       expectedTime: slotTimes[index] ?? "--:--",
-      expectedIdea: item.expectedIdeas[index]
+      expectedIdea: item.expectedIdeas[index],
+      slotIndex: index
     };
   });
 }
@@ -900,4 +1240,16 @@ function formatRemainingDuration(valueMs: number) {
   }
 
   return `${minutes}min`;
+}
+
+function getInitialBulkBrandColors(daySettings: DaySettingsState) {
+  for (const day of DAY_ORDER) {
+    for (const idea of daySettings[day]?.postIdeas ?? []) {
+      if (idea.brandColors.trim()) {
+        return idea.brandColors;
+      }
+    }
+  }
+
+  return "";
 }

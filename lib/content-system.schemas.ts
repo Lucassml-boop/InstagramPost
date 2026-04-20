@@ -15,6 +15,8 @@ export const contentPlanItemSchema = z.object({
   caption: z.string().min(1),
   visualIdea: z.string().min(1),
   cta: z.string().min(1),
+  themeCategory: z.string().min(1).optional(),
+  contentAngle: z.string().min(1).optional(),
   topicKeywords: z.union([
     z.array(z.string().min(1)).min(1),
     z.string().min(1).transform((str) => str.split(",").map((s) => s.trim()).filter(Boolean))
@@ -47,6 +49,7 @@ export const brandProfileSchema = z.object({
             goal: z.string().default(""),
             contentTypes: z.array(z.string().min(1)).default([]),
             formats: z.array(z.string().min(1)).default([]),
+            brandColors: z.string().default(""),
             confirmed: z.boolean().default(true)
           })
         )
@@ -67,6 +70,16 @@ export const historyItemSchema = z.object({
   date: z.string().min(1),
   day: z.string().min(1),
   theme: z.string().min(1)
+});
+
+export const topicHistoryRecordSchema = z.object({
+  theme: z.string().min(1),
+  normalizedTheme: z.string().min(1),
+  themeCategory: z.string().min(1).optional(),
+  contentAngle: z.string().min(1).optional(),
+  keywords: z.array(z.string().min(1)).default([]),
+  fingerprint: z.string().min(1),
+  createdAt: z.string().datetime().optional()
 });
 
 export const automaticPostIdeaSchema = z.object({
@@ -116,5 +129,6 @@ export const automaticCreatePostInputsSchema = z.object({
 export type ContentPlanItem = z.infer<typeof contentPlanItemSchema>;
 export type BrandProfile = z.infer<typeof brandProfileSchema>;
 export type HistoryItem = z.infer<typeof historyItemSchema>;
+export type TopicHistoryRecord = z.infer<typeof topicHistoryRecordSchema>;
 export type AutomaticPostIdea = z.infer<typeof automaticPostIdeaSchema>;
 export type AutomaticSettingTarget = z.infer<typeof automaticSettingTargetSchema>;

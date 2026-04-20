@@ -121,6 +121,16 @@ contentAutomation: {
   nextPostCreationStatusLabel: "Situacao do post",
   nextPostCreationReady: "Ja criado",
   nextPostCreationPending: "Ainda nao criado",
+  previewCreatedPost: "Abrir preview",
+  previewModalEyebrow: "Preview do post",
+  previewUnavailable: "Preview indisponivel.",
+  previewCaptionFallback: "Legenda indisponivel.",
+  noColorsSelected: "Nenhuma cor definida para este post.",
+  colorsForThisPost: "Cores deste post",
+  colorsForThisPostHint:
+    "Essas cores serao usadas na proxima geracao deste slot. Se o post ja existe, a mudanca nao altera o criativo salvo automaticamente.",
+  colorTargetDaysLabel: "Dias que vao receber essa paleta",
+  applyColorsToDays: "Aplicar aos dias",
   nextPostSlotLabel: "Slot planejado",
   nextPostManualSlotLabel: "Post manual/agendado fora do plano",
   publishNowButton: "Postar agora",
@@ -143,6 +153,37 @@ contentAutomation: {
     "Ao gerar agora, o sistema salva primeiro esta configuracao e monta uma agenda para os proximos 7 dias, a partir de hoje, com temas atuais.",
   generateSuccess: "Agenda semanal gerada com sucesso.",
   generateError: "Nao foi possivel gerar a agenda semanal.",
+  invalidAgendaSetupTitle: "A agenda ainda nao pode ser gerada",
+  invalidAgendaSetupNoDays:
+    "Ative pelo menos um dia na cadencia semanal para liberar a geracao da agenda.",
+  invalidAgendaSetupNoTimes:
+    "Defina pelo menos um horario valido no formato HH:mm em um dos dias ativos.",
+  invalidAgendaSetupNoConfirmedSlots:
+    "Confirme pelo menos um slot de post em um dia ativo com horario valido para gerar a agenda.",
+  cancelGeneration: "Cancelar",
+  generationStatusLabel: "Status da geracao",
+  generationElapsedLabel: "Tempo decorrido",
+  generationStepSaving: "Salvando configuracoes",
+  generationStepPlanning: "Gerando agenda",
+  generationStepRefreshing: "Atualizando dados",
+  generationSavingTitle: "Salvando configuracoes",
+  generationSavingDescription:
+    "Guardando a configuracao atual antes de montar a agenda dos proximos 7 dias.",
+  generationPlanningTitle: "Gerando agenda",
+  generationPlanningDescription:
+    "A IA esta pesquisando temas, organizando os slots, montando a agenda e preparando os posts vinculados a ela.",
+  generationRefreshingTitle: "Atualizando dados finais",
+  generationRefreshingDescription:
+    "Sincronizando agenda, topicos encontrados e demais dados para refletir o resultado na tela.",
+  generationStalledTitle: "A geracao esta demorando mais do que o normal",
+  generationStalledDescription:
+    "A operacao ainda pode estar em andamento no backend. Nessa etapa, o sistema pode estar pesquisando temas, gerando os posts e renderizando as imagens, o que pode levar varios minutos.",
+  generationCompletedTitle: "Agenda concluida",
+  generationCompletedDescription:
+    "A agenda semanal foi finalizada e a tela ja foi atualizada com o resultado.",
+  generationFailedTitle: "Falha na geracao",
+  generationFailedDescription:
+    "Nao foi possivel concluir a geracao da agenda semanal.",
   currentTopics: "Temas atuais encontrados",
   topicsHistoryTitle: "Historico de temas",
   topicsHistoryDescription:

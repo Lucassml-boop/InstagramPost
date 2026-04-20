@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import type { AgendaGenerationStatus } from "@/components/content-automation/settings-sections/types";
 import {
+  cancelGenerationProgress as cancelGenerationProgressService,
   clearAgenda as clearAgendaService,
   clearTopicsHistory as clearTopicsHistoryService,
+  fetchGenerationProgress as fetchGenerationProgressService,
   fetchTopicsHistory as fetchTopicsHistoryService,
   generateAutomaticPostIdea as generateAutomaticPostIdeaService,
   generateWeeklyAgenda as generateWeeklyAgendaService,
@@ -95,6 +98,83 @@ export function useContentAutomation(input: {
   const [clearingQueueStatus, setClearingQueueStatus] = useState<
     "queued" | "generating" | "scheduled" | null
   >(null);
+  const [generationStatus, setGenerationStatus] = useState<AgendaGenerationStatus>({
+    state: "idle",
+    phase: null,
+    startedAt: null,
+    phaseStartedAt: null,
+    completedAt: null,
+    detailMessage: null,
+    preparedCount: null,
+    scannedCount: null,
+    activeTheme: null,
+    currentPostIndex: null,
+    totalPosts: null,
+    errorMessage: null
+  });
+
+  useEffect(() => {
+    if (generationStatus.state !== "running") {
+      return;
+    }
+
+    let cancelled = false;
+    const updateFromBackend = async () => {
+      try {
+        const json = await fetchGenerationProgressService();
+        const progress = json.progress;
+        if (!progress || cancelled) {
+          return;
+        }
+        if (progress.state === "idle") {
+          return;
+        }
+
+        const nextPhase =
+          progress.stage === "saving-settings"
+            ? "saving-settings"
+            : progress.stage === "generating-weekly-plan"
+              ? "generating-plan"
+              : progress.stage === "materializing-posts" ||
+                  progress.stage === "summarizing-response"
+                ? "refreshing-data"
+                : progress.state === "failed" || progress.state === "completed"
+                  ? null
+                  : null;
+
+        setGenerationStatus((current) => ({
+          ...current,
+          state: progress.state,
+          phase: nextPhase,
+          startedAt: progress.startedAt ?? current.startedAt,
+          phaseStartedAt:
+            current.phase !== nextPhase || current.phaseStartedAt === null
+              ? Date.now()
+              : current.phaseStartedAt,
+          completedAt: progress.completedAt ?? current.completedAt,
+          detailMessage: progress.message,
+          preparedCount: progress.prepared,
+          scannedCount: progress.scanned,
+          activeTheme: progress.activeTheme,
+          currentPostIndex: progress.currentPostIndex,
+          totalPosts: progress.totalPosts,
+          errorMessage: progress.errorMessage
+        }));
+      } catch {
+        return;
+      }
+    };
+
+    void updateFromBackend();
+    const interval = window.setInterval(() => {
+      void updateFromBackend();
+    }, 2500);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [generationStatus.state]);
 
   const builtProfile = useMemo(
     () =>
@@ -132,6 +212,7 @@ export function useContentAutomation(input: {
     () => Array.from(new Set(topicsHistory.map((topic) => topic.trim()).filter(Boolean))),
     [topicsHistory]
   );
+  const isGeneratingEffectively = isGenerating || generationStatus.state === "running";
 
   function updateDay(day: DayLabel, field: "postsPerDay" | "postTimes", value: string) {
     setDaySettings((current) => {
@@ -147,6 +228,7 @@ export function useContentAutomation(input: {
         goal: existingIdeas[index]?.goal ?? "",
         contentTypes: existingIdeas[index]?.contentTypes ?? "",
         formats: existingIdeas[index]?.formats ?? "",
+        brandColors: existingIdeas[index]?.brandColors ?? "",
         confirmed: existingIdeas[index]?.confirmed ?? index === 0
       }));
 
@@ -190,7 +272,7 @@ export function useContentAutomation(input: {
   function updateDayPostIdea(
     day: DayLabel,
     postIndex: number,
-    field: "goal" | "contentTypes" | "formats",
+    field: "goal" | "contentTypes" | "formats" | "brandColors",
     value: string
   ) {
     setSuggestedAutoFillTargets((current) => ({
@@ -393,6 +475,21 @@ export function useContentAutomation(input: {
   function generateWeeklyAgenda() {
     setMessage(null);
     setError(null);
+    const startedAt = Date.now();
+    setGenerationStatus({
+      state: "running",
+      phase: "saving-settings",
+      startedAt,
+      phaseStartedAt: startedAt,
+      completedAt: null,
+      detailMessage: "Salvando a configuracao atual antes de iniciar a geracao.",
+      preparedCount: 0,
+      scannedCount: 0,
+      activeTheme: null,
+      currentPostIndex: null,
+      totalPosts: null,
+      errorMessage: null
+    });
 
     startGenerating(async () => {
       try {
@@ -402,6 +499,13 @@ export function useContentAutomation(input: {
         if (saved.agendaSummary) {
           setAgendaSummary(saved.agendaSummary);
         }
+        setGenerationStatus((current) => ({
+          ...current,
+          state: "running",
+          phase: "generating-plan",
+          phaseStartedAt: Date.now(),
+          detailMessage: "Gerando a agenda inicial dos proximos 7 dias."
+        }));
         const json = await generateWeeklyAgendaService();
 
         setAgenda(json.agenda ?? []);
@@ -410,15 +514,56 @@ export function useContentAutomation(input: {
           setAgendaSummary(json.agendaSummary);
         }
         setCurrentTopics(json.currentTopics ?? []);
+        setGenerationStatus((current) => ({
+          ...current,
+          state: "running",
+          phase: "refreshing-data",
+          phaseStartedAt: Date.now(),
+          detailMessage: "Atualizando a tela com a agenda e o historico mais recente."
+        }));
         const topicsHistoryJson = await fetchTopicsHistoryService();
         setTopicsHistory(topicsHistoryJson.topicsHistory ?? []);
         setMessage(input.dictionary.generateSuccess);
+        setGenerationStatus((current) => ({
+          ...current,
+          state: "completed",
+          phase: null,
+          completedAt: Date.now(),
+          detailMessage: current.detailMessage,
+          errorMessage: null
+        }));
       } catch (requestError) {
+        const nextError =
+          requestError instanceof Error ? requestError.message : input.dictionary.generateError;
+        setError(nextError);
+        setGenerationStatus((current) => ({
+          ...current,
+          state: "failed",
+          completedAt: Date.now(),
+          detailMessage: current.detailMessage,
+          errorMessage: nextError
+        }));
+      }
+    });
+  }
+
+  function cancelWeeklyGeneration() {
+    if (generationStatus.state !== "running") {
+      return;
+    }
+
+    void cancelGenerationProgressService()
+      .then(() => {
+        setGenerationStatus((current) => ({
+          ...current,
+          detailMessage: "Cancelamento solicitado. Encerrando a geracao no proximo ponto seguro."
+        }));
+      })
+      .catch((requestError) => {
         setError(
           requestError instanceof Error ? requestError.message : input.dictionary.generateError
         );
-      }
-    });
+      });
   }
 
   function clearTopicsHistory() {
@@ -621,13 +766,14 @@ export function useContentAutomation(input: {
     error,
     setError,
     isSaving,
-    isGenerating,
+    isGenerating: isGeneratingEffectively,
     autoFillKey,
     suggestedAutoFillTargets,
     isResolvingStaleAgenda,
     isClearingAgenda,
     isClearingQueue,
     clearingQueueStatus,
+    generationStatus,
     uniqueTopicsHistory,
     updateDay,
     updateDayPostIdea,
@@ -640,6 +786,7 @@ export function useContentAutomation(input: {
     setAllDaysEnabled,
     saveSettings,
     generateWeeklyAgenda,
+    cancelWeeklyGeneration,
     clearAgenda,
     clearQueueByStatus,
     keepUsingStaleAgenda,

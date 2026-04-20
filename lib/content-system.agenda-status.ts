@@ -17,6 +17,11 @@ export type ContentPlanItemWithStatus = ContentPlanItem & {
   linkedScheduledTime: string | null;
   linkedPublishedAt: string | null;
   linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
+  linkedPostCaption?: string | null;
+  linkedPostImageUrl?: string | null;
+  linkedPostPreviewUrl?: string | null;
+  linkedPostBrandColors?: string | null;
+  linkedPostType?: "FEED" | "STORY" | "CAROUSEL" | null;
 };
 
 export type WeeklyPostSummary = {
@@ -25,12 +30,23 @@ export type WeeklyPostSummary = {
   caption: string;
   status: Exclude<AgendaPostGenerationStatus, "not-generated">;
   publicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
+  imageUrl: string | null;
+  previewUrl: string | null;
+  brandColors: string | null;
+  postType: "FEED" | "STORY" | "CAROUSEL";
   scheduledTime: string | null;
   publishedAt: string | null;
   createdAt: string;
   localDate: string;
   localTime: string;
 };
+
+type OptionalPublicationState =
+  | "PUBLISHED"
+  | "ARCHIVED"
+  | "DELETED"
+  | null
+  | undefined;
 
 const STATUS_PRIORITY: Record<Exclude<AgendaPostGenerationStatus, "not-generated">, number> = {
   published: 5,
@@ -58,6 +74,41 @@ function mapPostStatus(status: PostStatus): Exclude<AgendaPostGenerationStatus, 
   }
 
   return "draft";
+}
+
+function getPublicationStateValue(post: {
+  status: PostStatus;
+  publicationState?: OptionalPublicationState;
+}) {
+  if (post.publicationState === "ARCHIVED" || post.publicationState === "DELETED") {
+    return post.publicationState;
+  }
+
+  if (post.publicationState === "PUBLISHED") {
+    return "PUBLISHED" as const;
+  }
+
+  return post.status === PostStatus.PUBLISHED ? "PUBLISHED" : null;
+}
+
+function getPreviewUrlFromMedia(mediaItems: unknown, fallbackImageUrl: string | null | undefined) {
+  if (Array.isArray(mediaItems)) {
+    const firstItem = mediaItems[0];
+
+    if (firstItem && typeof firstItem === "object") {
+      const candidate = firstItem as { previewUrl?: unknown; imageUrl?: unknown };
+
+      if (typeof candidate.previewUrl === "string" && candidate.previewUrl.trim()) {
+        return candidate.previewUrl;
+      }
+
+      if (typeof candidate.imageUrl === "string" && candidate.imageUrl.trim()) {
+        return candidate.imageUrl;
+      }
+    }
+  }
+
+  return fallbackImageUrl?.trim() ? fallbackImageUrl : null;
 }
 
 function formatLocalDatePart(value: Date) {
@@ -174,16 +225,6 @@ export async function attachAgendaPostStatuses(
         in: agenda.map((item) => item.theme)
       }
     },
-    select: {
-      id: true,
-      topic: true,
-      status: true,
-      publicationState: true,
-      scheduledTime: true,
-      publishedAt: true,
-      createdAt: true,
-      updatedAt: true
-    },
     orderBy: {
       updatedAt: "desc"
     }
@@ -207,7 +248,12 @@ export async function attachAgendaPostStatuses(
         postGenerationStatus: "not-generated",
         linkedScheduledTime: null,
         linkedPublishedAt: null,
-        linkedPublicationState: null
+        linkedPublicationState: null,
+        linkedPostCaption: null,
+        linkedPostImageUrl: null,
+        linkedPostPreviewUrl: null,
+        linkedPostBrandColors: null,
+        linkedPostType: null
       };
     }
 
@@ -217,7 +263,12 @@ export async function attachAgendaPostStatuses(
       postGenerationStatus: mapPostStatus(bestMatch.status),
       linkedScheduledTime: bestMatch.scheduledTime?.toISOString() ?? null,
       linkedPublishedAt: bestMatch.publishedAt?.toISOString() ?? null,
-      linkedPublicationState: bestMatch.publicationState ?? null
+      linkedPublicationState: getPublicationStateValue(bestMatch),
+      linkedPostCaption: bestMatch.caption?.trim() || null,
+      linkedPostImageUrl: bestMatch.imageUrl?.trim() || null,
+      linkedPostPreviewUrl: getPreviewUrlFromMedia(bestMatch.mediaItems, bestMatch.imageUrl),
+      linkedPostBrandColors: bestMatch.brandColors?.trim() || null,
+      linkedPostType: bestMatch.postType ?? null
     };
   });
 }
@@ -256,16 +307,6 @@ export async function getWeeklyPostsForAgenda(
         }
       ]
     },
-    select: {
-      id: true,
-      topic: true,
-      caption: true,
-      status: true,
-      publicationState: true,
-      scheduledTime: true,
-      publishedAt: true,
-      createdAt: true
-    },
     orderBy: [
       { scheduledTime: "asc" },
       { createdAt: "asc" }
@@ -279,7 +320,11 @@ export async function getWeeklyPostsForAgenda(
       topic: post.topic,
       caption: post.caption,
       status: mapPostStatus(post.status),
-      publicationState: post.publicationState ?? null,
+      publicationState: getPublicationStateValue(post),
+      imageUrl: post.imageUrl?.trim() || null,
+      previewUrl: getPreviewUrlFromMedia(post.mediaItems, post.imageUrl),
+      brandColors: post.brandColors?.trim() || null,
+      postType: post.postType,
       scheduledTime: post.scheduledTime?.toISOString() ?? null,
       publishedAt: post.publishedAt?.toISOString() ?? null,
       createdAt: post.createdAt.toISOString(),

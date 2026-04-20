@@ -248,8 +248,7 @@ export async function createDraftPost(input: {
       mediaItems: input.mediaItems,
       imageUrl: input.imageUrl,
       imagePath: input.imagePath,
-      status: PostStatus.DRAFT,
-      publicationState: null
+      status: PostStatus.DRAFT
     }
   });
 }
@@ -317,8 +316,7 @@ export async function publishPostNow(input: {
       mediaItems,
       imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
       imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
-      status: PostStatus.PUBLISHING,
-      publicationState: null
+      status: PostStatus.PUBLISHING
     }
   });
 
@@ -339,7 +337,6 @@ export async function publishPostNow(input: {
         caption: finalCaption,
         imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
         imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
-        publicationState: "PUBLISHED",
         publishedMediaId: published.mediaId,
         publishedAt: new Date()
       }
@@ -349,8 +346,7 @@ export async function publishPostNow(input: {
       where: { id: post.id },
       data: {
         status: PostStatus.FAILED,
-        caption: finalCaption,
-        publicationState: null
+        caption: finalCaption
       }
     });
 
@@ -383,8 +379,7 @@ export async function schedulePost(input: {
       imageUrl: coverImageUrl,
       imagePath: coverImagePath,
       scheduledTime: input.scheduledTime,
-      status: PostStatus.SCHEDULED,
-      publicationState: null
+      status: PostStatus.SCHEDULED
     }
   });
 }

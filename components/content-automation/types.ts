@@ -35,6 +35,7 @@ export type DaySettingsState = Record<
       goal: string;
       contentTypes: string;
       formats: string;
+      brandColors: string;
       confirmed: boolean;
     }>;
   }
