@@ -37,13 +37,27 @@ export async function generateInstagramCarouselPosts(
     },
     automationContext
   );
+  console.info("[openai] Carousel first slide ready", {
+    topic: parsedInput.topic,
+    slideCount,
+    hasStyleGuide: Boolean(firstSlide.styleGuide?.trim())
+  });
 
   const styleGuide =
     firstSlide.styleGuide?.trim() ||
     "Match the first slide's composition, typography rhythm, and color balance closely.";
+  console.info("[openai] Carousel remaining slides starting", {
+    topic: parsedInput.topic,
+    remainingSlides: Math.max(slideCount - 1, 0)
+  });
   const remainingSlides = await Promise.all(
     Array.from({ length: Math.max(slideCount - 1, 0) }, async (_, offset) => {
       const index = offset + 1;
+      console.info("[openai] Carousel slide generation queued", {
+        topic: parsedInput.topic,
+        slideIndex: index + 1,
+        slideCount
+      });
       const slide = await requestInstagramPostGeneration(
         parsedInput,
         {
@@ -55,6 +69,11 @@ export async function generateInstagramCarouselPosts(
         },
         automationContext
       );
+      console.info("[openai] Carousel slide ready", {
+        topic: parsedInput.topic,
+        slideIndex: index + 1,
+        slideCount
+      });
 
       return {
         ...slide,
@@ -65,6 +84,10 @@ export async function generateInstagramCarouselPosts(
     })
   );
   const slides: GeneratedPost[] = [firstSlide, ...remainingSlides];
+  console.info("[openai] Carousel generation complete", {
+    topic: parsedInput.topic,
+    slideCount: slides.length
+  });
 
   return {
     slides,
