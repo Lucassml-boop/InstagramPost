@@ -463,5 +463,108 @@
     ],
     "fingerprint": "marketplaces|ganho eficiencia|unificado-operando-livre-site-centralizada-multi",
     "createdAt": "2026-04-20T02:10:21.393Z"
+  },
+  {
+    "theme": "Integração nativa entre ERP e Shopee via API oficial em 3 passos",
+    "normalizedTheme": "integracao nativa entre erp e shopee via api oficial em 3 passos",
+    "themeCategory": "integracao",
+    "contentAngle": "passo-a-passo",
+    "keywords": [
+      "erp integrado",
+      "sincronizacao automatica",
+      "atualizacao estoque tempo real",
+      "webhook notificacoes"
+    ],
+    "fingerprint": "integracao|passo a passo|integracao-nativa-entre-oficial-integrado-sincronizacao",
+    "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Demora no primeiro atendimento que custa vendas no Mercado Livre",
+    "normalizedTheme": "demora no primeiro atendimento que custa vendas no mercado livre",
+    "themeCategory": "atendimento",
+    "contentAngle": "erro-operacional",
+    "keywords": [
+      "tempo resposta",
+      "reclamacao mercado livre",
+      "chat automatico",
+      "metrica satisfacao"
+    ],
+    "fingerprint": "atendimento|erro operacional|demora-primeiro-custa-livre-resposta-reclamacao",
+    "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Etiquetas de envio automatizadas multi-marketplace em lote",
+    "normalizedTheme": "etiquetas de envio automatizadas multi marketplace em lote",
+    "themeCategory": "logistica",
+    "contentAngle": "ganho-eficiencia",
+    "keywords": [
+      "etiqueta correios",
+      "impressao automatica",
+      "coleta inteligente",
+      "agrupamento pedidos",
+      "transportadora integrada"
+    ],
+    "fingerprint": "logistica|ganho eficiencia|etiquetas-envio-automatizadas-multi-etiqueta-correios",
+    "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Regras automáticas de floor price que protegem margem contra concorrência predatória",
+    "normalizedTheme": "regras automaticas de floor price que protegem margem contra concorrencia predatoria",
+    "themeCategory": "precificacao",
+    "contentAngle": "alerta",
+    "keywords": [
+      "preco dinamico",
+      "floor price",
+      "regra margem minima",
+      "alerta preco baixo",
+      "protecao lucratividade"
+    ],
+    "fingerprint": "precificacao|alerta|regras-automaticas-floor-price-preco-dinamico",
+    "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Cruzamento de curva de vendas com lead time de fornecedor para compras inteligentes",
+    "normalizedTheme": "cruzamento de curva de vendas com lead time de fornecedor para compras inteligentes",
+    "themeCategory": "analytics",
+    "contentAngle": "previsao-planejamento",
+    "keywords": [
+      "lead time fornecedor",
+      "curva vendas",
+      "ponto reposicao",
+      "giro estoque",
+      "cobertura estoque"
+    ],
+    "fingerprint": "analytics|previsao planejamento|cruzamento-curva-time-fornecedor-ponto",
+    "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Venda antecipada de produtos em trânsito com reserva virtual",
+    "normalizedTheme": "venda antecipada de produtos em transito com reserva virtual",
+    "themeCategory": "estoque",
+    "contentAngle": "oportunidade",
+    "keywords": [
+      "estoque transito",
+      "venda antecipada",
+      "reserva virtual",
+      "pre venda logistica",
+      "separacao futura"
+    ],
+    "fingerprint": "estoque|oportunidade|antecipada-produtos-transito-reserva-estoque",
+    "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Escala operacional de 50 para 500 pedidos diários sem aumentar equipe de fulfillment",
+    "normalizedTheme": "escala operacional de 50 para 500 pedidos diarios sem aumentar equipe de fulfillment",
+    "themeCategory": "marketplaces",
+    "contentAngle": "case-real",
+    "keywords": [
+      "escala operacional",
+      "automatizacao fulfillment",
+      "processamento batch",
+      "separacao automatica",
+      "crescimento sustentavel"
+    ],
+    "fingerprint": "marketplaces|case real|escala-para-pedidos-diarios-fulfillment-processamento",
+    "createdAt": "2026-04-21T05:37:18.546Z"
   }
 ]

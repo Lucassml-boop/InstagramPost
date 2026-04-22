@@ -10,6 +10,9 @@ const publishNowSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const startedAt = Date.now();
+  let parsedPostId: string | null = null;
+
   try {
     const user = await getCurrentUser();
 
@@ -18,6 +21,12 @@ export async function POST(request: Request) {
     }
 
     const parsed = publishNowSchema.parse(await request.json());
+    parsedPostId = parsed.postId;
+
+    console.info("[api/posts/publish-now] Request started", {
+      userId: user.id,
+      postId: parsed.postId
+    });
 
     await publishPostNow({
       postId: parsed.postId,
@@ -25,8 +34,22 @@ export async function POST(request: Request) {
       requestOrigin: getRequestOrigin(request)
     });
 
+    console.info("[api/posts/publish-now] Request completed", {
+      userId: user.id,
+      postId: parsed.postId,
+      durationMs: Date.now() - startedAt
+    });
+
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Unable to publish now.");
+    const message = error instanceof Error ? error.message : "Unable to publish now.";
+
+    console.error("[api/posts/publish-now] Request failed", {
+      postId: parsedPostId,
+      durationMs: Date.now() - startedAt,
+      error: message
+    });
+
+    return jsonError(message);
   }
 }

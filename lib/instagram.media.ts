@@ -11,6 +11,21 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function buildGraphFetchError(action: string, error: unknown) {
+  const detail = error instanceof Error ? error.message : String(error);
+  return new Error(
+    `Nao foi possivel ${action} no Instagram porque a conexao com a Graph API falhou. Verifique sua internet, o tunel publico e tente novamente. Detalhe tecnico: ${detail}`
+  );
+}
+
+async function fetchInstagramGraph(input: RequestInfo | URL, init?: RequestInit) {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    throw buildGraphFetchError("continuar a publicacao", error);
+  }
+}
+
 function isTransientMediaIdUnavailable(message: string | null | undefined) {
   if (!message) {
     return false;
@@ -46,6 +61,11 @@ async function assertImageUrlIsReachable(imageUrl: string) {
   }
 
   if (!imageProbeResponse) {
+    console.error("[instagram-media] Public image probe failed", {
+      imageUrl,
+      detail: lastProbeError instanceof Error ? lastProbeError.message : String(lastProbeError)
+    });
+
     throw new Error(
       [
         "Nao foi possivel publicar no Instagram porque a imagem do post nao esta acessivel por uma URL publica.",
@@ -60,6 +80,15 @@ async function assertImageUrlIsReachable(imageUrl: string) {
   }
 
   const imageContentType = imageProbeResponse.headers.get("content-type");
+  const imageContentLength = imageProbeResponse.headers.get("content-length");
+
+  console.info("[instagram-media] Public image probe completed", {
+    imageUrl,
+    status: imageProbeResponse.status,
+    contentType: imageContentType,
+    contentLength: imageContentLength
+  });
+
   if (!imageProbeResponse.ok) {
     throw new Error(
       `Nao foi possivel publicar no Instagram porque a imagem do post respondeu com status ${imageProbeResponse.status} na URL publica. Verifique se o dominio ou tunel publico esta ativo e se a imagem abre normalmente fora da sua maquina.`
@@ -108,7 +137,7 @@ export async function waitForInstagramMediaContainer(input: {
 }) {
   const startedAt = Date.now();
   while (Date.now() - startedAt <= MEDIA_CONTAINER_MAX_WAIT_MS) {
-    const statusResponse = await fetch(
+    const statusResponse = await fetchInstagramGraph(
       `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${input.creationId}?fields=status_code,status&access_token=${encodeURIComponent(
         input.accessToken
       )}`,
@@ -145,7 +174,7 @@ export async function publishInstagramCreation(input: {
   await waitForInstagramMediaContainer(input);
 
   for (let attempt = 0; attempt <= MEDIA_PUBLISH_MAX_RETRIES; attempt += 1) {
-    const publishResponse = await fetch(
+    const publishResponse = await fetchInstagramGraph(
       `https://graph.instagram.com/${INSTAGRAM_API_VERSION}/${input.instagramUserId}/media_publish`,
       {
         method: "POST",

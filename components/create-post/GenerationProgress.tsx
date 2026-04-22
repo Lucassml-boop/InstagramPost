@@ -1,11 +1,13 @@
 "use client";
 
 import { formatDuration } from "./utils";
+import type { GenerationStatus } from "./types";
 
 export function GenerationProgress({
   progressValue,
   elapsedMs,
   clientTimeoutMs,
+  generationStatus,
   title,
   estimate,
   elapsedLabel,
@@ -14,6 +16,7 @@ export function GenerationProgress({
   progressValue: number;
   elapsedMs: number;
   clientTimeoutMs: number;
+  generationStatus: GenerationStatus;
   title: string;
   estimate: string;
   elapsedLabel: string;
@@ -48,6 +51,28 @@ export function GenerationProgress({
           {elapsedLabel}: {formatDuration(elapsedMs)}
         </span>
         <span>~ {formatDuration(clientTimeoutMs)}</span>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-3">
+        <p className="text-sm font-semibold text-slate-800">{generationStatus.label}</p>
+        <p className="mt-1 text-sm text-slate-600">{generationStatus.detail}</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+          {generationStatus.steps.map((step) => (
+            <div
+              key={step.label}
+              className={[
+                "rounded-xl border px-3 py-2 text-xs font-semibold",
+                step.status === "done"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : step.status === "active"
+                    ? "border-amber-200 bg-amber-50 text-amber-800"
+                    : "border-slate-200 bg-slate-50 text-slate-500"
+              ].join(" ")}
+            >
+              {step.label}
+            </div>
+          ))}
+        </div>
       </div>
 
       {slowMessage ? <p className="mt-3 text-sm text-amber-700">{slowMessage}</p> : null}

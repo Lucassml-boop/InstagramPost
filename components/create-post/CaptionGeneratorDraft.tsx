@@ -5,7 +5,7 @@ import { GenerationProgress } from "./GenerationProgress";
 import { MediaManager } from "./MediaManager";
 import { PostScheduler } from "./PostScheduler";
 import { formatDuration } from "./utils";
-import type { DraftResponse, PostType } from "./types";
+import type { DraftResponse, GenerationStatus, PostType } from "./types";
 
 function buildManualFocusSummary(input: {
   topic: string;
@@ -26,6 +26,7 @@ export function CaptionGeneratorDraft(input: {
   progressValue: number;
   elapsedMs: number;
   clientTimeoutMs: number;
+  generationStatus: GenerationStatus;
   shouldShowSlowMessage: boolean;
   postType: PostType;
   carouselSlideCount: number;
@@ -134,6 +135,7 @@ export function CaptionGeneratorDraft(input: {
           progressValue={input.progressValue}
           elapsedMs={input.elapsedMs}
           clientTimeoutMs={input.clientTimeoutMs}
+          generationStatus={input.generationStatus}
           title={dictionary.generator.generationProgress}
           estimate={dictionary.generator.generationEstimate(
             formatDuration(input.clientTimeoutMs),

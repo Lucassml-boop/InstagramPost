@@ -50,6 +50,33 @@ function updateEnvFile(publicUrl) {
   log(`.env.local atualizado com a URL do tunel: ${publicUrl}`);
 }
 
+function getCloudflaredCommand() {
+  const candidates = [
+    "cloudflared",
+    process.env.LOCALAPPDATA
+      ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WinGet", "Links", "cloudflared.exe")
+      : "",
+    process.env.LOCALAPPDATA
+      ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WindowsApps", "cloudflared.exe")
+      : ""
+  ].filter(Boolean);
+
+  const wingetPackagesDir = process.env.LOCALAPPDATA
+    ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WinGet", "Packages")
+    : "";
+
+  if (wingetPackagesDir && fs.existsSync(wingetPackagesDir)) {
+    const packageDirs = fs
+      .readdirSync(wingetPackagesDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && entry.name.startsWith("Cloudflare.cloudflared_"))
+      .map((entry) => path.join(wingetPackagesDir, entry.name, "cloudflared.exe"));
+
+    candidates.push(...packageDirs);
+  }
+
+  return candidates.find((candidate) => candidate === "cloudflared" || fs.existsSync(candidate)) ?? "cloudflared";
+}
+
 function cleanupAndExit(exitCode = 0) {
   if (shuttingDown) {
     return;
@@ -93,8 +120,9 @@ function startNext() {
 
 function startTunnel() {
   try {
+    const cloudflaredCommand = getCloudflaredCommand();
     tunnelProcess = spawn(
-      "cloudflared",
+      cloudflaredCommand,
       ["tunnel", "--url", localUrl, "--no-autoupdate"],
       {
         cwd: projectRoot,

@@ -26,6 +26,15 @@ export async function generateCaptionPost(
   state.setGenerationStartedAt(startedAt);
   state.setError(null);
   state.setSettingsMessage(null);
+  console.info("[create-post] Generation request started", {
+    postType: state.postType,
+    carouselSlideCount: state.carouselSlideCount,
+    topic: state.topic,
+    outputLanguage: state.outputLanguage,
+    hasMessage: Boolean(state.message.trim()),
+    hasKeywords: Boolean(state.keywords.trim()),
+    allowSimilarPost: options?.allowSimilarPost ?? false
+  });
 
   try {
     saveBrandColorsToHistory();
@@ -43,6 +52,14 @@ export async function generateCaptionPost(
       userTopicHint: options?.userTopicHint ?? "",
       allowSimilarPost: options?.allowSimilarPost ?? false,
       signal: controller.signal
+    });
+    console.info("[create-post] Generation response received", {
+      ok: response.ok,
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+      postId: json.postId,
+      mediaItemsCount: json.mediaItems?.length ?? 0,
+      errorType: json.errorDetails?.type ?? null
     });
 
     if (!response.ok) {
@@ -62,10 +79,23 @@ export async function generateCaptionPost(
     state.setDraft(json);
     state.setPostType(json.postType);
     state.setCaption(`${json.caption}\n\n${json.hashtags.join(" ")}`.trim());
+    console.info("[create-post] Generation draft applied", {
+      postId: json.postId,
+      postType: json.postType,
+      mediaItemsCount: json.mediaItems.length,
+      durationMs: Date.now() - startedAt
+    });
   } catch (requestError) {
     if (requestError instanceof Error && requestError.name === "AbortError") {
+      console.info("[create-post] Generation request canceled", {
+        durationMs: Date.now() - startedAt
+      });
       return;
     }
+    console.error("[create-post] Generation request failed", {
+      durationMs: Date.now() - startedAt,
+      error: requestError instanceof Error ? requestError.message : String(requestError)
+    });
     state.setError(
       getClientRequestErrorMessage(
         requestError,
@@ -78,6 +108,9 @@ export async function generateCaptionPost(
       state.generationAbortControllerRef.current = null;
       state.setIsGenerating(false);
       state.setGenerationStartedAt(null);
+      console.info("[create-post] Generation request finished", {
+        durationMs: Date.now() - startedAt
+      });
     }
   }
 }

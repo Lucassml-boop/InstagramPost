@@ -3,10 +3,10 @@ import {
   buildPrompt,
   coerceGeneratedPost,
   extractJsonPayload,
-  fixMalformedJSON,
   getFallbackModels,
   getOllamaTimeoutForInput,
   ollamaResponseSchema,
+  parseGeneratedPostJson,
   sanitizeGeneratedPost,
   type AutomationContext,
   type GeneratePostInput
@@ -14,6 +14,7 @@ import {
 
 const MAX_RETRIES_ON_503 = 3;
 const INITIAL_RETRY_DELAY_MS = 2000;
+const GENERATION_HEARTBEAT_MS = 15_000;
 
 function isTemporarilyUnavailable(statusCode: number): boolean {
   // 503 = Service Unavailable, 429 = Too Many Requests
@@ -116,6 +117,21 @@ export async function requestInstagramPostGeneration(
     });
 
     try {
+      const heartbeat = setInterval(() => {
+        const elapsedMs = Date.now() - attemptStartedAt;
+        console.info("[openai] Generation attempt still running", {
+          model,
+          attempt: index + 1,
+          totalAttempts: modelsToTry.length,
+          postType: input.postType,
+          topic: input.topic,
+          slideIndex: options?.slideIndex ?? 1,
+          slideCount: options?.slideCount ?? 1,
+          elapsedMs,
+          remainingTimeoutMs: Math.max(timeoutMs - elapsedMs, 0)
+        });
+      }, GENERATION_HEARTBEAT_MS);
+
       const response = await fetchWithRetry(
         "https://ollama.com/api/chat",
         {
@@ -145,7 +161,9 @@ export async function requestInstagramPostGeneration(
           })
         },
         timeoutMs
-      );
+      ).finally(() => {
+        clearInterval(heartbeat);
+      });
 
       const responseText = await response.text();
       if (!response.ok) {
@@ -160,11 +178,28 @@ export async function requestInstagramPostGeneration(
         responseBytes: responseText.length
       });
       const extractedJson = extractJsonPayload(parsedResponse.message.content);
-      const fixedJson = fixMalformedJSON(extractedJson);
-      return sanitizeGeneratedPost(
-        coerceGeneratedPost(JSON.parse(fixedJson)),
+      console.info("[openai] Parsing generated JSON", {
+        model,
+        attempt: index + 1,
+        contentBytes: parsedResponse.message.content.length,
+        extractedBytes: extractedJson.length,
+        totalDurationMs: Date.now() - requestStartedAt
+      });
+      const generated = sanitizeGeneratedPost(
+        coerceGeneratedPost(parseGeneratedPostJson(extractedJson)),
         input
       );
+      console.info("[openai] Generated JSON parsed", {
+        model,
+        attempt: index + 1,
+        captionBytes: generated.caption.length,
+        hashtagsCount: generated.hashtags.length,
+        htmlBytes: generated.html.length,
+        cssBytes: generated.css.length,
+        hasStyleGuide: Boolean(generated.styleGuide?.trim()),
+        totalDurationMs: Date.now() - requestStartedAt
+      });
+      return generated;
     } catch (error) {
       const message =
         error instanceof Error && error.name === "AbortError"

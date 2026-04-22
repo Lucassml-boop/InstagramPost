@@ -60,6 +60,7 @@ export function CaptionGenerator({
     progressValue,
     elapsedMs,
     clientTimeoutMs,
+    generationStatus,
     shouldShowSlowMessage,
     shouldShowCaptionEditor,
     effectiveCaption,
@@ -174,6 +175,7 @@ export function CaptionGenerator({
             progressValue={progressValue}
             elapsedMs={elapsedMs}
             clientTimeoutMs={clientTimeoutMs}
+            generationStatus={generationStatus}
             shouldShowSlowMessage={shouldShowSlowMessage}
             postType={postType}
             carouselSlideCount={carouselSlideCount}

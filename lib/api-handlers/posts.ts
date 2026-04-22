@@ -11,6 +11,8 @@ type AuthUser = {
   id: string;
 };
 
+const GENERATE_POST_HEARTBEAT_MS = 10_000;
+
 type GeneratePostInput = z.infer<typeof generatePostSchema>;
 
 type GeneratePostDeps = {
@@ -139,6 +141,22 @@ export async function handleGeneratePost(
     render: 0,
     draft: 0
   };
+  let currentPhase = "auth";
+  const heartbeat = setInterval(() => {
+    console.info("[api/posts/generate] Request still running", {
+      phase: currentPhase,
+      durationMs: Date.now() - startedAt,
+      phaseDurationMs:
+        currentPhase === "ai" && phaseStartedAt.ai
+          ? Date.now() - phaseStartedAt.ai
+          : currentPhase === "render" && phaseStartedAt.render
+            ? Date.now() - phaseStartedAt.render
+            : currentPhase === "draft" && phaseStartedAt.draft
+              ? Date.now() - phaseStartedAt.draft
+              : Date.now() - phaseStartedAt.auth,
+      isAuthenticated: Boolean(user)
+    });
+  }, GENERATE_POST_HEARTBEAT_MS);
 
   try {
     console.info("[api/posts/generate] Request started");
@@ -155,9 +173,12 @@ export async function handleGeneratePost(
       return jsonError("Unauthorized", 401);
     }
 
+    currentPhase = "loading-dependencies";
     const resolvedDeps = deps ?? (await getDefaultGeneratePostDeps());
 
+    currentPhase = "parsing-payload";
     const parsed = generatePostSchema.parse(await request.json());
+    currentPhase = "loading-brand-profile";
     const brandProfile = resolvedDeps.getContentBrandProfile
       ? await resolvedDeps.getContentBrandProfile()
       : null;
@@ -174,6 +195,7 @@ export async function handleGeneratePost(
       brandColors: parsed.brandColors
     });
 
+    currentPhase = "checking-similar-post";
     const similarPost = resolvedDeps.findSimilarManualPost
       && !parsed.allowSimilarPost
       ? await resolvedDeps.findSimilarManualPost({
@@ -202,6 +224,7 @@ export async function handleGeneratePost(
     }
 
     phaseStartedAt.ai = Date.now();
+    currentPhase = "ai";
     const generatedCarousel =
       parsed.postType === "carousel"
         ? await resolvedDeps.generateInstagramCarouselPosts(parsed, { brandProfile })
@@ -224,11 +247,20 @@ export async function handleGeneratePost(
     });
 
     phaseStartedAt.render = Date.now();
+    currentPhase = "render";
     const slidesToRender = generatedCarousel?.slides ?? [generated];
     const renderedImages = [];
 
     for (const [index, slide] of slidesToRender.entries()) {
       const slideRenderStartedAt = Date.now();
+      console.info("[api/posts/generate] Slide render started", {
+        userId: user.id,
+        slideIndex: index + 1,
+        slideCount: slidesToRender.length,
+        htmlBytes: slide.html.length,
+        cssBytes: slide.css.length,
+        totalDurationMs: Date.now() - startedAt
+      });
       const image = await resolvedDeps.renderPostImage({
         slug: `${resolvedDeps.slugify(parsed.topic)}-${index + 1}`,
         html: slide.html,
@@ -250,6 +282,12 @@ export async function handleGeneratePost(
     }
 
     phaseStartedAt.draft = Date.now();
+    currentPhase = "draft";
+    console.info("[api/posts/generate] Draft creation started", {
+      userId: user.id,
+      mediaItemsCount: renderedImages.length,
+      totalDurationMs: Date.now() - startedAt
+    });
     const draft = await resolvedDeps.createDraftPost({
       userId: user.id,
       topic: parsed.topic,
@@ -305,6 +343,8 @@ export async function handleGeneratePost(
       error: message
     });
     return jsonError(message, status);
+  } finally {
+    clearInterval(heartbeat);
   }
 }
 

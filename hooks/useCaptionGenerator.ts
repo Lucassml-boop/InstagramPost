@@ -18,6 +18,7 @@ import type {
 import {
   createSlideContexts,
   getClientGenerationTimeoutMs,
+  getGenerationStatus,
   normalizeSlideContexts,
   parseBrandColors,
   serializeBrandColors
@@ -94,6 +95,13 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
     ? Math.min((elapsedMs / clientTimeoutMs) * 100, PROGRESS_CAP)
     : 0;
   const shouldShowSlowMessage = elapsedMs >= clientTimeoutMs * 0.7;
+  const generationStatus = getGenerationStatus({
+    elapsedMs,
+    clientTimeoutMs,
+    postType,
+    carouselSlideCount,
+    outputLanguage
+  });
   const shouldShowCaptionEditor = postType !== "story" || storyCaptionMode === "with-caption";
   const effectiveCaption = shouldShowCaptionEditor ? caption : "";
   const state = {
@@ -200,6 +208,7 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
     ...state,
     progressValue,
     clientTimeoutMs,
+    generationStatus,
     shouldShowSlowMessage,
     shouldShowCaptionEditor,
     effectiveCaption,

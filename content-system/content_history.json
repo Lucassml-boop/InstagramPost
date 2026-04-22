@@ -93,5 +93,40 @@
     "date": "2026-04-25",
     "day": "Sabado",
     "theme": "Dashboard unificado: operando Mercado Livre, Shopee e site próprio numa única tela"
+  },
+  {
+    "date": "2026-04-21",
+    "day": "Terca",
+    "theme": "Integração nativa entre ERP e Shopee via API oficial em 3 passos"
+  },
+  {
+    "date": "2026-04-22",
+    "day": "Quarta",
+    "theme": "Demora no primeiro atendimento que custa vendas no Mercado Livre"
+  },
+  {
+    "date": "2026-04-23",
+    "day": "Quinta",
+    "theme": "Etiquetas de envio automatizadas multi-marketplace em lote"
+  },
+  {
+    "date": "2026-04-24",
+    "day": "Sexta",
+    "theme": "Regras automáticas de floor price que protegem margem contra concorrência predatória"
+  },
+  {
+    "date": "2026-04-25",
+    "day": "Sabado",
+    "theme": "Cruzamento de curva de vendas com lead time de fornecedor para compras inteligentes"
+  },
+  {
+    "date": "2026-04-26",
+    "day": "Domingo",
+    "theme": "Venda antecipada de produtos em trânsito com reserva virtual"
+  },
+  {
+    "date": "2026-04-27",
+    "day": "Segunda",
+    "theme": "Escala operacional de 50 para 500 pedidos diários sem aumentar equipe de fulfillment"
   }
 ]

@@ -298,6 +298,18 @@ export async function publishPostNow(input: {
       : getAbsoluteAssetUrl(item.imageUrl, input.requestOrigin)
   }));
 
+  console.info("[posts] Publish now resolved stored post", {
+    userId: input.userId,
+    postId: post.id,
+    storedStatus: post.status,
+    storedPostType: post.postType,
+    finalPostType,
+    mediaItemsCount: normalizedMediaItems.length,
+    mediaUrls: normalizedMediaItems.map((item) => item.imageUrl),
+    hasProvidedCaption: providedCaption.length > 0,
+    finalCaptionLength: finalCaption.length
+  });
+
   if (finalPostType === "carousel" && normalizedMediaItems.length < 2) {
     throw new Error("Carousel posts require at least 2 images.");
   }

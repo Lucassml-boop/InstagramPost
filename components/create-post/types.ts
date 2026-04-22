@@ -2,6 +2,18 @@ export type OutputLanguage = "en" | "pt-BR";
 export type PostType = "feed" | "story" | "carousel";
 export type StoryCaptionMode = "image-only" | "with-caption";
 export type Tone = "professional" | "casual" | "promotional";
+export type GenerationStepStatus = "pending" | "active" | "done";
+
+export type GenerationStep = {
+  label: string;
+  status: GenerationStepStatus;
+};
+
+export type GenerationStatus = {
+  label: string;
+  detail: string;
+  steps: GenerationStep[];
+};
 
 export type BrandColorPalette = {
   primary: string;

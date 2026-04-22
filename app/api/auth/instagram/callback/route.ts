@@ -76,13 +76,42 @@ export async function GET(request: Request) {
   }
 
   try {
+    console.log("[instagram-callback] Exchanging code for short-lived token", {
+      userId: user.id
+    });
     const tokenResponse = await exchangeCodeForAccessToken(code, redirectUri);
+    console.log("[instagram-callback] Short-lived token exchange succeeded", {
+      userId: user.id,
+      instagramUserId: tokenResponse.instagramUserId
+    });
+
+    console.log("[instagram-callback] Exchanging for long-lived token", {
+      userId: user.id
+    });
     const longLivedToken = await exchangeForLongLivedAccessToken(tokenResponse.accessToken);
+    console.log("[instagram-callback] Long-lived token exchange succeeded", {
+      userId: user.id,
+      expiresAt: longLivedToken.expiresAt?.toISOString() ?? null
+    });
+
+    console.log("[instagram-callback] Fetching Instagram profile", {
+      userId: user.id,
+      instagramUserId: tokenResponse.instagramUserId
+    });
     const profile = await fetchInstagramProfile(
       longLivedToken.accessToken,
       tokenResponse.instagramUserId
     );
+    console.log("[instagram-callback] Instagram profile fetched", {
+      userId: user.id,
+      instagramUserId: profile.instagramUserId,
+      username: profile.username
+    });
 
+    console.log("[instagram-callback] Saving Instagram account", {
+      userId: user.id,
+      instagramUserId: profile.instagramUserId
+    });
     await saveInstagramAccount({
       userId: user.id,
       instagramUserId: profile.instagramUserId,

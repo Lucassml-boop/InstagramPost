@@ -1,6 +1,7 @@
 import { saveGeneratedImageBuffer } from "@/lib/storage.server";
 
 const RENDER_TIMEOUT_MS = 120_000;
+const RENDER_HEARTBEAT_MS = 10_000;
 
 async function launchRendererBrowser() {
   const isServerlessLinux =
@@ -82,6 +83,16 @@ export async function renderPostImage(input: {
   height: number;
 }) {
   const startedAt = Date.now();
+  let renderPhase = "launching-browser";
+  const heartbeat = setInterval(() => {
+    console.info("[renderer] Image render still running", {
+      slug: input.slug,
+      phase: renderPhase,
+      durationMs: Date.now() - startedAt,
+      timeoutMs: RENDER_TIMEOUT_MS
+    });
+  }, RENDER_HEARTBEAT_MS);
+
   console.info("[renderer] Starting image render", {
     slug: input.slug,
     width: input.width,
@@ -90,14 +101,16 @@ export async function renderPostImage(input: {
     cssLength: input.css.length
   });
 
-  const browser = await launchRendererBrowser();
+  let browser: Awaited<ReturnType<typeof launchRendererBrowser>> | null = null;
 
   try {
+    browser = await launchRendererBrowser();
     console.info("[renderer] Browser launched", {
       slug: input.slug,
       durationMs: Date.now() - startedAt
     });
 
+    renderPhase = "creating-page";
     const page = await browser.newPage();
     page.setDefaultNavigationTimeout(RENDER_TIMEOUT_MS);
     page.setDefaultTimeout(RENDER_TIMEOUT_MS);
@@ -117,7 +130,9 @@ export async function renderPostImage(input: {
       });
     });
 
+    renderPhase = "setting-viewport";
     await page.setViewport({ width: input.width, height: input.height, deviceScaleFactor: 1 });
+    renderPhase = "setting-content";
     await page.setContent(buildHtmlDocument(input.html, input.css), {
       waitUntil: "domcontentloaded",
       timeout: RENDER_TIMEOUT_MS
@@ -125,6 +140,7 @@ export async function renderPostImage(input: {
 
     // The generated layout is self-contained, so a short settle delay is enough
     // and avoids waiting forever for "networkidle" when the page never becomes idle.
+    renderPhase = "settling-content";
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     console.info("[renderer] Content rendered in page", {
@@ -132,15 +148,31 @@ export async function renderPostImage(input: {
       durationMs: Date.now() - startedAt
     });
 
+    renderPhase = "taking-screenshot";
+    console.info("[renderer] Taking screenshot", {
+      slug: input.slug,
+      durationMs: Date.now() - startedAt
+    });
     const buffer = await page.screenshot({
       type: "jpeg",
       quality: 90
     });
 
+    renderPhase = "saving-image";
+    console.info("[renderer] Saving generated image", {
+      slug: input.slug,
+      bytes: buffer.length,
+      durationMs: Date.now() - startedAt
+    });
     const savedImage = await saveGeneratedImageBuffer({
       bytes: Buffer.from(buffer),
       slug: input.slug,
       markAsAiGenerated: true
+    });
+    console.info("[renderer] Generated image saved", {
+      slug: input.slug,
+      publicPath: savedImage.publicPath,
+      durationMs: Date.now() - startedAt
     });
 
     return {
@@ -149,10 +181,13 @@ export async function renderPostImage(input: {
       publicPath: savedImage.publicPath
     };
   } finally {
-    await browser.close();
-    console.info("[renderer] Browser closed", {
-      slug: input.slug,
-      durationMs: Date.now() - startedAt
-    });
+    clearInterval(heartbeat);
+    if (browser) {
+      await browser.close();
+      console.info("[renderer] Browser closed", {
+        slug: input.slug,
+        durationMs: Date.now() - startedAt
+      });
+    }
   }
 }
