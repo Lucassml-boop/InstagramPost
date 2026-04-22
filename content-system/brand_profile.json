@@ -26,7 +26,7 @@
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]
@@ -45,102 +45,92 @@
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]
     },
     "Quarta": {
-      "enabled": true,
+      "enabled": false,
       "goal": "",
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [
-        "09:00"
-      ],
+      "postTimes": [],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]
     },
     "Quinta": {
-      "enabled": true,
+      "enabled": false,
       "goal": "",
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [
-        "09:00"
-      ],
+      "postTimes": [],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]
     },
     "Sexta": {
-      "enabled": true,
+      "enabled": false,
       "goal": "",
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [
-        "09:00"
-      ],
+      "postTimes": [],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]
     },
     "Sabado": {
-      "enabled": true,
+      "enabled": false,
       "goal": "",
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [
-        "09:00"
-      ],
+      "postTimes": [],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]
     },
     "Domingo": {
-      "enabled": true,
+      "enabled": false,
       "goal": "",
       "contentTypes": [],
       "formats": [],
       "postsPerDay": 1,
-      "postTimes": [
-        "09:00"
-      ],
+      "postTimes": [],
       "postIdeas": [
         {
           "goal": "",
           "contentTypes": [],
           "formats": [],
-          "brandColors": "Cor principal: #ff751f\nCor de fundo: #1a1a1a",
+          "brandColors": "",
           "confirmed": true
         }
       ]

@@ -566,5 +566,37 @@
     ],
     "fingerprint": "marketplaces|case real|escala-para-pedidos-diarios-fulfillment-processamento",
     "createdAt": "2026-04-21T05:37:18.546Z"
+  },
+  {
+    "theme": "Dashboard operacional que mostra o que vender, repor e acelerar hoje",
+    "normalizedTheme": "dashboard operacional que mostra o que vender repor e acelerar hoje",
+    "themeCategory": "analytics",
+    "contentAngle": "ganho-eficiencia",
+    "keywords": [
+      "dashboard operacional",
+      "painel de vendas",
+      "margem por sku",
+      "prioridade diaria",
+      "dados de operacao",
+      "controle gerencial"
+    ],
+    "fingerprint": "analytics|ganho eficiencia|mostra-vender-repor-acelerar-painel-margem",
+    "createdAt": "2026-04-22T02:52:02.264Z"
+  },
+  {
+    "theme": "Como unificar Mercado Livre e Shopee sem duplicar cadastros e ajustes manuais",
+    "normalizedTheme": "como unificar mercado livre e shopee sem duplicar cadastros e ajustes manuais",
+    "themeCategory": "integracao",
+    "contentAngle": "passo-a-passo",
+    "keywords": [
+      "sincronizacao de estoque",
+      "cadastro centralizado",
+      "sku padronizado",
+      "regras de precificacao",
+      "fluxo multicanal",
+      "conexao de canais"
+    ],
+    "fingerprint": "integracao|passo a passo|como-unificar-livre-duplicar-sincronizacao-estoque",
+    "createdAt": "2026-04-22T02:52:02.264Z"
   }
 ]

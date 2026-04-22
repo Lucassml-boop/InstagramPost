@@ -71,8 +71,12 @@ function GenerationStatusCard({
     return null;
   }
 
+  const elapsedNow =
+    generationStatus.state === "completed" || generationStatus.state === "failed"
+      ? generationStatus.completedAt ?? now
+      : now;
   const elapsedMs =
-    generationStatus.startedAt !== null ? Math.max(now - generationStatus.startedAt, 0) : 0;
+    generationStatus.startedAt !== null ? Math.max(elapsedNow - generationStatus.startedAt, 0) : 0;
   const phaseElapsedMs =
     generationStatus.phaseStartedAt !== null
       ? Math.max(now - generationStatus.phaseStartedAt, 0)

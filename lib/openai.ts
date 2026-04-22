@@ -1,4 +1,5 @@
 import { generatePostSchema } from "@/lib/validators";
+import { getJsonGenerationProvider } from "./ai-json.client.ts";
 import {
   getOllamaTimeoutForInput,
   type AutomationContext,
@@ -46,43 +47,54 @@ export async function generateInstagramCarouselPosts(
   const styleGuide =
     firstSlide.styleGuide?.trim() ||
     "Match the first slide's composition, typography rhythm, and color balance closely.";
+  const shouldGenerateSequentially = getJsonGenerationProvider() === "openai";
   console.info("[openai] Carousel remaining slides starting", {
     topic: parsedInput.topic,
-    remainingSlides: Math.max(slideCount - 1, 0)
+    remainingSlides: Math.max(slideCount - 1, 0),
+    mode: shouldGenerateSequentially ? "sequential" : "parallel"
   });
-  const remainingSlides = await Promise.all(
-    Array.from({ length: Math.max(slideCount - 1, 0) }, async (_, offset) => {
-      const index = offset + 1;
-      console.info("[openai] Carousel slide generation queued", {
-        topic: parsedInput.topic,
-        slideIndex: index + 1,
-        slideCount
-      });
-      const slide = await requestInstagramPostGeneration(
-        parsedInput,
-        {
-          slideIndex: index + 1,
-          slideCount,
-          slideContext: slideContexts[index],
-          styleGuide,
-          requireCaption: false
-        },
-        automationContext
-      );
-      console.info("[openai] Carousel slide ready", {
-        topic: parsedInput.topic,
-        slideIndex: index + 1,
-        slideCount
-      });
 
-      return {
-        ...slide,
-        caption: firstSlide.caption,
-        hashtags: firstSlide.hashtags,
-        styleGuide
-      };
-    })
-  );
+  async function generateSlide(index: number) {
+    console.info("[openai] Carousel slide generation queued", {
+      topic: parsedInput.topic,
+      slideIndex: index + 1,
+      slideCount
+    });
+    const slide = await requestInstagramPostGeneration(
+      parsedInput,
+      {
+        slideIndex: index + 1,
+        slideCount,
+        slideContext: slideContexts[index],
+        styleGuide,
+        requireCaption: false
+      },
+      automationContext
+    );
+    console.info("[openai] Carousel slide ready", {
+      topic: parsedInput.topic,
+      slideIndex: index + 1,
+      slideCount
+    });
+
+    return {
+      ...slide,
+      caption: firstSlide.caption,
+      hashtags: firstSlide.hashtags,
+      styleGuide
+    };
+  }
+
+  const remainingIndexes = Array.from({ length: Math.max(slideCount - 1, 0) }, (_, offset) => offset + 1);
+  const remainingSlides = shouldGenerateSequentially
+    ? []
+    : await Promise.all(remainingIndexes.map(generateSlide));
+
+  if (shouldGenerateSequentially) {
+    for (const index of remainingIndexes) {
+      remainingSlides.push(await generateSlide(index));
+    }
+  }
   const slides: GeneratedPost[] = [firstSlide, ...remainingSlides];
   console.info("[openai] Carousel generation complete", {
     topic: parsedInput.topic,

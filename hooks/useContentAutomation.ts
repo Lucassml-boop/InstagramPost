@@ -530,6 +530,11 @@ export function useContentAutomation(input: {
           phase: null,
           completedAt: Date.now(),
           detailMessage: current.detailMessage,
+          preparedCount: null,
+          scannedCount: null,
+          activeTheme: null,
+          currentPostIndex: null,
+          totalPosts: null,
           errorMessage: null
         }));
       } catch (requestError) {

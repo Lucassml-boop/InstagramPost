@@ -3,194 +3,58 @@
     "date": "2026-04-21",
     "day": "Terca",
     "time": "09:00",
-    "goal": "Educar sobre integração técnica e gerar leads qualificados para implementação de API",
-    "type": "Educacional",
+    "goal": "Gerar leads qualificados para projetos de automação e integração",
+    "type": "Educativo",
     "format": "Carrossel",
-    "theme": "Integração nativa entre ERP e Shopee via API oficial em 3 passos",
+    "theme": "Dashboard operacional que mostra o que vender, repor e acelerar hoje",
     "structure": [
-      "Capa / Hook: 'Conecte seu ERP à Shopee em 24h sem desenvolvedor interno'",
-      "Contexto / Problema: O caos operacional de atualizar planilhas manualmente entre sistemas diferentes",
-      "Desenvolvimento / Conteudo: Mapeamento de campos de SKU → Teste em ambiente sandbox → Ativação de webhook para sincronização em tempo real",
-      "Insight / Conclusao: Integração elimina 15h semanais de trabalho manual e evita vendas duplicadas",
-      "CTA / Call To Action: 'Baixe nosso checklist técnico de integração Shopee-ERP'"
+      "Capa: O painel que tira o time do achismo",
+      "Contexto: decisões operacionais dependem de dados dispersos em planilhas, ERP e canais",
+      "Desenvolvimento: 5 blocos do dashboard ideal — vendas por canal, ruptura prevista, pedidos atrasados, margem por SKU e tarefas críticas do dia",
+      "Insight: quando tudo aparece no mesmo painel, a operação responde mais rápido e compra melhor",
+      "CTA: solicite um diagnóstico de dashboard para sua operação"
     ],
-    "caption": "Ainda exporta planilha do ERP e importa na Shopee manualmente? 🤯\n\nEssa operação custa em média 15 horas semanais da sua equipe e gera 12% de erro na atualização de estoque.\n\nA integração via API oficial da Shopee não exige desenvolvedor fixo na sua equipe. Veja o fluxo:\n\n1️⃣ Mapeamento: SKU do ERP = Código da Shopee (1h de configuração)\n2️⃣ Sandbox: Teste seguro sem afetar sua loja real\n3️⃣ Webhook: Atualização automática a cada venda ou alteração de preço\n\nResultado: Estoque sincronizado em tempo real, zero overselling e equipe focada em estratégia, não em Ctrl+C Ctrl+V.\n\n👉 Link na bio para o checklist completo de integração.",
-    "visualIdea": "Mockup de tela dividida mostrando ERP à esquerda e painel Shopee à direita, com setas animadas de dados fluindo automaticamente entre os sistemas, indicadores de 'sincronizado' em verde",
-    "cta": "Baixe nosso checklist técnico de integração Shopee-ERP",
-    "themeCategory": "integracao",
-    "contentAngle": "passo-a-passo",
-    "topicKeywords": [
-      "erp integrado",
-      "sincronizacao automatica",
-      "atualizacao estoque tempo real",
-      "webhook notificacoes"
-    ]
-  },
-  {
-    "date": "2026-04-22",
-    "day": "Quarta",
-    "time": "09:00",
-    "goal": "Criar senso de urgência sobre atendimento e posicionar automação como solução",
-    "type": "Alerta",
-    "format": "Carrossel",
-    "theme": "Demora no primeiro atendimento que custa vendas no Mercado Livre",
-    "structure": [
-      "Capa / Hook: '4 horas de espera = cliente perdido para sempre'",
-      "Contexto / Problema: Fila de atendimento manual explode durante picos de venda e ninguém responde",
-      "Desenvolvimento / Conteudo: Como a automação responde em 30 segundos mantendo tom humano e personalizado",
-      "Insight / Conclusao: 68% das reclamações no ML vêm de demora no primeiro contato, não do produto",
-      "CTA / Call To Action: 'Calcule seu custo de oportunidade por demora'"
-    ],
-    "caption": "Seu cliente no Mercado Livre espera 4h por uma resposta? Você já perdeu a venda. 📉\n\nDados internos da plataforma mostram que 68% das reclamações e devoluções começam com 'demora no atendimento', não com defeito no produto.\n\nO erro operacional: achar que atendimento humano significa responder manualmente. Na prática, durante picos de venda (Black Friday, pagamentos aprovados às 14h), sua equipe simplesmente não dá conta.\n\nA solução não é contratar 10 atendentes. É configurar respostas automáticas inteligentes que:\n✅ Reconhecem a intenção da pergunta\n✅ Respondem em 30 segundos\n✅ Escalam para humano apenas quando necessário\n\nResultado: Nota de atendimento sobe, custo operacional cai.\n\n🔍 Quanto você perdeu em vendas esse mês por demora no chat? Comente 'CALCULAR' que enviamos a planilha.",
-    "visualIdea": "Gráfico comparativo em duas colunas: à esquerda, relógio marcando 4h com ícone de cliente triste e venda perdida; à direita, robô amigável com cronômetro de 30s e check de satisfação, tons de vermelho para problema e verde para solução",
-    "cta": "Calcule seu custo de oportunidade por demora no atendimento",
-    "themeCategory": "atendimento",
-    "contentAngle": "erro-operacional",
-    "topicKeywords": [
-      "tempo resposta",
-      "reclamacao mercado livre",
-      "chat automatico",
-      "metrica satisfacao"
-    ]
-  },
-  {
-    "date": "2026-04-23",
-    "day": "Quinta",
-    "time": "09:00",
-    "goal": "Demonstrar ganho de produtividade logística e atrair empresas com volume crescente de envios",
-    "type": "Educacional",
-    "format": "Carrossel",
-    "theme": "Etiquetas de envio automatizadas multi-marketplace em lote",
-    "structure": [
-      "Capa / Hook: 'Imprima 200 etiquetas em 2 minutos, não em 2 horas'",
-      "Contexto / Problema: Operação de envio travada na impressão manual uma a uma por marketplace",
-      "Desenvolvimento / Conteudo: Agrupamento inteligente por transportadora, região e prazo de envio + impressão em batch",
-      "Insight / Conclusao: Redução de 70% no tempo de separação e zero erro de endereçamento",
-      "CTA / Call To Action: 'Veja o sistema funcionando na prática'"
-    ],
-    "caption": "Operação logística travada na impressão de etiqueta? 📦🐢\n\nQuando você vende no Mercado Livre, Shopee e site próprio, o operador perde 40 minutos só alternando entre painéis diferentes para imprimir etiquetas.\n\nE se pudesse:\n🖨️ Selecionar 200 pedidos de uma vez\n🧠 Deixar o sistema agrupar por transportadora (Correios, Loggi, Jadlog)\n📍 Separar por região de entrega otimizando a rota do motoboy\n⏱️ Imprimir tudo em 2 minutos\n\nA automação de etiquetas em lote não é luxo. É sobrevivência quando você passa de 50 para 500 pedidos por dia sem contratar 10 operadores.\n\nResultado real: separação de pedidos 70% mais rápida e zero erro de endereçamento porque o sistema valida CEP antes de imprimir.\n\n🎥 Arraste para ver o passo a passo no vídeo do carrossel.",
-    "visualIdea": "Fotografia de impressora térmica industrial alta performance com pilhas organizadas de etiquetas coloridas por transportadora (azul para Correios, verde para Shopee, laranja para site próprio), mostrando organização física do operador",
-    "cta": "Veja como funciona na prática",
-    "themeCategory": "logistica",
+    "caption": "Muita empresa vende bem, mas decide no escuro.\n\nQuando vendas, estoque e pedidos ficam espalhados em relatórios diferentes, o time perde tempo juntando informação em vez de agir.\n\nUm dashboard operacional bem desenhado resolve isso ao mostrar, em um só lugar:\n- performance por canal\n- itens que exigem reposição\n- pedidos com risco de atraso\n- produtos com margem pressionada\n- prioridades do dia\n\nO ganho não é só visual. É velocidade de decisão.\n\nNa EcomForge, estruturamos dashboards para transformar dados operacionais em rotina de ação, com foco em produtividade e controle.\n\nSe você quer enxergar a operação com clareza, fale com a gente.",
+    "visualIdea": "Tela de dashboard em estilo premium com blocos coloridos para vendas, estoque, pedidos e margem; pessoas do time olhando para um monitor com destaque em dados prioritários.",
+    "cta": "Comente DASHBOARD ou chame no direct para avaliar sua operação.",
+    "themeCategory": "analytics",
     "contentAngle": "ganho-eficiencia",
     "topicKeywords": [
-      "etiqueta correios",
-      "impressao automatica",
-      "coleta inteligente",
-      "agrupamento pedidos",
-      "transportadora integrada"
-    ]
-  },
-  {
-    "date": "2026-04-24",
-    "day": "Sexta",
-    "time": "09:00",
-    "goal": "Alertar sobre riscos de precificação e gerar demanda por automação de preços",
-    "type": "Alerta",
-    "format": "Carrossel",
-    "theme": "Regras automáticas de floor price que protegem margem contra concorrência predatória",
-    "structure": [
-      "Capa / Hook: 'Alerta: seu concorrente baixou o preço e você não viu. Margem negativa em 50 SKUs'",
-      "Contexto / Problema: Concorrência predatória quebrando preços enquanto você dorme e arrastando seus produtos para baixo",
-      "Desenvolvimento / Conteudo: Configuração de regras de floor price (preço mínimo) e repricing defensivo automático",
-      "Insight / Conclusao: Proteção ativa evita prejuízo em 23% dos SKUs em média e mantende saúde financeira",
-      "CTA / Call To Action: 'Configure seu escudo de preço agora'"
-    ],
-    "caption": "Acordou hoje com 50 produtos vendendo abaixo do custo? 💸\n\nA concorrência no Mercado Livre e Shopee é brutal. Seu concorrente baixa o preço às 3h da manhã, o algoritmo sugere que você acompanhe, e sem perceber, sua margem virou negativa.\n\nO erro: ajustar preço manualmente ou deixar no automático sem regras de proteção.\n\nA solução é o floor price (preço mínimo de piso):\n🛡️ Regra 1: Nunca vender abaixo de custo + imposto + taxa marketplace\n🛡️ Regra 2: Se concorrente baixar além do saudável, você mantém preço e destaca outros diferenciais\n🛡️ Regra 3: Alerta instantâneo quando margem cai abaixo de 15%\n\nDados da EcomForge: lojas com proteção automática de preço evitam prejuízo em 23% dos SKUs ativos.\n\n🚨 Não deixe seu lucro nas mãos do concorrente. \n\n👉 Toque no link da bio para configurar seu escudo de preço.",
-    "visualIdea": "Dashboard mostrando alerta vermelho pulsante 'MARGEM NEGATIVA DETECTADA' em um card de produto, ao lado botão de ajuste automático para valor mínimo seguro destacado em verde com escudo de proteção",
-    "cta": "Configure seu escudo de preço",
-    "themeCategory": "precificacao",
-    "contentAngle": "alerta",
-    "topicKeywords": [
-      "preco dinamico",
-      "floor price",
-      "regra margem minima",
-      "alerta preco baixo",
-      "protecao lucratividade"
-    ]
-  },
-  {
-    "date": "2026-04-25",
-    "day": "Sabado",
-    "time": "09:00",
-    "goal": "Educar sobre planejamento de compras e posicionar analytics preditivo",
-    "type": "Educacional",
-    "format": "Carrossel",
-    "theme": "Cruzamento de curva de vendas com lead time de fornecedor para compras inteligentes",
-    "structure": [
-      "Capa / Hook: 'Compre hoje o que você vai vender daqui 15 dias. Matemática simples, execução zero'",
-      "Contexto / Problema: Descompasso entre velocidade de venda e tempo de reposição do fornecedor gera ruptura ou excesso",
-      "Desenvolvimento / Conteudo: Cálculo automático de curva de vendas diária vs lead time de cada fornecedor + ponto de pedido inteligente",
-      "Insight / Conclusao: Compra baseada em dados reduz ruptura em 35% e elimina capital parado em excesso de estoque",
-      "CTA / Call To Action: 'Calcule seu lead time ideal de reposição'"
-    ],
-    "caption": "Sabe por que falta produto justo quando as vendas bombam? 🤔\n\nVocê olha o estoque hoje e vê 100 unidades. Vende 20 por dia. Pensa: 'tenho 5 dias'. Errado.\n\nSeu fornecedor demora 10 dias para entregar (lead time). Você deveria ter comprado ontem.\n\nA matemática da reposição:\n📊 Curva de vendas dos últimos 30 dias (tendência real, não achismo)\n⏳ Lead time real de cada fornecedor (não o prometido, o comprovado)\n🎯 Ponto de pedido automático: quando atingir X unidades, dispara compra sozinha\n\nResultado: 35% menos ruptura de estoque e zero dinheiro parado em produto encalhado.\n\nO sistema calcula sozinho. Você só aprova.\n\n📉 Quanto tempo seu fornecedor realmente demora? Comente o número de dias.",
-    "visualIdea": "Gráfico de linha duplo: linha azul descendente representando curva de vendas (estoque diminuindo) cruzando com linha vermelha de alerta (ponto de pedido), acima linha pontilhada indicando lead time de reposição, área de segurança destacada em verde claro",
-    "cta": "Calcule seu lead time ideal de reposição",
-    "themeCategory": "analytics",
-    "contentAngle": "previsao-planejamento",
-    "topicKeywords": [
-      "lead time fornecedor",
-      "curva vendas",
-      "ponto reposicao",
-      "giro estoque",
-      "cobertura estoque"
-    ]
-  },
-  {
-    "date": "2026-04-26",
-    "day": "Domingo",
-    "time": "09:00",
-    "goal": "Apresentar oportunidade de receita extra com estoque em trânsito",
-    "type": "Oportunidade",
-    "format": "Carrossel",
-    "theme": "Venda antecipada de produtos em trânsito com reserva virtual",
-    "structure": [
-      "Capa / Hook: 'Venda o que está na estrada: +15% de faturamento sem comprar mais nada'",
-      "Oportunidade: Estoque parado em trânsito entre fornecedor e seu CD é dinheiro dormindo que pode estar na conta",
-      "Desenvolvimento / Conteudo: Sistema de reserva virtual com previsão precisa de chegada e gestão de expectativa do cliente",
-      "Insight / Conclusao: Lojas que vendem em trânsito aumentam giro de estoque em 22% sem risco de ruptura",
-      "CTA / Call To Action: 'Libere seu estoque travado agora'"
-    ],
-    "caption": "Seu dinheiro está preso na BR-116 e você nem sabe. 🚛💰\n\nTem produto chegando segunda, quarta e sexta? Ótimo. Mas enquanto isso, seu anúncio está pausado por 'sem estoque'.\n\nA oportunidade: venda antecipada (pre-sale) com data de envio futura.\n\nComo funciona na prática:\n📦 Fornecedor confirma: 200 unidades chegam dia 15\n🖥️ Sistema libera 150 unidades para venda imediata com entrega dia 16\n⏰ Cliente compra sabendo que envio é em 48h (após chegada)\n📊 Você fatura 15 dias antes e já programa a reposição seguinte\n\nResultado: +22% de giro de estoque e capital liberado mais rápido.\n\nRisco zero: se houver atraso do transporte, o sistema bloqueia automaticamente e notifica cliente antes da frustração.\n\n🚀 Quanto você tem 'travado' em trânsito hoje?",
-    "visualIdea": "Caminhão de carga em movimento na estrada com overlay de etiqueta de produto disponível e ícone de 'venda confirmada', seta indicando fluxo contínuo de dinheiro entrando antes do produto chegar ao galpão",
-    "cta": "Libere seu estoque travado",
-    "themeCategory": "estoque",
-    "contentAngle": "oportunidade",
-    "topicKeywords": [
-      "estoque transito",
-      "venda antecipada",
-      "reserva virtual",
-      "pre venda logistica",
-      "separacao futura"
+      "dashboard operacional",
+      "painel de vendas",
+      "margem por sku",
+      "prioridade diaria",
+      "dados de operacao",
+      "controle gerencial"
     ]
   },
   {
     "date": "2026-04-27",
     "day": "Segunda",
     "time": "09:00",
-    "goal": "Provar autoridade através de case real e inspirar empresas em crescimento",
-    "type": "Case",
+    "goal": "Atrair empresas que precisam integrar canais e reduzir trabalho manual",
+    "type": "Educativo",
     "format": "Carrossel",
-    "theme": "Escala operacional de 50 para 500 pedidos diários sem aumentar equipe de fulfillment",
+    "theme": "Como unificar Mercado Livre e Shopee sem duplicar cadastros e ajustes manuais",
     "structure": [
-      "Capa / Hook: 'De 50 para 500 pedidos/dia sem contratar ninguém na operação'",
-      "Problema: Gargalo operacional limitando crescimento e dono tendo que parar vendas para não atrasar entrega",
-      "Desenvolvimento / Conteudo: Automação de fulfillment com processamento em batch, separação automática por corredor e conferência via scanner",
-      "Insight / Conclusao: Produtividade por operador aumentou 400% com robôs de picking e regras de negócio automatizadas",
-      "CTA / Call To Action: 'Receba a análise completa deste case'"
+      "Capa: O problema de operar dois marketplaces como se fossem duas empresas",
+      "Contexto: cada canal com cadastro, estoque e regra própria gera retrabalho e erro",
+      "Desenvolvimento: passo a passo da unificação — base única de produtos, sincronização de estoque, padrão de SKU, regras de preço e atualização centralizada",
+      "Insight: integrar não é só conectar sistemas, é criar uma rotina única de operação",
+      "CTA: peça um mapa de integração para sua operação"
     ],
-    "caption": "O dono parava de vender quando atingia 50 pedidos. Hoje processa 500 sozinho. Como? 🤖\n\nCase real da EcomForge:\n\nEmpresa de eletrônicos cresceu rápido no Mercado Livre e Shopee. Aos 50 pedidos/dia, já era caos: atraso, erro de envio, cliente irritado.\n\nSolução implementada:\n⚙️ Processamento em batch (agrupa pedidos similares)\n🤖 Separação automática por corredor de picking (WMS inteligente)\n📱 Conferência via scanner (zero erro de SKU)\n📦 Etiqueta automática por transportadora\n\nResultado em 90 dias:\n✅ 500 pedidos/dia processados\n✅ Mesmos 3 operadores (produtividade 400% maior)\n✅ Zero atrasos no envio\n✅ Dono focado em estratégia, não em colar etiqueta\n\nAutomação não substituiu gente. Multiplicou a capacidade de quem já estava lá.\n\n📄 Quer ver o passo a passo completo dessa implementação?\n\n👉 Toque no link e receba o PDF do case.",
-    "visualIdea": "Infográfico comparativo antes/depois: à esquerda caos operacional com pilhas de pedidos desorganizadas e operadores estressados; à direita operação organizada com esteiras, scanners e dashboards mostrando 500 pedidos processados, seta indicando crescimento de 10x",
-    "cta": "Receba a análise completa deste case",
-    "themeCategory": "marketplaces",
-    "contentAngle": "case-real",
+    "caption": "Vender em Mercado Livre e Shopee sem integração costuma virar um ciclo de retrabalho.\n\nO time cadastra produto em um lugar, ajusta estoque em outro, altera preço manualmente e ainda corre risco de divergência entre canais.\n\nA forma mais eficiente de escalar é criar uma base única com regras claras para:\n- cadastro de produto\n- estoque sincronizado\n- atualização de preço\n- organização de SKU\n- governança dos canais\n\nIsso reduz erro, acelera a operação e libera a equipe para atividades mais estratégicas.\n\nNa EcomForge, desenhamos integrações pensando no fluxo real da operação, não só na conexão técnica.\n\nSe você quer organizar seus canais sem caos manual, vamos conversar.",
+    "visualIdea": "Diagrama com um hub central conectando Mercado Livre e Shopee, mostrando estoque, cadastro e preço sincronizados em tempo real.",
+    "cta": "Envie INTEGRAR no direct para receber uma análise inicial.",
+    "themeCategory": "integracao",
+    "contentAngle": "passo-a-passo",
     "topicKeywords": [
-      "escala operacional",
-      "automatizacao fulfillment",
-      "processamento batch",
-      "separacao automatica",
-      "crescimento sustentavel"
+      "sincronizacao de estoque",
+      "cadastro centralizado",
+      "sku padronizado",
+      "regras de precificacao",
+      "fluxo multicanal",
+      "conexao de canais"
     ]
   }
 ]

@@ -11,10 +11,15 @@ export async function GET(request: Request) {
   const requestOrigin = requestUrl.origin;
   const baseUrl = getBaseUrl(requestOrigin);
   const redirectUri = getInstagramRedirectUri(requestOrigin);
+  const fixedPublicUrl = process.env.FIXED_PUBLIC_URL?.trim().replace(/\/$/, "");
+  const fixedRedirectUri = fixedPublicUrl
+    ? `${fixedPublicUrl}/api/auth/instagram/callback`
+    : "";
 
   if (
     process.env.NODE_ENV !== "production" &&
-    redirectUri.includes(".trycloudflare.com/")
+    redirectUri.includes(".trycloudflare.com/") &&
+    redirectUri !== fixedRedirectUri
   ) {
     const helpMessage =
       "Instagram OAuth bloqueado em desenvolvimento: o callback atual usa um dominio trycloudflare temporario, que nao esta cadastrado no Meta App. Defina FIXED_PUBLIC_URL em .env.local, reinicie npm run dev e cadastre exatamente a nova callback no Meta.";

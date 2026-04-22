@@ -1,87 +1,19 @@
-import { requireEnv } from "@/lib/env";
+import {
+  getJsonGenerationModel,
+  getJsonGenerationProvider,
+  requestJsonGeneration
+} from "@/lib/ai-json.client";
 import {
   buildPrompt,
   coerceGeneratedPost,
-  extractJsonPayload,
   getFallbackModels,
   getOllamaTimeoutForInput,
-  ollamaResponseSchema,
-  parseGeneratedPostJson,
   sanitizeGeneratedPost,
   type AutomationContext,
   type GeneratePostInput
 } from "./openai.shared.ts";
 
-const MAX_RETRIES_ON_503 = 3;
-const INITIAL_RETRY_DELAY_MS = 2000;
 const GENERATION_HEARTBEAT_MS = 15_000;
-
-function isTemporarilyUnavailable(statusCode: number): boolean {
-  // 503 = Service Unavailable, 429 = Too Many Requests
-  return statusCode === 503 || statusCode === 429;
-}
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Tenta a requisição novamente com backoff exponencial em caso de erros temporários
- */
-async function fetchWithRetry(
-  url: string,
-  init: RequestInit,
-  timeoutMs: number,
-  maxRetries = MAX_RETRIES_ON_503
-): Promise<Response> {
-  let lastError: Error | null = null;
-  
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
-      
-      try {
-        const response = await fetch(url, {
-          ...init,
-          signal: controller.signal
-        });
-        
-        // Se for erro 503/429 e não for a última tentativa, aguardar e tentar novamente
-        if (isTemporarilyUnavailable(response.status) && attempt < maxRetries) {
-          const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
-          console.warn(`[openai] Service temporarily unavailable (${response.status}), retrying in ${delayMs}ms...`, {
-            attempt: attempt + 1,
-            maxRetries: maxRetries + 1
-          });
-          await sleep(delayMs);
-          continue;
-        }
-        
-        return response;
-      } finally {
-        clearTimeout(timeout);
-      }
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      
-      // Se for AbortError (timeout) e não for a última tentativa, tentar novamente
-      if (lastError.name === "AbortError" && attempt < maxRetries) {
-        const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
-        console.warn(`[openai] Request timeout, retrying in ${delayMs}ms...`, {
-          attempt: attempt + 1,
-          maxRetries: maxRetries + 1
-        });
-        await sleep(delayMs);
-        continue;
-      }
-      
-      throw lastError;
-    }
-  }
-  
-  throw lastError ?? new Error("Fetch with retry failed unexpectedly");
-}
 
 export async function requestInstagramPostGeneration(
   input: GeneratePostInput,
@@ -94,9 +26,10 @@ export async function requestInstagramPostGeneration(
   },
   automationContext?: AutomationContext
 ) {
-  const apiKey = requireEnv("OLLAMA_API_KEY");
-  const primaryModel = process.env.OLLAMA_MODEL?.trim() || "kimi-k2.5:cloud";
-  const modelsToTry = [primaryModel, ...getFallbackModels(primaryModel)];
+  const provider = getJsonGenerationProvider();
+  const primaryModel = getJsonGenerationModel();
+  const modelsToTry =
+    provider === "openai" ? [primaryModel] : [primaryModel, ...getFallbackModels(primaryModel)];
   const timeoutMs = getOllamaTimeoutForInput(input);
   const prompt = buildPrompt(input, options, automationContext);
   const attemptErrors: string[] = [];
@@ -106,6 +39,7 @@ export async function requestInstagramPostGeneration(
     const attemptStartedAt = Date.now();
 
     console.info("[openai] Generation attempt started", {
+      provider,
       model,
       attempt: index + 1,
       totalAttempts: modelsToTry.length,
@@ -120,6 +54,7 @@ export async function requestInstagramPostGeneration(
       const heartbeat = setInterval(() => {
         const elapsedMs = Date.now() - attemptStartedAt;
         console.info("[openai] Generation attempt still running", {
+          provider,
           model,
           attempt: index + 1,
           totalAttempts: modelsToTry.length,
@@ -132,64 +67,27 @@ export async function requestInstagramPostGeneration(
         });
       }, GENERATION_HEARTBEAT_MS);
 
-      const response = await fetchWithRetry(
-        "https://ollama.com/api/chat",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model,
-            stream: false,
-            format: "json",
-            options: {
-              temperature: 0.4
-            },
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You generate structured Instagram content payloads for direct rendering and publishing."
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ]
-          })
-        },
+      const rawGenerated = await requestJsonGeneration({
+        model,
+        prompt,
+        system: "You generate structured Instagram content payloads for direct rendering and publishing.",
+        temperature: 0.4,
         timeoutMs
-      ).finally(() => {
+      }).finally(() => {
         clearInterval(heartbeat);
       });
 
-      const responseText = await response.text();
-      if (!response.ok) {
-        throw new Error(`Ollama request failed: ${response.status} ${responseText}`.trim());
-      }
-      const parsedResponse = ollamaResponseSchema.parse(JSON.parse(responseText));
       console.info("[openai] Generation attempt finished", {
+        provider,
         model,
         attempt: index + 1,
         durationMs: Date.now() - attemptStartedAt,
-        totalDurationMs: Date.now() - requestStartedAt,
-        responseBytes: responseText.length
-      });
-      const extractedJson = extractJsonPayload(parsedResponse.message.content);
-      console.info("[openai] Parsing generated JSON", {
-        model,
-        attempt: index + 1,
-        contentBytes: parsedResponse.message.content.length,
-        extractedBytes: extractedJson.length,
         totalDurationMs: Date.now() - requestStartedAt
       });
-      const generated = sanitizeGeneratedPost(
-        coerceGeneratedPost(parseGeneratedPostJson(extractedJson)),
-        input
-      );
+
+      const generated = sanitizeGeneratedPost(coerceGeneratedPost(rawGenerated), input);
       console.info("[openai] Generated JSON parsed", {
+        provider,
         model,
         attempt: index + 1,
         captionBytes: generated.caption.length,
@@ -203,11 +101,12 @@ export async function requestInstagramPostGeneration(
     } catch (error) {
       const message =
         error instanceof Error && error.name === "AbortError"
-          ? `Ollama request timed out after ${Math.round(timeoutMs / 1000)} seconds.`
+          ? `${provider} request timed out after ${Math.round(timeoutMs / 1000)} seconds.`
           : error instanceof Error
             ? error.message
             : String(error);
       console.warn("[openai] Generation attempt failed", {
+        provider,
         model,
         attempt: index + 1,
         durationMs: Date.now() - attemptStartedAt,
@@ -222,6 +121,6 @@ export async function requestInstagramPostGeneration(
   }
 
   throw new Error(
-    attemptErrors[attemptErrors.length - 1] ?? "Ollama generation failed unexpectedly."
+    attemptErrors[attemptErrors.length - 1] ?? `${provider} generation failed unexpectedly.`
   );
 }

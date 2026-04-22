@@ -8,7 +8,7 @@ const localPort = 3020;
 const localUrl = `http://127.0.0.1:${localPort}`;
 const redirectPath = "/api/auth/instagram/callback";
 const shouldSkipTunnel = process.env.SKIP_TUNNEL === "1" || process.env.SKIP_TUNNEL === "true";
-const fixedPublicUrl = process.env.FIXED_PUBLIC_URL?.trim().replace(/\/$/, "") ?? "";
+const fixedPublicUrl = normalizePublicUrl(process.env.FIXED_PUBLIC_URL ?? readEnvValue("FIXED_PUBLIC_URL") ?? "");
 
 let shuttingDown = false;
 let nextProcess;
@@ -28,6 +28,21 @@ function readEnvFile() {
 
     throw error;
   }
+}
+
+function readEnvValue(key) {
+  const pattern = new RegExp(`^${key}\\s*=\\s*(.*)$`, "m");
+  const match = readEnvFile().match(pattern);
+
+  if (!match) {
+    return "";
+  }
+
+  return match[1].trim().replace(/^["']|["']$/g, "");
+}
+
+function normalizePublicUrl(value) {
+  return value.trim().replace(/\/$/, "");
 }
 
 function upsertEnvValue(content, key, value) {
@@ -219,6 +234,11 @@ if (shouldSkipTunnel) {
 } else if (fixedPublicUrl) {
   updateEnvFile(fixedPublicUrl);
   log(`FIXED_PUBLIC_URL detectado. Mantendo callback fixo em ${fixedPublicUrl}${redirectPath}`);
+  if (/\.trycloudflare\.com$/i.test(new URL(fixedPublicUrl).hostname)) {
+    log("Atencao: FIXED_PUBLIC_URL usa trycloudflare, mas quick tunnels sao temporarios.");
+    log("Esta execucao nao vai criar um cloudflared novo. A URL publica so funciona se o tunnel correspondente ainda estiver ativo.");
+    log("Se a publicacao falhar com fetch failed, crie um novo tunnel e atualize APP_BASE_URL/Meta, ou use um Cloudflare named tunnel fixo.");
+  }
   log("Nenhum quick tunnel aleatorio sera criado nesta execucao.");
   startNext();
 } else {

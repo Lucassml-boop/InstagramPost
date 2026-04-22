@@ -4,6 +4,8 @@ import {
   MEDIA_CONTAINER_POLL_INTERVAL_MS
 } from "./instagram.constants.ts";
 import { getInstagramAccessToken, getStoredInstagramUserId } from "./instagram.access-token.ts";
+import fs from "node:fs";
+import path from "node:path";
 
 const MEDIA_PUBLISH_MAX_RETRIES = 3;
 
@@ -34,9 +36,68 @@ function isTransientMediaIdUnavailable(message: string | null | undefined) {
   return message.toLowerCase().includes("media id is not available");
 }
 
+function getLocalGeneratedAssetInfo(imageUrl: string) {
+  try {
+    const url = new URL(imageUrl);
+    if (!url.pathname.startsWith("/generated-posts/")) {
+      return null;
+    }
+
+    const relativePath = url.pathname.replace(/^\/+/, "").split("/").map(decodeURIComponent);
+    const localPath = path.join(process.cwd(), "public", ...relativePath);
+    const stats = fs.existsSync(localPath) ? fs.statSync(localPath) : null;
+
+    return {
+      localPath,
+      exists: Boolean(stats?.isFile()),
+      bytes: stats?.isFile() ? stats.size : null,
+      lastWriteTime: stats?.isFile() ? stats.mtime.toISOString() : null
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getPublicImageProbeContext(imageUrl: string) {
+  let parsedUrl: URL | null = null;
+  try {
+    parsedUrl = new URL(imageUrl);
+  } catch {
+    parsedUrl = null;
+  }
+
+  const publicBaseUrl = process.env.APP_BASE_URL ?? null;
+  const fixedPublicUrl = process.env.FIXED_PUBLIC_URL ?? null;
+  const localAsset = getLocalGeneratedAssetInfo(imageUrl);
+  const isTryCloudflare = parsedUrl?.hostname.endsWith(".trycloudflare.com") ?? false;
+
+  return {
+    imageUrl,
+    imageHost: parsedUrl?.hostname ?? null,
+    imagePath: parsedUrl?.pathname ?? null,
+    appBaseUrl: publicBaseUrl,
+    fixedPublicUrl,
+    isTryCloudflare,
+    localAsset,
+    likelyCause: isTryCloudflare
+      ? "O dominio trycloudflare e temporario. Se o processo do tunnel antigo caiu ou npm run dev foi reiniciado com FIXED_PUBLIC_URL, essa URL pode deixar de existir."
+      : "A URL publica nao respondeu ao probe do servidor.",
+    nextSteps: [
+      "Abra a URL da imagem em uma janela anonima ou em outro dispositivo/rede.",
+      "Confirme que APP_BASE_URL aponta para um dominio publico ativo.",
+      isTryCloudflare
+        ? "Para trycloudflare, mantenha o mesmo processo cloudflared vivo ou crie um novo tunnel e atualize APP_BASE_URL, INSTAGRAM_REDIRECT_URI e o callback na Meta."
+        : "Verifique DNS, HTTPS, firewall e se a rota /generated-posts esta servindo o arquivo."
+    ]
+  };
+}
+
 async function assertImageUrlIsReachable(imageUrl: string) {
   let imageProbeResponse: Response | null = null;
   let lastProbeError: unknown = null;
+  const probeContext = getPublicImageProbeContext(imageUrl);
+
+  console.info("[instagram-media] Public image probe started", probeContext);
 
   try {
     imageProbeResponse = await fetch(imageUrl, {
@@ -46,6 +107,15 @@ async function assertImageUrlIsReachable(imageUrl: string) {
     });
   } catch (error) {
     lastProbeError = error;
+    console.warn("[instagram-media] Public image HEAD probe failed, trying GET fallback", {
+      ...probeContext,
+      detail: error instanceof Error ? error.message : String(error),
+      errorName: error instanceof Error ? error.name : null,
+      errorCause:
+        error instanceof Error && "cause" in error
+          ? String((error as { cause?: unknown }).cause)
+          : null
+    });
   }
 
   if (!imageProbeResponse || !imageProbeResponse.ok) {
@@ -57,13 +127,28 @@ async function assertImageUrlIsReachable(imageUrl: string) {
       });
     } catch (error) {
       lastProbeError = error;
+      console.warn("[instagram-media] Public image GET fallback failed", {
+        ...probeContext,
+        previousHeadStatus: imageProbeResponse?.status ?? null,
+        detail: error instanceof Error ? error.message : String(error),
+        errorName: error instanceof Error ? error.name : null,
+        errorCause:
+          error instanceof Error && "cause" in error
+            ? String((error as { cause?: unknown }).cause)
+            : null
+      });
     }
   }
 
   if (!imageProbeResponse) {
     console.error("[instagram-media] Public image probe failed", {
-      imageUrl,
-      detail: lastProbeError instanceof Error ? lastProbeError.message : String(lastProbeError)
+      ...probeContext,
+      detail: lastProbeError instanceof Error ? lastProbeError.message : String(lastProbeError),
+      errorName: lastProbeError instanceof Error ? lastProbeError.name : null,
+      errorCause:
+        lastProbeError instanceof Error && "cause" in lastProbeError
+          ? String((lastProbeError as { cause?: unknown }).cause)
+          : null
     });
 
     throw new Error(
@@ -83,18 +168,31 @@ async function assertImageUrlIsReachable(imageUrl: string) {
   const imageContentLength = imageProbeResponse.headers.get("content-length");
 
   console.info("[instagram-media] Public image probe completed", {
-    imageUrl,
+    ...probeContext,
     status: imageProbeResponse.status,
     contentType: imageContentType,
     contentLength: imageContentLength
   });
 
   if (!imageProbeResponse.ok) {
+    console.error("[instagram-media] Public image probe returned non-OK status", {
+      ...probeContext,
+      status: imageProbeResponse.status,
+      statusText: imageProbeResponse.statusText,
+      contentType: imageContentType,
+      contentLength: imageContentLength
+    });
     throw new Error(
       `Nao foi possivel publicar no Instagram porque a imagem do post respondeu com status ${imageProbeResponse.status} na URL publica. Verifique se o dominio ou tunel publico esta ativo e se a imagem abre normalmente fora da sua maquina.`
     );
   }
   if (!imageContentType?.startsWith("image/")) {
+    console.error("[instagram-media] Public image probe returned invalid content-type", {
+      ...probeContext,
+      status: imageProbeResponse.status,
+      contentType: imageContentType,
+      contentLength: imageContentLength
+    });
     throw new Error(
       `Nao foi possivel publicar no Instagram porque a URL publica do post nao retornou uma imagem valida. O servidor respondeu com content-type ${imageContentType ?? "desconhecido"}.`
     );

@@ -128,5 +128,15 @@
     "date": "2026-04-27",
     "day": "Segunda",
     "theme": "Escala operacional de 50 para 500 pedidos diários sem aumentar equipe de fulfillment"
+  },
+  {
+    "date": "2026-04-21",
+    "day": "Terca",
+    "theme": "Dashboard operacional que mostra o que vender, repor e acelerar hoje"
+  },
+  {
+    "date": "2026-04-27",
+    "day": "Segunda",
+    "theme": "Como unificar Mercado Livre e Shopee sem duplicar cadastros e ajustes manuais"
   }
 ]
