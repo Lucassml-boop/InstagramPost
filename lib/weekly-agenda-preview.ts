@@ -21,6 +21,7 @@ export async function publishWeeklyAgendaPreview(input: {
     getCurrentWeeklyAgenda(),
     getContentBrandProfile()
   ]);
+  const resolvedBrandColors = brandProfile.brandColors?.trim() || DEFAULT_BRAND_COLORS;
 
   if (agenda.length === 0) {
     throw new Error("No weekly agenda is available to publish.");
@@ -60,7 +61,7 @@ export async function publishWeeklyAgendaPreview(input: {
             ? ("en" as const)
             : ("pt-BR" as const),
         customInstructions: input.user.preferredCustomInstructions?.trim() || "",
-        brandColors: DEFAULT_BRAND_COLORS,
+        brandColors: resolvedBrandColors,
         keywords: item.topicKeywords.join(", "),
         userTopicHint: "",
         allowSimilarPost: false
@@ -98,7 +99,7 @@ export async function publishWeeklyAgendaPreview(input: {
         message: generationInput.message,
         tone: generationInput.tone,
         postType,
-        brandColors: DEFAULT_BRAND_COLORS,
+        brandColors: resolvedBrandColors,
         keywords: generationInput.keywords,
         caption: generated.caption,
         hashtags: generated.hashtags,

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { DEFAULT_CUSTOM_INSTRUCTIONS } from "@/components/create-post/constants";
+import { parseBrandColors, serializeBrandColors } from "@/components/create-post/utils";
 import { renderStatusMessage, parseTextareaItems } from "@/components/content-automation/helpers";
 import { useContentAutomation } from "@/hooks/useContentAutomation";
 import { createEmptyBriefingFields, parseStoredCustomInstructions, serializeStoredCustomInstructions } from "@/lib/briefing-builder";
@@ -23,6 +24,13 @@ import { SourcesSection } from "./settings-sections/SourcesSection";
 import { StrategySection } from "./settings-sections/StrategySection";
 import type { DayLabel, Props } from "./types";
 import { DAY_ORDER, expandPreviewPostTimes } from "./utils";
+
+const CONTENT_AUTOMATION_BRAND_COLORS_HISTORY_KEY =
+  "content-automation-brand-colors-history-v1";
+
+function normalizeBrandColorsValue(value: string) {
+  return serializeBrandColors(parseBrandColors(value));
+}
 
 const ENGLISH_DAY_TO_LABEL: Record<string, DayLabel> = {
   monday: "Segunda",
@@ -88,7 +96,69 @@ export function ContentAutomationSettings({ initialProfile, initialAgenda, initi
   const [expandedDays, setExpandedDays] = useState<Record<DayLabel, boolean>>(Object.fromEntries(DAY_ORDER.map((day, index) => [day, index === 0])) as Record<DayLabel, boolean>);
   const [openPresetPicker, setOpenPresetPicker] = useState<string | null>(null);
   const [activeQueueFilter, setActiveQueueFilter] = useState<"queued" | "generating" | "scheduled" | null>(null);
+  const [brandColorsHistory, setBrandColorsHistory] = useState<string[]>([]);
   const automation = useContentAutomation({ initialProfile, initialAgenda, initialWeekPosts, initialAgendaSummary, initialTopicsHistory, dictionary: { saveSuccess: dictionary.contentAutomation.saveSuccess, saveError: dictionary.contentAutomation.saveError, generateSuccess: dictionary.contentAutomation.generateSuccess, generateError: dictionary.contentAutomation.generateError, clearAgendaSuccess: dictionary.contentAutomation.clearAgendaSuccess, clearAgendaError: dictionary.contentAutomation.clearAgendaError, clearQueuedSuccess: dictionary.contentAutomation.clearQueuedSuccess, clearGeneratingSuccess: dictionary.contentAutomation.clearGeneratingSuccess, clearScheduledSuccess: dictionary.contentAutomation.clearScheduledSuccess, clearQueueError: dictionary.contentAutomation.clearQueueError, clearTopicsHistorySuccess: dictionary.contentAutomation.clearTopicsHistorySuccess, clearTopicsHistoryError: dictionary.contentAutomation.clearTopicsHistoryError } });
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(CONTENT_AUTOMATION_BRAND_COLORS_HISTORY_KEY);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const normalized = parsed
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => normalizeBrandColorsValue(value))
+        .filter(Boolean);
+
+      setBrandColorsHistory(Array.from(new Set(normalized)).slice(0, 12));
+    } catch {
+      window.localStorage.removeItem(CONTENT_AUTOMATION_BRAND_COLORS_HISTORY_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      CONTENT_AUTOMATION_BRAND_COLORS_HISTORY_KEY,
+      JSON.stringify(brandColorsHistory)
+    );
+  }, [brandColorsHistory]);
+
+  useEffect(() => {
+    const normalized = normalizeBrandColorsValue(automation.brandColors);
+    if (!normalized || normalized === automation.brandColors) {
+      return;
+    }
+
+    automation.setBrandColors(normalized);
+  }, [automation.brandColors, automation.setBrandColors]);
+
+  const saveBrandColorsToHistory = () => {
+    const normalized = normalizeBrandColorsValue(automation.brandColors);
+    if (!normalized) {
+      return;
+    }
+
+    automation.setBrandColors(normalized);
+    setBrandColorsHistory((current) => {
+      const next = [normalized, ...current.filter((item) => item !== normalized)];
+      return next.slice(0, 12);
+    });
+  };
+
+  const removeBrandColorsFromHistory = (value: string) => {
+    const normalized = normalizeBrandColorsValue(value);
+    if (!normalized) {
+      return;
+    }
+
+    setBrandColorsHistory((current) => current.filter((item) => item !== normalized));
+  };
 
   const getConfirmedDaySlotData = (day: DayLabel) => {
     const dayConfig = automation.daySettings[day];
@@ -398,8 +468,7 @@ export function ContentAutomationSettings({ initialProfile, initialAgenda, initi
 
   const saveGenerationSettings = () => startSavingGenerationSettings(async () => { setGenerationSettingsMessage(null); try { const json = await saveGenerationSettingsService({ outputLanguage, customInstructions: serializeStoredCustomInstructions({ mode: briefingMode, fields: guidedBriefingFields, prompt: effectiveCustomInstructions }) }); if (json.outputLanguage) setOutputLanguage(json.outputLanguage); if (typeof json.customInstructions === "string") { const parsed = parseStoredCustomInstructions(json.customInstructions); setBriefingMode(parsed.mode); setGuidedBriefingFields(parsed.fields); setCustomInstructions(parsed.prompt || DEFAULT_CUSTOM_INSTRUCTIONS); } setGenerationSettingsMessage(dictionary.generator.settingsSaved); } catch (requestError) { automation.setError(getClientRequestErrorMessage(requestError, dictionary.generator.settingsSaveError, dictionary.common.serverConnectionError)); } });
   const generateAutomaticSettingsBundle = () => startAutoGeneratingAllSettings(async () => { setGenerationSettingsMessage(null); automation.setError(null); try { const json = await generateAutomaticSettingsBundleService({ profile: automation.builtProfile, customInstructions: effectiveCustomInstructions }); automation.setBrandName(json.brandName ?? automation.brandName); automation.setEditableBrief(json.editableBrief ?? automation.editableBrief); automation.setServices(json.services ?? automation.services); automation.setContentRules(json.contentRules ?? automation.contentRules); automation.setResearchQueries(json.researchQueries ?? automation.researchQueries); automation.setCarouselDefaultStructure(json.carouselDefaultStructure ?? automation.carouselDefaultStructure); automation.updatePreset("goalPresets", json.goalPresets ?? automation.presets.goalPresets); automation.updatePreset("contentTypePresets", json.contentTypePresets ?? automation.presets.contentTypePresets); automation.updatePreset("formatPresets", json.formatPresets ?? automation.presets.formatPresets); if (typeof json.customInstructions === "string") { setBriefingMode("prompt"); setCustomInstructions(json.customInstructions || DEFAULT_CUSTOM_INSTRUCTIONS); } } catch (requestError) { automation.setError(getClientRequestErrorMessage(requestError, dictionary.contentAutomation.generateError, dictionary.common.serverConnectionError)); } });
-
-  const settingsSectionProps = { dictionary, brandName: automation.brandName, setBrandName: automation.setBrandName, editableBrief: automation.editableBrief, setEditableBrief: automation.setEditableBrief, automationLoopEnabled: automation.automationLoopEnabled, setAutomationLoopEnabled: automation.setAutomationLoopEnabled, topicsHistoryCleanupFrequency: automation.topicsHistoryCleanupFrequency, setTopicsHistoryCleanupFrequency: automation.setTopicsHistoryCleanupFrequency, generationRigor: automation.generationRigor, setGenerationRigor: automation.setGenerationRigor, historyLookbackDays: automation.historyLookbackDays, setHistoryLookbackDays: automation.setHistoryLookbackDays, services: automation.services, setServices: automation.setServices, contentRules: automation.contentRules, setContentRules: automation.setContentRules, researchQueries: automation.researchQueries, setResearchQueries: automation.setResearchQueries, carouselDefaultStructure: automation.carouselDefaultStructure, setCarouselDefaultStructure: automation.setCarouselDefaultStructure, presets: automation.presets, updatePreset: automation.updatePreset, renderAutoButton, runAutomaticSetting, saveSettings: automation.saveSettings, generateWeeklyAgenda: automation.generateWeeklyAgenda, cancelWeeklyGeneration: automation.cancelWeeklyGeneration, isSaving: automation.isSaving, isGenerating: automation.isGenerating, currentTopics: automation.currentTopics, uniqueTopicsHistory: automation.uniqueTopicsHistory, clearTopicsHistory: automation.clearTopicsHistory };
+  const settingsSectionProps = { dictionary, brandName: automation.brandName, setBrandName: automation.setBrandName, editableBrief: automation.editableBrief, setEditableBrief: automation.setEditableBrief, brandColors: automation.brandColors, setBrandColors: automation.setBrandColors, brandColorsHistory, saveBrandColorsToHistory, removeBrandColorsFromHistory, automationLoopEnabled: automation.automationLoopEnabled, setAutomationLoopEnabled: automation.setAutomationLoopEnabled, topicsHistoryCleanupFrequency: automation.topicsHistoryCleanupFrequency, setTopicsHistoryCleanupFrequency: automation.setTopicsHistoryCleanupFrequency, generationRigor: automation.generationRigor, setGenerationRigor: automation.setGenerationRigor, historyLookbackDays: automation.historyLookbackDays, setHistoryLookbackDays: automation.setHistoryLookbackDays, services: automation.services, setServices: automation.setServices, contentRules: automation.contentRules, setContentRules: automation.setContentRules, researchQueries: automation.researchQueries, setResearchQueries: automation.setResearchQueries, carouselDefaultStructure: automation.carouselDefaultStructure, setCarouselDefaultStructure: automation.setCarouselDefaultStructure, presets: automation.presets, updatePreset: automation.updatePreset, renderAutoButton, runAutomaticSetting, saveSettings: automation.saveSettings, generateWeeklyAgenda: automation.generateWeeklyAgenda, cancelWeeklyGeneration: automation.cancelWeeklyGeneration, isSaving: automation.isSaving, isGenerating: automation.isGenerating, currentTopics: automation.currentTopics, uniqueTopicsHistory: automation.uniqueTopicsHistory, clearTopicsHistory: automation.clearTopicsHistory };
   const agendaSectionProps = { dictionary, daySettings: automation.daySettings, expandedDays, toggleExpandedDay: (day: DayLabel) => setExpandedDays((current) => ({ ...current, [day]: !current[day] })), toggleDay: automation.toggleDay, updateDay: automation.updateDay, updateDayPostTime: automation.updateDayPostTime, updateDayPostIdea: automation.updateDayPostIdea, toggleDayPostConfirmation: automation.toggleDayPostConfirmation, renderPresetPicker, goalPresetItems, contentTypePresetItems, formatPresetItems, autoFillKey: automation.autoFillKey, generateAutomaticPostIdea: automation.generateAutomaticPostIdea, autoFillNewDayPost: automation.autoFillNewDayPost, dismissAutoFillSuggestion: automation.dismissAutoFillSuggestion, suggestedAutoFillTargets: automation.suggestedAutoFillTargets, postTimesByDay, slotRuntimeStatusByKey, setAllDaysEnabled: automation.setAllDaysEnabled, saveSettings: automation.saveSettings, generateWeeklyAgenda: automation.generateWeeklyAgenda, cancelWeeklyGeneration: automation.cancelWeeklyGeneration, isSaving: automation.isSaving, isGenerating: automation.isGenerating, currentTopics: automation.currentTopics, groupedAgenda, totalExpectedPosts, agendaSummary: automation.agendaSummary, keepUsingStaleAgenda: automation.keepUsingStaleAgenda, clearAgenda: automation.clearAgenda, isResolvingStaleAgenda: automation.isResolvingStaleAgenda, isClearingAgenda: automation.isClearingAgenda, generationStatus: automation.generationStatus };
 
   return <div className="space-y-6">{renderStatusMessage(automation.message, automation.error)}{initialTab === "settings" ? <><BriefingControlsSection dictionary={dictionary} outputLanguage={outputLanguage} setOutputLanguage={setOutputLanguage} briefingMode={briefingMode} setBriefingMode={setBriefingMode} /><BriefingEditorSection dictionary={dictionary} briefingMode={briefingMode} briefingFieldDefinitions={briefingFieldDefinitions} guidedBriefingFields={guidedBriefingFields} updateGuidedBriefingField={(field, value) => setGuidedBriefingFields((current) => ({ ...current, [field]: value }))} guidedBriefingPrompt={guidedBriefingPrompt} customInstructions={customInstructions} setCustomInstructions={setCustomInstructions} renderAutoButton={renderAutoButton} generatePromptInstructions={() => runAutomaticSetting({ key: "customInstructions", target: "customInstructions", currentValue: customInstructions, apply: (value) => { setBriefingMode("prompt"); setCustomInstructions(value); } })} clearGuidedBriefing={() => setGuidedBriefingFields(createEmptyBriefingFields())} /><BriefingActionsBar dictionary={dictionary} generateAutomaticSettingsBundle={generateAutomaticSettingsBundle} isAutoGeneratingAllSettings={isAutoGeneratingAllSettings} saveGenerationSettings={saveGenerationSettings} isSavingGenerationSettings={isSavingGenerationSettings} generationSettingsMessage={generationSettingsMessage} /><StrategySection {...settingsSectionProps} /><div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]"><SourcesSection {...settingsSectionProps} /><AutomationSection {...settingsSectionProps} /></div><MemorySection {...settingsSectionProps} /><LanguageSection dictionary={dictionary} /><PresetLibrarySection {...settingsSectionProps} /></> : null}{initialTab === "agenda" ? <><div className="flex justify-end"><button type="button" onClick={() => { if (!window.confirm(dictionary.contentAutomation.clearAgendaConfirm)) { return; } automation.clearAgenda(); }} disabled={automation.isClearingAgenda || automation.isResolvingStaleAgenda || automation.isSaving || automation.isGenerating} className="rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-400 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-60">{automation.isClearingAgenda ? dictionary.contentAutomation.clearingAgenda : dictionary.contentAutomation.clearAgenda}</button></div><NextPostCountdownCard dictionary={dictionary} groupedAgenda={groupedAgenda} weekPosts={automation.weekPosts} queueSummary={queueSummary} queueDetails={queueDetails} activeQueueFilter={activeQueueFilter} onQueueFilterChange={setActiveQueueFilter} onClearQueued={() => { if (queueActionTargets.queuedSlotKeys.length === 0) { return; } if (!window.confirm(dictionary.contentAutomation.clearQueuedConfirm)) { return; } automation.clearQueueByStatus({ status: "queued", slotKeys: queueActionTargets.queuedSlotKeys }); setActiveQueueFilter(null); }} onClearGenerating={() => { if (queueActionTargets.generatingSlotKeys.length === 0) { return; } if (!window.confirm(dictionary.contentAutomation.clearGeneratingConfirm)) { return; } automation.clearQueueByStatus({ status: "generating", slotKeys: queueActionTargets.generatingSlotKeys, postIds: queueActionTargets.generatingPostIds }); setActiveQueueFilter(null); }} onClearScheduled={() => { if (queueActionTargets.scheduledSlotKeys.length === 0) { return; } if (!window.confirm(dictionary.contentAutomation.clearScheduledConfirm)) { return; } automation.clearQueueByStatus({ status: "scheduled", slotKeys: queueActionTargets.scheduledSlotKeys, postIds: queueActionTargets.scheduledPostIds }); setActiveQueueFilter(null); }} isClearingQueue={automation.isClearingQueue} clearingQueueStatus={automation.clearingQueueStatus} /><AgendaAutomationSection {...agendaSectionProps} /><AgendaRulesSection {...agendaSectionProps} /><GeneratedAgendaSection dictionary={dictionary} groupedAgenda={groupedAgenda} totalExpectedPosts={totalExpectedPosts} agendaSummary={automation.agendaSummary} keepUsingStaleAgenda={automation.keepUsingStaleAgenda} isResolvingStaleAgenda={automation.isResolvingStaleAgenda} activeQueueFilter={activeQueueFilter} slotRuntimeStatusByKey={slotRuntimeStatusByKey} daySettings={automation.daySettings} updateDayPostIdea={automation.updateDayPostIdea} /></> : null}</div>;

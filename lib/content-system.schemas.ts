@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_CONTENT_BRAND_COLORS } from "./content-system.constants.ts";
 
 export const contentPlanItemSchema = z.object({
   date: z.string().min(1),
@@ -30,6 +31,7 @@ export function createWeeklyAgendaSchema(expectedCount: number) {
 export const brandProfileSchema = z.object({
   brandName: z.string().min(1),
   editableBrief: z.string().min(1),
+  brandColors: z.string().min(2).default(DEFAULT_CONTENT_BRAND_COLORS),
   automationLoopEnabled: z.boolean().default(true),
   topicsHistoryCleanupFrequency: z
     .enum(["disabled", "daily", "weekly", "monthly"])

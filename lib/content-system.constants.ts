@@ -20,5 +20,11 @@ export const DAY_ORDER = [
 export const DEFAULT_OLLAMA_TIMEOUT_MS = 480_000;
 export const DEFAULT_AUTOMATIC_POST_IDEA_TIMEOUT_MS = 45_000;
 export const DEFAULT_DISABLED_DAYS = new Set(["Sabado", "Domingo"]);
+export const DEFAULT_CONTENT_BRAND_COLORS = [
+  "Cor principal: #1d4ed8",
+  "Cor de fundo: #101828",
+  "Cor de apoio: #38bdf8",
+  "Cor de destaque: #f8fafc"
+].join("\n");
 
 export type DayLabel = (typeof DAY_ORDER)[number];

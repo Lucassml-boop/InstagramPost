@@ -12,13 +12,35 @@ declare global {
   var __postSchedulerStarted__: boolean | undefined;
 }
 
+function resolveSchedulerTimezone() {
+  const rawTimezone = process.env.TZ?.trim();
+  if (!rawTimezone) {
+    return "America/Sao_Paulo";
+  }
+
+  const normalizedTimezone = rawTimezone.startsWith(":")
+    ? rawTimezone.slice(1)
+    : rawTimezone;
+
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: normalizedTimezone });
+    return normalizedTimezone;
+  } catch {
+    console.warn("[scheduler] Invalid timezone from environment, falling back", {
+      rawTimezone,
+      fallbackTimezone: "America/Sao_Paulo"
+    });
+    return "America/Sao_Paulo";
+  }
+}
+
 export function startPostScheduler() {
   if (global.__postSchedulerStarted__) {
     return;
   }
 
   global.__postSchedulerStarted__ = true;
-  const timezone = process.env.TZ?.trim() || "America/Sao_Paulo";
+  const timezone = resolveSchedulerTimezone();
 
   console.info("[scheduler] Starting post scheduler", {
     timezone,

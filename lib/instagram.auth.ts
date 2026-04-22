@@ -70,13 +70,23 @@ export async function exchangeCodeForAccessToken(code: string, redirectUri?: str
   };
 }
 
-async function requestGraphToken(url: string, failureMessage: string) {
-  const response = await fetch(url, { cache: "no-store" });
+async function requestGraphToken(
+  endpoint: string,
+  params: URLSearchParams,
+  failureMessage: string
+) {
+  const url = new URL(endpoint);
+  url.search = params.toString();
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store"
+  });
   const json = await response.json();
   if (!response.ok || !json.access_token) {
     console.error("[instagram] Graph token request failed", {
       status: response.status,
-      url,
+      endpoint,
       errorMessage: json.error?.message ?? json.error_message ?? null,
       errorCode: json.error?.code ?? null
     });
@@ -96,9 +106,12 @@ export async function exchangeForLongLivedAccessToken(shortLivedAccessToken: str
     accessTokenLength: shortLivedAccessToken.length
   });
   const result = await requestGraphToken(
-    `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(
-      requireEnv("INSTAGRAM_APP_SECRET")
-    )}&access_token=${encodeURIComponent(shortLivedAccessToken)}`,
+    "https://graph.instagram.com/access_token",
+    new URLSearchParams({
+      grant_type: "ig_exchange_token",
+      client_secret: requireEnv("INSTAGRAM_APP_SECRET"),
+      access_token: shortLivedAccessToken
+    }),
     "Unable to exchange for a long-lived Instagram token."
   );
   console.log("[instagram] Long-lived token exchange succeeded", {
@@ -112,9 +125,11 @@ export async function refreshLongLivedAccessToken(accessToken: string) {
     accessTokenLength: accessToken.length
   });
   const result = await requestGraphToken(
-    `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(
-      accessToken
-    )}`,
+    "https://graph.instagram.com/refresh_access_token",
+    new URLSearchParams({
+      grant_type: "ig_refresh_token",
+      access_token: accessToken
+    }),
     "Unable to refresh Instagram access token."
   );
   console.log("[instagram] Token refresh succeeded", {
