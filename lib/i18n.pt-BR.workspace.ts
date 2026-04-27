@@ -19,7 +19,15 @@ dashboard: {
   quickActions: "Acoes rapidas",
   createPost: "Criar Post",
   viewScheduledPosts: "Ver Posts Agendados",
-  connectedAccount: "Conta do Instagram conectada"
+  connectedAccount: "Conta do Instagram conectada",
+  operationalHealth: "Saude operacional",
+  ready: "Pronto",
+  attention: "Precisa de atencao",
+  lastPublishCron: "Ultimo cron de publicacao",
+  never: "Nunca",
+  publicUrlMissing: "URL publica de midia ausente",
+  tokenExpires: "Token expira",
+  failedPosts: "Posts com falha"
 },
 
 connectInstagram: {

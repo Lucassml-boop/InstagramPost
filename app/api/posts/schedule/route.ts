@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { schedulePost } from "@/lib/posts";
+import { rateLimitResponse } from "@/lib/rate-limit";
 import { jsonError } from "@/lib/server-utils";
 import { schedulePostSchema } from "@/lib/validators";
 
@@ -10,6 +11,15 @@ export async function POST(request: Request) {
 
     if (!user) {
       return jsonError("Unauthorized", 401);
+    }
+
+    const rateLimit = rateLimitResponse({
+      key: `posts:schedule:${user.id}`,
+      limit: 60,
+      windowMs: 60 * 60 * 1000
+    });
+    if (rateLimit) {
+      return rateLimit;
     }
 
     const parsed = schedulePostSchema.parse(await request.json());

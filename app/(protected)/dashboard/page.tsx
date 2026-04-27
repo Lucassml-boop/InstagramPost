@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { InstagramAccountCard } from "@/components/dashboard";
 import { Panel, SectionTitle } from "@/components/shared";
+import { getLatestAutomationRun } from "@/lib/automation-runs";
 import { destroySession, getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocaleFromCookies } from "@/lib/i18n-server";
@@ -26,14 +27,26 @@ export default async function DashboardPage({
     where: { userId: user.id }
   });
   const instagramSnapshot = instagram ? getInstagramAccountSnapshot(instagram) : null;
-  const [scheduledCount, publishedCount] = await Promise.all([
+  const [scheduledCount, publishedCount, failedCount, lastPublishCron] = await Promise.all([
     prisma.post.count({
       where: { userId: user.id, status: "SCHEDULED" }
     }),
     prisma.post.count({
       where: { userId: user.id, status: "PUBLISHED" }
-    })
+    }),
+    prisma.post.count({
+      where: { userId: user.id, status: "FAILED" }
+    }),
+    getLatestAutomationRun("publish-scheduled")
   ]);
+  const publicAssetBaseUrl = process.env.APP_BASE_URL ?? process.env.FIXED_PUBLIC_URL ?? "";
+  const hasPublicAssetUrl =
+    publicAssetBaseUrl.startsWith("https://") && !publicAssetBaseUrl.includes("localhost");
+  const tokenExpiresAt = instagram?.tokenExpiresAt ?? null;
+  const tokenExpiresSoon =
+    Boolean(tokenExpiresAt) && tokenExpiresAt!.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+  const needsAttention =
+    !instagramSnapshot?.connected || !hasPublicAssetUrl || failedCount > 0 || tokenExpiresSoon;
 
   async function logoutAction() {
     "use server";
@@ -76,7 +89,7 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+      <div className="mt-8 grid gap-4 md:grid-cols-4">
         <Panel className="p-5">
           <p className="text-sm text-slate-500">{dictionary.dashboard.connectionStatus}</p>
           <p className="mt-2 text-2xl font-semibold text-ink">
@@ -90,6 +103,31 @@ export default async function DashboardPage({
         <Panel className="p-5">
           <p className="text-sm text-slate-500">{dictionary.dashboard.publishedPosts}</p>
           <p className="mt-2 text-2xl font-semibold text-ink">{publishedCount}</p>
+        </Panel>
+        <Panel className="p-5">
+          <p className="text-sm text-slate-500">{dictionary.dashboard.operationalHealth}</p>
+          <p className={`mt-2 text-2xl font-semibold ${needsAttention ? "text-amber-700" : "text-emerald-700"}`}>
+            {needsAttention ? dictionary.dashboard.attention : dictionary.dashboard.ready}
+          </p>
+          <div className="mt-3 space-y-1 text-xs text-slate-500">
+            <p>
+              {dictionary.dashboard.lastPublishCron}:{" "}
+              {lastPublishCron?.startedAt
+                ? lastPublishCron.startedAt.toLocaleString(locale)
+                : dictionary.dashboard.never}
+            </p>
+            {!hasPublicAssetUrl ? <p>{dictionary.dashboard.publicUrlMissing}</p> : null}
+            {tokenExpiresAt ? (
+              <p>
+                {dictionary.dashboard.tokenExpires}: {tokenExpiresAt.toLocaleDateString(locale)}
+              </p>
+            ) : null}
+            {failedCount > 0 ? (
+              <p>
+                {dictionary.dashboard.failedPosts}: {failedCount}
+              </p>
+            ) : null}
+          </div>
         </Panel>
       </div>
 

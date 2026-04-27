@@ -26,8 +26,8 @@ export async function POST(request: Request) {
   try {
     const parsed = requestSchema.parse(await request.json());
     const [agenda, profile] = await Promise.all([
-      getCurrentWeeklyAgenda(),
-      getContentBrandProfile()
+      getCurrentWeeklyAgenda(user.id),
+      getContentBrandProfile(user.id)
     ]);
 
     const [agendaWithStatus, metadata] = await Promise.all([

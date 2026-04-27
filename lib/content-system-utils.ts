@@ -50,7 +50,6 @@ const GENERIC_TOPIC_TERMS = new Set([
   "resultados",
   "rotina",
   "seller",
-  "shopee",
   "sistema",
   "sistemas",
   "tempo",
@@ -151,6 +150,16 @@ export function isSameOrSimilarTopic(candidate: string, existing: string) {
     normalizedCandidate === normalizedExisting ||
     normalizedCandidate.includes(normalizedExisting) ||
     normalizedExisting.includes(normalizedCandidate)
+  ) {
+    return true;
+  }
+
+  const candidateWords = normalizeTopic(candidate).split(" ").filter(Boolean).sort();
+  const existingWords = normalizeTopic(existing).split(" ").filter(Boolean).sort();
+  if (
+    candidateWords.length > 0 &&
+    candidateWords.length === existingWords.length &&
+    candidateWords.every((word, index) => word === existingWords[index])
   ) {
     return true;
   }

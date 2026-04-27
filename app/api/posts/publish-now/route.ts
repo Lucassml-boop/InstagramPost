@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { publishPostNow } from "@/lib/posts";
+import { rateLimitResponse } from "@/lib/rate-limit";
 import { jsonError } from "@/lib/server-utils";
 import { getRequestOrigin } from "@/lib/server-utils";
 import { z } from "zod";
@@ -18,6 +19,15 @@ export async function POST(request: Request) {
 
     if (!user) {
       return jsonError("Unauthorized", 401);
+    }
+
+    const rateLimit = rateLimitResponse({
+      key: `posts:publish-now:${user.id}`,
+      limit: 20,
+      windowMs: 60 * 60 * 1000
+    });
+    if (rateLimit) {
+      return rateLimit;
     }
 
     const parsed = publishNowSchema.parse(await request.json());

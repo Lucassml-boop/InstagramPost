@@ -59,6 +59,84 @@ function getStoredPostType(postType: string | null | undefined): InstagramPostTy
   return "feed";
 }
 
+function isMissingOptionalPublishingTableError(error: unknown) {
+  return (
+    error instanceof Error &&
+    (error.message.includes("PostMedia") ||
+      error.message.includes("PublicationAttempt") ||
+      error.message.includes("does not exist"))
+  );
+}
+
+async function replacePostMedia(postId: string, mediaItems: PublishableMediaItem[]) {
+  try {
+    await prisma.$transaction([
+      prisma.postMedia.deleteMany({ where: { postId } }),
+      ...mediaItems.map((item, index) =>
+        prisma.postMedia.create({
+          data: {
+            postId,
+            position: index,
+            imageUrl: item.imageUrl,
+            imagePath: item.imagePath,
+            previewUrl: item.previewUrl
+          }
+        })
+      )
+    ]);
+  } catch (error) {
+    if (!isMissingOptionalPublishingTableError(error)) {
+      throw error;
+    }
+  }
+}
+
+async function createPublicationAttempt(input: { postId: string; userId: string }) {
+  try {
+    return await prisma.publicationAttempt.create({
+      data: {
+        postId: input.postId,
+        userId: input.userId,
+        status: "STARTED"
+      },
+      select: { id: true }
+    });
+  } catch (error) {
+    if (isMissingOptionalPublishingTableError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+async function finishPublicationAttempt(input: {
+  attemptId?: string | null;
+  status: "SUCCEEDED" | "FAILED";
+  error?: string;
+  createdMediaId?: string;
+}) {
+  if (!input.attemptId) {
+    return;
+  }
+
+  try {
+    await prisma.publicationAttempt.update({
+      where: { id: input.attemptId },
+      data: {
+        status: input.status,
+        error: input.error,
+        createdMediaId: input.createdMediaId,
+        finishedAt: new Date()
+      }
+    });
+  } catch (error) {
+    if (!isMissingOptionalPublishingTableError(error)) {
+      throw error;
+    }
+  }
+}
+
 function ensureHashPrefix(tag: string) {
   const cleaned = tag.trim();
   if (!cleaned) {
@@ -233,7 +311,7 @@ export async function createDraftPost(input: {
   imageUrl: string;
   imagePath: string;
 }) {
-  return prisma.post.create({
+  const post = await prisma.post.create({
     data: {
       userId: input.userId,
       topic: input.topic,
@@ -251,6 +329,9 @@ export async function createDraftPost(input: {
       status: PostStatus.DRAFT
     }
   });
+
+  await replacePostMedia(post.id, input.mediaItems);
+  return post;
 }
 
 export async function publishPostNow(input: {
@@ -262,6 +343,7 @@ export async function publishPostNow(input: {
   imageUrl?: string;
   imagePath?: string;
   requestOrigin?: string;
+  expectedStatus?: PostStatus;
 }) {
   const post = await prisma.post.findFirst({
     where: {
@@ -320,17 +402,32 @@ export async function publishPostNow(input: {
     );
   }
 
-  await prisma.post.update({
-    where: { id: post.id },
+  const claim = await prisma.post.updateMany({
+    where: {
+      id: post.id,
+      userId: input.userId,
+      ...(input.expectedStatus
+        ? { status: input.expectedStatus }
+        : { status: { in: [PostStatus.DRAFT, PostStatus.SCHEDULED, PostStatus.FAILED] } })
+    },
     data: {
       caption: finalCaption,
       postType: finalPostType.toUpperCase() as "FEED" | "STORY" | "CAROUSEL",
       mediaItems,
       imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
       imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
-      status: PostStatus.PUBLISHING
+      status: PostStatus.PUBLISHING,
+      lastPublishAttemptAt: new Date(),
+      lastPublishError: null
     }
   });
+
+  if (claim.count === 0) {
+    throw new Error("Post is already published or being processed.");
+  }
+
+  await replacePostMedia(post.id, mediaItems);
+  const attempt = await createPublicationAttempt({ postId: post.id, userId: input.userId });
 
   try {
     const published = await publishInstagramPost({
@@ -340,7 +437,7 @@ export async function publishPostNow(input: {
       mediaItems: normalizedMediaItems
     });
 
-    return prisma.post.update({
+    const updatedPost = await prisma.post.update({
       where: { id: post.id },
       data: {
         status: PostStatus.PUBLISHED,
@@ -350,16 +447,32 @@ export async function publishPostNow(input: {
         imageUrl: mediaItems[0]?.imageUrl ?? post.imageUrl,
         imagePath: mediaItems[0]?.imagePath ?? post.imagePath,
         publishedMediaId: published.mediaId,
-        publishedAt: new Date()
+        publishedAt: new Date(),
+        lastPublishError: null
       }
     });
+    await finishPublicationAttempt({
+      attemptId: attempt?.id,
+      status: "SUCCEEDED",
+      createdMediaId: published.mediaId
+    });
+
+    return updatedPost;
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     await prisma.post.update({
       where: { id: post.id },
       data: {
         status: PostStatus.FAILED,
-        caption: finalCaption
+        caption: finalCaption,
+        lastPublishError: message,
+        publishRetryCount: { increment: 1 }
       }
+    });
+    await finishPublicationAttempt({
+      attemptId: attempt?.id,
+      status: "FAILED",
+      error: message
     });
 
     throw error;
@@ -379,7 +492,7 @@ export async function schedulePost(input: {
   const coverImageUrl = input.mediaItems?.[0]?.imageUrl ?? input.imageUrl;
   const coverImagePath = input.mediaItems?.[0]?.imagePath ?? input.imagePath;
 
-  return prisma.post.updateMany({
+  const result = await prisma.post.updateMany({
     where: {
       id: input.postId,
       userId: input.userId
@@ -394,6 +507,12 @@ export async function schedulePost(input: {
       status: PostStatus.SCHEDULED
     }
   });
+
+  if (result.count > 0 && input.mediaItems?.length) {
+    await replacePostMedia(input.postId, input.mediaItems);
+  }
+
+  return result;
 }
 
 export async function processScheduledPosts(requestOrigin?: string) {
@@ -406,20 +525,40 @@ export async function processScheduledPosts(requestOrigin?: string) {
     }
   });
 
+  let published = 0;
+  let failed = 0;
+  let skipped = 0;
+
   for (const post of duePosts) {
     try {
       await publishPostNow({
         postId: post.id,
         userId: post.userId,
         caption: post.caption,
-        requestOrigin
+        requestOrigin,
+        expectedStatus: PostStatus.SCHEDULED
       });
+      published += 1;
     } catch {
-      continue;
+      const refreshed = await prisma.post.findUnique({
+        where: { id: post.id },
+        select: { status: true }
+      });
+      if (refreshed?.status === PostStatus.FAILED) {
+        failed += 1;
+      } else {
+        skipped += 1;
+      }
     }
   }
 
-  return duePosts.length;
+  return {
+    due: duePosts.length,
+    attempted: published + failed,
+    published,
+    failed,
+    skipped
+  };
 }
 
 export async function deleteQueuedPosts(input: {

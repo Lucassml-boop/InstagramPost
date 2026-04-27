@@ -12,16 +12,16 @@ import {
 } from "./content-system.storage.ts";
 import { getDayConfig } from "./content-system.schedule.ts";
 
-export async function runMonthlyTopicsHistoryCleanup() {
-  const result = await clearTopicsHistory();
+export async function runMonthlyTopicsHistoryCleanup(userId?: string) {
+  const result = await clearTopicsHistory(userId);
   return {
     ok: true as const,
     ...result
   };
 }
 
-export async function runTopicsHistoryCleanupAutomation(referenceDate = new Date()) {
-  const profile = await getBrandProfile();
+export async function runTopicsHistoryCleanupAutomation(referenceDate = new Date(), userId?: string) {
+  const profile = await getBrandProfile(userId);
   const frequency = profile.topicsHistoryCleanupFrequency as TopicsHistoryCleanupFrequency;
   if (!shouldRunTopicsHistoryCleanup(frequency, referenceDate)) {
     return {
@@ -35,12 +35,12 @@ export async function runTopicsHistoryCleanupAutomation(referenceDate = new Date
     ok: true as const,
     skipped: false as const,
     frequency,
-    ...(await clearTopicsHistory())
+    ...(await clearTopicsHistory(userId))
   };
 }
 
-export async function runWeeklyContentAutomationLoop(referenceDate = new Date()) {
-  const profile = await getBrandProfile();
+export async function runWeeklyContentAutomationLoop(referenceDate = new Date(), userId?: string) {
+  const profile = await getBrandProfile(userId);
   if (!profile.automationLoopEnabled) {
     return {
       ok: true as const,
@@ -48,7 +48,7 @@ export async function runWeeklyContentAutomationLoop(referenceDate = new Date())
       reason: "disabled"
     };
   }
-  const currentAgenda = await getCurrentWeeklyAgenda();
+  const currentAgenda = await getCurrentWeeklyAgenda(userId);
   const enabledDays = DAY_ORDER.filter((day) => getDayConfig(profile, day).enabled);
   if (shouldSkipAutomationLoop(currentAgenda, referenceDate, enabledDays)) {
     return {
@@ -61,7 +61,8 @@ export async function runWeeklyContentAutomationLoop(referenceDate = new Date())
     ok: true as const,
     skipped: false as const,
     ...(await generateWeeklyContentPlan(referenceDate, {
-      windowMode: "next-week"
+      windowMode: "next-week",
+      userId
     }))
   };
 }

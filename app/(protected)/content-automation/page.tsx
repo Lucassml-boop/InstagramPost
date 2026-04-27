@@ -23,10 +23,11 @@ export default async function ContentAutomationPage() {
   const user = await getCurrentUser();
   const locale = await getLocaleFromCookies();
   const dictionary = getDictionary(locale);
+  const userId = user?.id;
   const [profile, agenda, topicsHistory] = await Promise.all([
-    getContentBrandProfile(),
-    getCurrentWeeklyAgenda(),
-    getContentTopicsHistory()
+    getContentBrandProfile(userId),
+    getCurrentWeeklyAgenda(userId),
+    getContentTopicsHistory(userId)
   ]);
   const agendaWithStatus = user ? await attachAgendaPostStatuses(user.id, agenda) : [];
   const weekPosts = user ? await getWeeklyPostsForAgenda(user.id, agenda) : [];

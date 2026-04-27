@@ -15,6 +15,7 @@ import {
 import { generateWeeklyContentPlan, getContentBrandProfile } from "@/lib/content-system";
 import { countConfirmedWeeklyPosts } from "@/lib/content-system.schedule";
 import { materializeConfirmedAgendaPosts } from "@/lib/weekly-agenda-scheduler";
+import { rateLimitResponse } from "@/lib/rate-limit";
 import { jsonError } from "@/lib/server-utils";
 
 export async function POST() {
@@ -22,6 +23,15 @@ export async function POST() {
 
   if (!user) {
     return jsonError("Unauthorized", 401);
+  }
+
+  const rateLimit = rateLimitResponse({
+    key: `content-system:generate-weekly:${user.id}`,
+    limit: 4,
+    windowMs: 60 * 60 * 1000
+  });
+  if (rateLimit) {
+    return rateLimit;
   }
 
   const startedAt = Date.now();
@@ -67,7 +77,7 @@ export async function POST() {
     });
     const [metadata, profile] = await Promise.all([
       upsertWeeklyAgendaState(user.id, result.agenda),
-      getContentBrandProfile()
+      getContentBrandProfile(user.id)
     ]);
 
     console.info("[content-system] Weekly agenda metadata updated", {

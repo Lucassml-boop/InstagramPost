@@ -25,8 +25,8 @@ export async function GET() {
   }
 
   const [agenda, profile, agendaState] = await Promise.all([
-    getCurrentWeeklyAgenda(),
-    getContentBrandProfile(),
+    getCurrentWeeklyAgenda(user.id),
+    getContentBrandProfile(user.id),
     getWeeklyAgendaState(user.id)
   ]);
   const agendaWithStatus = await attachAgendaPostStatuses(user.id, agenda);
@@ -52,26 +52,29 @@ export async function DELETE() {
   }
 
   try {
-    const profile = await getContentBrandProfile();
-    const clearedProfile = await updateContentBrandProfile({
-      ...profile,
-      weeklyAgenda: Object.fromEntries(
-        DAY_ORDER.map((day) => [
-          day,
-          {
-            enabled: false,
-            goal: "",
-            contentTypes: [],
-            formats: [],
-            postsPerDay: 1,
-            postTimes: [],
-            postIdeas: []
-          }
-        ])
-      )
-    });
+    const profile = await getContentBrandProfile(user.id);
+    const clearedProfile = await updateContentBrandProfile(
+      {
+        ...profile,
+        weeklyAgenda: Object.fromEntries(
+          DAY_ORDER.map((day) => [
+            day,
+            {
+              enabled: false,
+              goal: "",
+              contentTypes: [],
+              formats: [],
+              postsPerDay: 1,
+              postTimes: [],
+              postIdeas: []
+            }
+          ])
+        )
+      },
+      user.id
+    );
 
-    await Promise.all([clearCurrentWeeklyAgenda(), clearWeeklyAgendaState(user.id)]);
+    await Promise.all([clearCurrentWeeklyAgenda(user.id), clearWeeklyAgendaState(user.id)]);
 
     const totalExpectedPosts = countConfirmedWeeklyPosts(clearedProfile);
     const agendaSummary = summarizeWeeklyAgendaUsage({

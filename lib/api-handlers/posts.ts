@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { rateLimitResponse } from "../rate-limit.ts";
 import { jsonError } from "../server-utils.ts";
 import type { BrandProfile } from "../content-system.ts";
 import type {
@@ -27,7 +28,7 @@ type GeneratePostDeps = {
     hashtags: string[];
     slides: Array<{ html: string; css: string }>;
   }>;
-  getContentBrandProfile?: () => Promise<BrandProfile>;
+  getContentBrandProfile?: (userId?: string) => Promise<BrandProfile>;
   renderPostImage: (input: {
     slug: string;
     html: string;
@@ -174,13 +175,21 @@ export async function handleGeneratePost(
     }
 
     currentPhase = "loading-dependencies";
+    const generationRateLimit = rateLimitResponse({
+      key: `posts:generate:${user.id}`,
+      limit: 12,
+      windowMs: 60 * 60 * 1000
+    });
+    if (generationRateLimit) {
+      return generationRateLimit;
+    }
     const resolvedDeps = deps ?? (await getDefaultGeneratePostDeps());
 
     currentPhase = "parsing-payload";
     const parsed = generatePostSchema.parse(await request.json());
     currentPhase = "loading-brand-profile";
     const brandProfile = resolvedDeps.getContentBrandProfile
-      ? await resolvedDeps.getContentBrandProfile()
+      ? await resolvedDeps.getContentBrandProfile(user.id)
       : null;
     console.info("[api/posts/generate] Payload parsed", {
       userId: user.id,
@@ -357,6 +366,15 @@ export async function handlePublishPost(
   try {
     if (!user) {
       return jsonError("Unauthorized", 401);
+    }
+
+    const publishRateLimit = rateLimitResponse({
+      key: `posts:publish:${user.id}`,
+      limit: 20,
+      windowMs: 60 * 60 * 1000
+    });
+    if (publishRateLimit) {
+      return publishRateLimit;
     }
 
     const resolvedDeps = deps ?? (await getDefaultPublishPostDeps());

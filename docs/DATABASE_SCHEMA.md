@@ -30,6 +30,15 @@ User
  |- Session (1:N)
  |- Post (1:N)
  |- InstagramAccount (1:1)
+ |- ContentBrandProfile (1:1)
+ |- ContentWeeklyAgenda (1:1)
+ |- ContentTopicsHistory (1:1)
+ |- ContentHistory (1:1)
+ |- AutomationRun (1:N)
+
+Post
+ |- PostMedia (1:N)
+ |- PublicationAttempt (1:N)
 ```
 
 ## Tables
@@ -173,6 +182,9 @@ Main fields:
 - `scheduledTime`
 - `publishedMediaId`
 - `publishedAt`
+- `lastPublishError`
+- `lastPublishAttemptAt`
+- `publishRetryCount`
 - `createdAt`
 - `updatedAt`
 
@@ -181,6 +193,7 @@ Business rules:
 - posts are always scoped to one user
 - the system stores the cover image separately from `mediaItems` for practical access
 - `mediaItems` can represent feed, story, or carousel assets
+- media is also mirrored into `PostMedia` for normalized querying
 - scheduled posts are selected by `status = SCHEDULED` and `scheduledTime <= now`
 - deleting a post record removes local history only
 
@@ -192,7 +205,93 @@ Indexes and constraints:
 
 - primary key on `id`
 - index on `userId, status, scheduledTime`
+- index on `userId, publishedAt`
+- index on `publishedMediaId`
 - foreign key `userId -> User.id`
+
+### 5. PostMedia
+
+Purpose:
+
+- stores normalized media rows for generated, uploaded, and carousel assets
+
+Main fields:
+
+- `id`
+- `postId`
+- `position`
+- `imageUrl`
+- `imagePath`
+- `previewUrl`
+- `mimeType`
+- `sizeBytes`
+- `createdAt`
+
+Indexes and constraints:
+
+- primary key on `id`
+- unique on `postId, position`
+- index on `postId`
+- foreign key `postId -> Post.id`
+
+### 6. PublicationAttempt
+
+Purpose:
+
+- stores an audit trail for each Instagram publication attempt
+
+Main fields:
+
+- `id`
+- `postId`
+- `userId`
+- `status`
+- `error`
+- `startedAt`
+- `finishedAt`
+- `createdMediaId`
+
+Indexes and constraints:
+
+- primary key on `id`
+- index on `userId, startedAt`
+- index on `postId, startedAt`
+- foreign key `postId -> Post.id`
+
+### 7. Content Automation Tables
+
+Purpose:
+
+- scope editorial automation data by application user instead of using only global JSON files
+
+Tables:
+
+- `ContentBrandProfile`
+- `ContentWeeklyAgenda`
+- `ContentTopicsHistory`
+- `ContentHistory`
+
+Business rules:
+
+- each table has one row per user
+- JSON fallback files remain supported for local/test contexts without a user id
+
+### 8. AutomationRun
+
+Purpose:
+
+- records cron/automation executions and their summaries
+
+Main fields:
+
+- `id`
+- `userId`
+- `job`
+- `status`
+- `summary`
+- `error`
+- `startedAt`
+- `finishedAt`
 
 ## Enums
 
@@ -212,6 +311,23 @@ FAILED
 FEED
 STORY
 CAROUSEL
+```
+
+### PublicationAttemptStatus
+
+```txt
+STARTED
+SUCCEEDED
+FAILED
+SKIPPED
+```
+
+### AutomationRunStatus
+
+```txt
+STARTED
+SUCCEEDED
+FAILED
 ```
 
 ## Relationships
@@ -242,51 +358,18 @@ The current schema is broadly aligned with third normal form:
 - session lifecycle is separated from user identity
 - posts are separated from account connection details
 
-### Controlled Exception
+### Controlled Compatibility Exception
 
 `Post.mediaItems` is stored as JSON rather than a normalized child table.
 
-Reasonable benefits for the current phase:
+Reasonable benefits for compatibility:
 
 - flexible structure for feed, story, and carousel media
-- faster implementation
-- reduced migration overhead during evolving product logic
+- existing UI flows can continue reading the JSON payload
 
 Tradeoffs:
 
-- weaker relational guarantees
-- reduced query power
-- harder indexing of individual media entries
-
-## Recommended Future Normalization
-
-If the media model becomes more important, introduce:
-
-```txt
-PostMedia
-- id
-- postId
-- position
-- imageUrl
-- imagePath
-- previewUrl
-- mimeType
-- sizeBytes
-- width
-- height
-- createdAt
-```
-
-Recommended relationship:
-
-- `Post 1:N PostMedia`
-
-Benefits:
-
-- stronger normalization
-- easier preview queries
-- media-specific retention rules
-- easier asset deduplication and analytics
+- writes must keep `Post.mediaItems` and `PostMedia` aligned until the UI fully migrates
 
 ## Performance Notes
 
@@ -295,12 +378,14 @@ Current performance-sensitive access patterns:
 - session lookup by hashed token
 - post queue lookup by `userId`, `status`, and `scheduledTime`
 - Instagram token refresh candidates by `connected` and `tokenExpiresAt`
+- media lookup by `postId`
+- publication attempt lookup by `postId` or `userId`
+- automation run lookup by `job` or `userId`
 
 Recommended future indexes if usage grows:
 
 - `Post(userId, createdAt desc)`
-- `Post(userId, publishedAt desc)`
-- `Post(publishedMediaId)`
+- partial indexes for failed or retryable publication attempts
 
 ## Security Notes
 
@@ -349,7 +434,9 @@ When changing the schema:
 - cascade delete is active across user-owned relational data
 - removing a local post record does not remove an Instagram post already published externally
 - cron automation depends on accurate `status` and `scheduledTime`
+- scheduled publishing should run frequently enough to catch due posts close to their intended time
+- publication attempts and automation runs are operational audit data and may need retention policies later
 
 ## Summary
 
-The current schema is compact and well-suited for the current application scope. The main long-term architectural decision point is whether `mediaItems` should remain JSON or be promoted to a normalized child table once reporting, asset lifecycle management, or advanced querying become important.
+The schema now supports multi-user editorial automation, normalized media metadata, publication attempt auditing, and cron run visibility while keeping JSON compatibility for existing UI flows. The main long-term architectural decision point is when to migrate readers fully from `Post.mediaItems` to `PostMedia` and whether heavy AI/rendering work should move into a durable job queue.

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       };
       userTopicHint?: string;
     };
-    const profile = await getContentBrandProfile();
+    const profile = await getContentBrandProfile(user.id);
     const result = await generateAutomaticCreatePostInputs({
       profile,
       current: body.current,

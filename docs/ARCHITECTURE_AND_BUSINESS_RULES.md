@@ -219,16 +219,15 @@ If external consumers are introduced:
 
 ### 2.8 Rate Limiting
 
-Current state:
+Current implementation:
 
-- no explicit application-level rate limiting
+- in-memory application rate limiting for login, registration, password reset, AI generation, scheduling, and publishing
+- cron endpoints remain protected by authenticated session or `CRON_SECRET`
 
 Recommended future implementation:
 
-- rate limit login
-- rate limit AI generation
-- rate limit publish endpoints
-- rate limit cron endpoints if publicly reachable
+- move rate limit counters to durable storage such as Postgres or Redis if multiple server instances need shared counters
+- add per-plan quotas if the product introduces paid limits
 
 ## 3. Modularization
 
@@ -322,6 +321,13 @@ Current core tables from Prisma schema:
 - `Session`
 - `InstagramAccount`
 - `Post`
+- `PostMedia`
+- `PublicationAttempt`
+- `ContentBrandProfile`
+- `ContentWeeklyAgenda`
+- `ContentTopicsHistory`
+- `ContentHistory`
+- `AutomationRun`
 
 ### 4.2 Relationships
 
@@ -346,6 +352,13 @@ Current indexes:
 - `Session.userId`
 - `InstagramAccount.connected, tokenExpiresAt`
 - `Post.userId, status, scheduledTime`
+- `Post.userId, publishedAt`
+- `Post.publishedMediaId`
+- `PostMedia.postId`
+- `PublicationAttempt.userId, startedAt`
+- `PublicationAttempt.postId, startedAt`
+- `AutomationRun.job, startedAt`
+- `AutomationRun.userId, startedAt`
 
 Recommended future indexes:
 
@@ -361,30 +374,10 @@ The project is mostly aligned with 3NF:
 - session data is isolated from user identity
 - Instagram connection state is isolated from post content
 
-Important current exception:
+Important compatibility note:
 
-- `Post.mediaItems` is stored as JSON for flexibility
-
-This is acceptable for the current scope, but if media metadata grows, normalize into a dedicated table such as:
-
-```txt
-PostMedia
-- id
-- postId
-- position
-- imageUrl
-- imagePath
-- previewUrl
-- mimeType
-- sizeBytes
-```
-
-That would improve:
-
-- queryability
-- constraints
-- analytics
-- future media lifecycle management
+- `Post.mediaItems` is still stored as JSON for backward compatibility with existing UI flows
+- new and rescheduled posts also mirror media into `PostMedia` for queryability, constraints, analytics, and future media lifecycle management
 
 ## 5. Frontend to Backend Integration
 
@@ -572,13 +565,14 @@ Practical scalability concerns in this project:
 - Instagram API rate and token lifecycle
 - long-term media storage growth
 - cron reliability
+- publication retry/audit growth
 
 Recommended future improvements:
 
 - queue system for heavy jobs
 - repository layer for persistence
 - background workers for rendering and publish retries
-- dedicated normalized media table if media operations grow
+- durable distributed rate limiting
 
 ## 10. Versioning and Organization
 
@@ -691,4 +685,4 @@ This file must be updated whenever there is a meaningful change in:
 
 ## Summary
 
-The project already has a solid functional foundation for Instagram-oriented AI publishing, but the next architectural improvement should be clearer separation between route handlers, services, and repositories, plus standardized API responses. Security and data handling are on a good path, especially with encrypted identity data, session hashing, and cron protection, but rate limiting and standardized monitoring remain important future steps.
+The project now has a stronger operational foundation for Instagram-oriented AI publishing: scheduled publishing is processed by due time instead of once per day, cron routes support Vercel-compatible GET execution, content automation is scoped by user when database tables are available, media has a normalized mirror table, publication attempts are audited, and basic rate limits protect high-cost or sensitive routes. The next architectural improvement should be clearer separation between route handlers, services, and repositories, plus standardized API responses and a durable job queue for heavy AI/rendering work.

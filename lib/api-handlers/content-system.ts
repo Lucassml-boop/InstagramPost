@@ -5,10 +5,10 @@ type AuthUser = {
 };
 
 type BrandProfileDeps = {
-  getContentBrandProfile: () => Promise<unknown>;
-  updateContentBrandProfile: (input: unknown) => Promise<unknown>;
-  getContentTopicsHistory: () => Promise<string[]>;
-  clearTopicsHistory: () => Promise<unknown>;
+  getContentBrandProfile: (userId?: string) => Promise<unknown>;
+  updateContentBrandProfile: (input: unknown, userId?: string) => Promise<unknown>;
+  getContentTopicsHistory: (userId?: string) => Promise<string[]>;
+  clearTopicsHistory: (userId?: string) => Promise<unknown>;
 };
 
 async function getDefaultDeps(): Promise<BrandProfileDeps> {
@@ -31,7 +31,7 @@ export async function handleGetBrandProfile(
   }
 
   const resolvedDeps = deps ?? (await getDefaultDeps());
-  const profile = await resolvedDeps.getContentBrandProfile();
+  const profile = await resolvedDeps.getContentBrandProfile(user.id);
 
   return Response.json({
     ok: true,
@@ -50,7 +50,7 @@ export async function handleUpdateBrandProfile(
     }
 
     const resolvedDeps = deps ?? (await getDefaultDeps());
-    const profile = await resolvedDeps.updateContentBrandProfile(await request.json());
+    const profile = await resolvedDeps.updateContentBrandProfile(await request.json(), user.id);
 
     return Response.json({
       ok: true,
@@ -72,7 +72,7 @@ export async function handleGetTopicsHistory(
   }
 
   const resolvedDeps = deps ?? (await getDefaultDeps());
-  const topicsHistory = await resolvedDeps.getContentTopicsHistory();
+  const topicsHistory = await resolvedDeps.getContentTopicsHistory(user.id);
 
   return Response.json({
     ok: true,
@@ -89,7 +89,7 @@ export async function handleClearTopicsHistory(
   }
 
   const resolvedDeps = deps ?? (await getDefaultDeps());
-  await resolvedDeps.clearTopicsHistory();
+  await resolvedDeps.clearTopicsHistory(user.id);
 
   return Response.json({
     ok: true,

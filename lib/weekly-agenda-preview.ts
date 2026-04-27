@@ -18,8 +18,8 @@ export async function publishWeeklyAgendaPreview(input: {
   selectedDate?: string | null;
 }) {
   const [agenda, brandProfile] = await Promise.all([
-    getCurrentWeeklyAgenda(),
-    getContentBrandProfile()
+    getCurrentWeeklyAgenda(input.user.id),
+    getContentBrandProfile(input.user.id)
   ]);
   const resolvedBrandColors = brandProfile.brandColors?.trim() || DEFAULT_BRAND_COLORS;
 

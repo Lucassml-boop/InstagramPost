@@ -8,12 +8,6 @@ import {
   shouldBlockForHistoryDuplicate,
   shouldBlockForInternalDuplicate
 } from "@/lib/content-system-utils";
-import {
-  AGENDA_PATH,
-  CONTENT_HISTORY_PATH,
-  TOPICS_HISTORY_PATH,
-  TOPICS_PATH
-} from "./content-system.constants.ts";
 import { requestWeeklyAgenda } from "./content-system.requests.ts";
 import { buildWeekSlots, getDayConfig, type WeekSlot } from "./content-system.schedule.ts";
 import type { BrandProfile, TopicHistoryRecord } from "./content-system.schemas.ts";
@@ -21,7 +15,8 @@ import {
   getBrandProfile,
   getContentHistory,
   getTopicsHistoryRecords,
-  writeJsonFile
+  saveCurrentTopics,
+  saveWeeklyContentResult
 } from "./content-system.storage.ts";
 
 const MAX_WEEKLY_AGENDA_ATTEMPTS = 5;
@@ -35,7 +30,7 @@ function extractGoogleNewsTitles(xml: string) {
     .slice(0, 5);
 }
 
-async function fetchCurrentTopics(queries: string[]) {
+async function fetchCurrentTopics(queries: string[], userId?: string) {
   const topics = new Set<string>();
   for (const query of queries) {
     try {
@@ -52,7 +47,7 @@ async function fetchCurrentTopics(queries: string[]) {
     }
   }
   const topicList = Array.from(topics).slice(0, 20);
-  await writeJsonFile(TOPICS_PATH, topicList);
+  await saveCurrentTopics(topicList, userId);
   return topicList;
 }
 
@@ -212,7 +207,7 @@ export async function generateWeeklyContentPlan(
   if (options?.userId) {
     throwIfGenerationCancelled(options.userId);
   }
-  const brandProfile = await getBrandProfile();
+  const brandProfile = await getBrandProfile(options?.userId);
   const weekSlots = buildWeekSlots(brandProfile, referenceDate, {
     windowMode: options?.windowMode
   });
@@ -220,9 +215,9 @@ export async function generateWeeklyContentPlan(
     throw new Error("At least one active day with a valid post schedule is required.");
   }
 
-  const contentHistory = await getContentHistory();
-  const topicHistoryRecords = await getTopicsHistoryRecords();
-  const currentTopics = await fetchCurrentTopics(brandProfile.researchQueries);
+  const contentHistory = await getContentHistory(options?.userId);
+  const topicHistoryRecords = await getTopicsHistoryRecords(options?.userId);
+  const currentTopics = await fetchCurrentTopics(brandProfile.researchQueries, options?.userId);
   let dedupedAgenda: ReturnType<typeof buildAgendaWithWeekSlots> | null = null;
   let rejectedThemes: string[] = [];
 
@@ -279,17 +274,20 @@ export async function generateWeeklyContentPlan(
     );
   }
 
-  await writeJsonFile(AGENDA_PATH, dedupedAgenda);
-  await writeJsonFile(CONTENT_HISTORY_PATH, [
+  const nextContentHistory = [
     ...contentHistory,
     ...dedupedAgenda.map((item) => ({ date: item.date, day: item.day, theme: item.theme }))
-  ]);
+  ];
 
   const newTopicHistory = buildTopicHistoryRecords(dedupedAgenda);
-  await writeJsonFile(
-    TOPICS_HISTORY_PATH,
-    mergeTopicHistoryRecords(topicHistoryRecords, newTopicHistory)
-  );
+  const nextTopicHistoryRecords = mergeTopicHistoryRecords(topicHistoryRecords, newTopicHistory);
+  await saveWeeklyContentResult({
+    userId: options?.userId,
+    agenda: dedupedAgenda,
+    contentHistory: nextContentHistory,
+    topicHistoryRecords: nextTopicHistoryRecords,
+    currentTopics
+  });
 
   return {
     agenda: dedupedAgenda,

@@ -17,7 +17,15 @@ dashboard: {
   quickActions: "Quick actions",
   createPost: "Create Post",
   viewScheduledPosts: "View Scheduled Posts",
-  connectedAccount: "Connected Instagram Account"
+  connectedAccount: "Connected Instagram Account",
+  operationalHealth: "Operational health",
+  ready: "Ready",
+  attention: "Needs attention",
+  lastPublishCron: "Last publish cron",
+  never: "Never",
+  publicUrlMissing: "Public asset URL missing",
+  tokenExpires: "Token expires",
+  failedPosts: "Failed posts"
 },
 
 connectInstagram: {

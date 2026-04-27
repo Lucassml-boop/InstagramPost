@@ -33,8 +33,8 @@ function getAgendaItemDateTime(date: string, time: string) {
   return new Date(`${date}T${time}:00-03:00`);
 }
 
-async function findAutomationUser() {
-  const user = await prisma.user.findFirst({
+async function findAutomationUsers() {
+  const users = await prisma.user.findMany({
     where: {
       instagramAccount: {
         connected: true
@@ -54,11 +54,7 @@ async function findAutomationUser() {
     }
   });
 
-  if (!user) {
-    return null;
-  }
-
-  return {
+  return users.map((user) => ({
     id: user.id,
     email: user.email ?? "",
     preferredOutputLanguage:
@@ -66,7 +62,7 @@ async function findAutomationUser() {
         ? ("pt-BR" as const)
         : ("en" as const),
     preferredCustomInstructions: user.preferredCustomInstructions
-  };
+  }));
 }
 
 async function createScheduledDraftFromAgendaItem(input: {
@@ -240,8 +236,8 @@ async function materializeAgendaItems(input: {
   throwIfGenerationCancelled(input.user.id);
   const referenceDate = input.referenceDate ?? new Date();
   const [agenda, brandProfile] = await Promise.all([
-    getCurrentWeeklyAgenda(),
-    getContentBrandProfile()
+    getCurrentWeeklyAgenda(input.user.id),
+    getContentBrandProfile(input.user.id)
   ]);
 
   if (agenda.length === 0) {
@@ -376,18 +372,27 @@ async function materializeAgendaItems(input: {
 }
 
 export async function prepareUpcomingAgendaPosts(referenceDate = new Date()) {
-  const automationUser = await findAutomationUser();
-  if (!automationUser) {
+  const automationUsers = await findAutomationUsers();
+  if (automationUsers.length === 0) {
     return { prepared: 0, scanned: 0 };
   }
-  const result = await materializeAgendaItems({
-    user: automationUser,
-    referenceDate,
-    requirePreGenerationWindow: true
-  });
+
+  let prepared = 0;
+  let scanned = 0;
+
+  for (const user of automationUsers) {
+    const result = await materializeAgendaItems({
+      user,
+      referenceDate,
+      requirePreGenerationWindow: true
+    });
+    prepared += result.prepared;
+    scanned += result.scanned;
+  }
+
   return {
-    prepared: result.prepared,
-    scanned: result.scanned
+    prepared,
+    scanned
   };
 }
 

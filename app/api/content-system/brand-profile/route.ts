@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return jsonError("Unauthorized", 401);
     }
 
-    const profile = await updateContentBrandProfile(await request.json());
+    const profile = await updateContentBrandProfile(await request.json(), user.id);
     const result = await materializeConfirmedAgendaPosts(user);
     const agendaState = await getWeeklyAgendaState(user.id);
     const agendaSummary = summarizeWeeklyAgendaUsage({
