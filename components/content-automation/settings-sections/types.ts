@@ -2,11 +2,13 @@ import type { ReactNode } from "react";
 import type { useI18n } from "@/components/I18nProvider";
 import type { BriefingFieldId, BriefingMode } from "@/lib/briefing-builder";
 import type { DayLabel } from "@/components/content-automation/types";
-import type { WeeklyAgendaUsageSummary } from "@/lib/content-system.agenda-metadata";
 import type {
-  AgendaPostGenerationStatus,
-  WeeklyPostSummary
-} from "@/lib/content-system.agenda-status";
+  AgendaGenerationStatus,
+  AgendaGroup,
+  AgendaSummary
+} from "./agenda-types";
+
+export type { AgendaGenerationStatus, AgendaGroup } from "./agenda-types";
 
 export type AppDictionary = ReturnType<typeof useI18n>["dictionary"];
 
@@ -25,77 +27,6 @@ export type PresetPickerRenderer = (input: {
 }) => ReactNode;
 
 export type BriefingFieldDefinition = [BriefingFieldId, string];
-
-export type AgendaGenerationStatus = {
-  state: "idle" | "running" | "completed" | "failed";
-  phase: "saving-settings" | "generating-plan" | "refreshing-data" | null;
-  startedAt: number | null;
-  phaseStartedAt: number | null;
-  completedAt: number | null;
-  detailMessage: string | null;
-  preparedCount: number | null;
-  scannedCount: number | null;
-  activeTheme: string | null;
-  currentPostIndex: number | null;
-  totalPosts: number | null;
-  errorMessage: string | null;
-};
-
-export type AgendaGroup = {
-  day: string;
-  date: string;
-  time: string;
-  goal: string;
-  type: string;
-  format: string;
-  theme: string;
-  structure: string[];
-  caption: string;
-  visualIdea: string;
-  cta: string;
-  postGenerationStatus: AgendaPostGenerationStatus;
-  linkedPostId: string | null;
-  linkedScheduledTime: string | null;
-  linkedPublishedAt: string | null;
-  linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
-  linkedPostCaption?: string | null;
-  linkedPostImageUrl?: string | null;
-  linkedPostPreviewUrl?: string | null;
-  linkedPostBrandColors?: string | null;
-  linkedPostType?: "FEED" | "STORY" | "CAROUSEL" | null;
-  expectedPostsCount: number;
-  expectedTimes: string[];
-  expectedIdeas: Array<{
-    goal: string;
-    contentTypes: string;
-    formats: string;
-    brandColors: string;
-  }>;
-  items: Array<{
-    date: string;
-    day: string;
-    time: string;
-    goal: string;
-    type: string;
-    format: string;
-    theme: string;
-    structure: string[];
-    caption: string;
-    visualIdea: string;
-    cta: string;
-    postGenerationStatus: AgendaPostGenerationStatus;
-    linkedPostId: string | null;
-    linkedScheduledTime: string | null;
-    linkedPublishedAt: string | null;
-    linkedPublicationState: "PUBLISHED" | "ARCHIVED" | "DELETED" | null;
-    linkedPostCaption?: string | null;
-    linkedPostImageUrl?: string | null;
-    linkedPostPreviewUrl?: string | null;
-    linkedPostBrandColors?: string | null;
-    linkedPostType?: "FEED" | "STORY" | "CAROUSEL" | null;
-  }>;
-  extraPosts: WeeklyPostSummary[];
-};
 
 export type BriefingSettingsSectionProps = {
   dictionary: AppDictionary;
@@ -228,7 +159,7 @@ export type AgendaSectionsProps = {
   currentTopics: string[];
   groupedAgenda: AgendaGroup[];
   totalExpectedPosts: number;
-  agendaSummary: WeeklyAgendaUsageSummary;
+  agendaSummary: AgendaSummary;
   keepUsingStaleAgenda: () => void;
   isResolvingStaleAgenda: boolean;
   generationStatus: AgendaGenerationStatus;

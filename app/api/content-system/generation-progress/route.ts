@@ -11,6 +11,6 @@ export async function GET() {
 
   return Response.json({
     ok: true,
-    progress: getGenerationProgress(user.id)
+    progress: await getGenerationProgress(user.id)
   });
 }

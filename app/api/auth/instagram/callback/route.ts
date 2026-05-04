@@ -32,8 +32,7 @@ export async function GET(request: Request) {
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(OAUTH_STATE_COOKIE_NAME)?.value;
 
-  console.log("[instagram-callback] Received callback", {
-    requestUrl: request.url,
+  console.info("[instagram-callback] Received callback", {
     baseUrl,
     redirectUri,
     hasCode: Boolean(code),
@@ -56,9 +55,7 @@ export async function GET(request: Request) {
   }
 
   if (!code) {
-    console.error("[instagram-callback] Missing authorization code", {
-      requestUrl: request.url
-    });
+    console.error("[instagram-callback] Missing authorization code");
     return NextResponse.redirect(
       new URL("/dashboard?error=Missing%20authorization%20code", baseUrl)
     );
@@ -76,42 +73,31 @@ export async function GET(request: Request) {
   }
 
   try {
-    console.log("[instagram-callback] Exchanging code for short-lived token", {
+    console.info("[instagram-callback] Exchanging code for short-lived token", {
       userId: user.id
     });
     const tokenResponse = await exchangeCodeForAccessToken(code, redirectUri);
-    console.log("[instagram-callback] Short-lived token exchange succeeded", {
-      userId: user.id,
-      instagramUserId: tokenResponse.instagramUserId
+    console.info("[instagram-callback] Short-lived token exchange succeeded", {
+      userId: user.id
     });
 
-    console.log("[instagram-callback] Exchanging for long-lived token", {
+    console.info("[instagram-callback] Exchanging for long-lived token", {
       userId: user.id
     });
     const longLivedToken = await exchangeForLongLivedAccessToken(tokenResponse.accessToken);
-    console.log("[instagram-callback] Long-lived token exchange succeeded", {
+    console.info("[instagram-callback] Long-lived token exchange succeeded", {
       userId: user.id,
       expiresAt: longLivedToken.expiresAt?.toISOString() ?? null
     });
 
-    console.log("[instagram-callback] Fetching Instagram profile", {
-      userId: user.id,
-      instagramUserId: tokenResponse.instagramUserId
-    });
+    console.info("[instagram-callback] Fetching Instagram profile", { userId: user.id });
     const profile = await fetchInstagramProfile(
       longLivedToken.accessToken,
       tokenResponse.instagramUserId
     );
-    console.log("[instagram-callback] Instagram profile fetched", {
-      userId: user.id,
-      instagramUserId: profile.instagramUserId,
-      username: profile.username
-    });
+    console.info("[instagram-callback] Instagram profile fetched", { userId: user.id });
 
-    console.log("[instagram-callback] Saving Instagram account", {
-      userId: user.id,
-      instagramUserId: profile.instagramUserId
-    });
+    console.info("[instagram-callback] Saving Instagram account", { userId: user.id });
     await saveInstagramAccount({
       userId: user.id,
       instagramUserId: profile.instagramUserId,
@@ -122,9 +108,8 @@ export async function GET(request: Request) {
       tokenLastRefreshedAt: new Date()
     });
 
-    console.log("[instagram-callback] Instagram account connected", {
+    console.info("[instagram-callback] Instagram account connected", {
       userId: user.id,
-      instagramUserId: profile.instagramUserId,
       tokenExpiresAt: longLivedToken.expiresAt?.toISOString() ?? null
     });
 

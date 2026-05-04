@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import { requireEnv } from "@/lib/env";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __prisma__: PrismaClient | undefined;
 }
 
@@ -57,7 +56,3 @@ export const prisma = new Proxy({} as PrismaClient, {
     return Reflect.get(getPrismaClient(), property, receiver);
   }
 });
-
-if (process.env.NODE_ENV !== "production") {
-  global.__prisma__ = getPrismaClient();
-}

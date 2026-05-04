@@ -25,7 +25,7 @@ export async function POST() {
     return jsonError("Unauthorized", 401);
   }
 
-  const rateLimit = rateLimitResponse({
+  const rateLimit = await rateLimitResponse({
     key: `content-system:generate-weekly:${user.id}`,
     limit: 4,
     windowMs: 60 * 60 * 1000
@@ -50,8 +50,8 @@ export async function POST() {
   }, 30_000);
 
   try {
-    clearGenerationCancellation(user.id);
-    startGenerationProgress(user.id, {
+    await clearGenerationCancellation(user.id);
+    await startGenerationProgress(user.id, {
       stage: "generating-weekly-plan",
       message: "Pesquisando temas e montando a agenda dos proximos 7 dias."
     });
@@ -71,7 +71,7 @@ export async function POST() {
     });
 
     currentStage = "saving-metadata";
-    setGenerationProgress(user.id, {
+    await setGenerationProgress(user.id, {
       stage: "saving-settings",
       message: "Salvando metadados e estado da agenda gerada."
     });
@@ -86,7 +86,7 @@ export async function POST() {
     });
 
     currentStage = "materializing-posts";
-    setGenerationProgress(user.id, {
+    await setGenerationProgress(user.id, {
       stage: "materializing-posts",
       message: "Preparando posts e imagens vinculados a agenda.",
       prepared: 0,
@@ -97,7 +97,7 @@ export async function POST() {
     });
     const materialized = await materializeConfirmedAgendaPosts(user, new Date(), {
       onProgress(progress) {
-        setGenerationProgress(user.id, {
+        void setGenerationProgress(user.id, {
           stage: "materializing-posts",
           message: progress.message ?? "Preparando posts vinculados a agenda.",
           prepared: progress.prepared ?? 0,
@@ -116,7 +116,7 @@ export async function POST() {
     });
 
     currentStage = "summarizing-response";
-    setGenerationProgress(user.id, {
+    await setGenerationProgress(user.id, {
       stage: "summarizing-response",
       message: "Consolidando o resultado final para atualizar a tela.",
       prepared: materialized.prepared,
@@ -138,7 +138,7 @@ export async function POST() {
       prepared: materialized.prepared,
       scanned: materialized.scanned
     });
-    completeGenerationProgress(user.id, {
+    await completeGenerationProgress(user.id, {
       message: "Agenda concluida e sincronizada com a tela.",
       prepared: materialized.prepared,
       scanned: materialized.scanned
@@ -154,7 +154,7 @@ export async function POST() {
       scanned: materialized.scanned
     });
   } catch (error) {
-    failGenerationProgress(
+    await failGenerationProgress(
       user.id,
       error instanceof Error ? error.message : "Weekly content generation failed."
     );

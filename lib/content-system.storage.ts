@@ -1,126 +1,17 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cache } from "react";
 import { z } from "zod";
-import {
-  AGENDA_PATH,
-  BRAND_PROFILE_PATH,
-  CONTENT_HISTORY_PATH,
-  CONTENT_SYSTEM_DIR,
-  TOPICS_PATH,
-  TOPICS_HISTORY_PATH
-} from "./content-system.constants.ts";
+import { AGENDA_PATH, BRAND_PROFILE_PATH, CONTENT_HISTORY_PATH, TOPICS_PATH, TOPICS_HISTORY_PATH } from "./content-system.constants.ts";
 import {
   brandProfileSchema,
   historyItemSchema,
-  topicHistoryRecordSchema,
   type ContentPlanItem,
   type HistoryItem,
   type TopicHistoryRecord
 } from "./content-system.schemas.ts";
-import { normalizeTopicHistoryRecord } from "./content-system-utils.ts";
+import { readUserJsonRecord, upsertUserJsonRecord } from "./content-system.storage-db.ts";
+import { readJsonFile, writeJsonFile } from "./content-system.storage-files.ts";
+import { parseTopicHistoryRecords } from "./content-system.storage-parsers.ts";
 import { normalizeStoredAgenda } from "./content-system.schedule.ts";
-
-export async function ensureContentSystemDir() {
-  await mkdir(CONTENT_SYSTEM_DIR, { recursive: true });
-}
-
-export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
-  try {
-    const content = await readFile(filePath, "utf8");
-    return JSON.parse(content) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-export async function writeJsonFile(filePath: string, value: unknown) {
-  await ensureContentSystemDir();
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function isMissingContentStorageTableError(error: unknown) {
-  return (
-    error instanceof Error &&
-    (error.message.includes("ContentBrandProfile") ||
-      error.message.includes("ContentWeeklyAgenda") ||
-      error.message.includes("ContentTopicsHistory") ||
-      error.message.includes("ContentHistory")) &&
-    error.message.includes("does not exist")
-  );
-}
-
-async function getPrisma() {
-  const { prisma } = await import("@/lib/prisma");
-  return prisma;
-}
-
-async function readUserJsonRecord<T>(
-  userId: string | undefined,
-  delegateName: "contentBrandProfile" | "contentWeeklyAgenda" | "contentTopicsHistory" | "contentHistory",
-  fieldName: "data" | "agenda" | "records" | "items",
-  fallback: T
-) {
-  if (!userId) {
-    return fallback;
-  }
-
-  try {
-    const prisma = await getPrisma();
-    const delegate = (prisma as unknown as Record<string, {
-      findUnique: (input: { where: { userId: string } }) => Promise<Record<string, unknown> | null>;
-    }>)[delegateName];
-    const record = await delegate.findUnique({ where: { userId } });
-    return (record?.[fieldName] ?? fallback) as T;
-  } catch (error) {
-    if (isMissingContentStorageTableError(error)) {
-      return fallback;
-    }
-
-    throw error;
-  }
-}
-
-async function upsertUserJsonRecord(
-  userId: string | undefined,
-  delegateName: "contentBrandProfile" | "contentWeeklyAgenda" | "contentTopicsHistory" | "contentHistory",
-  fieldName: "data" | "agenda" | "records" | "items",
-  value: unknown,
-  extraFields?: Record<string, unknown>
-) {
-  if (!userId) {
-    return false;
-  }
-
-  try {
-    const prisma = await getPrisma();
-    const delegate = (prisma as unknown as Record<string, {
-      upsert: (input: {
-        where: { userId: string };
-        create: Record<string, unknown>;
-        update: Record<string, unknown>;
-      }) => Promise<unknown>;
-    }>)[delegateName];
-    await delegate.upsert({
-      where: { userId },
-      create: {
-        userId,
-        [fieldName]: value,
-        ...(extraFields ?? {})
-      },
-      update: {
-        [fieldName]: value,
-        ...(extraFields ?? {})
-      }
-    });
-    return true;
-  } catch (error) {
-    if (isMissingContentStorageTableError(error)) {
-      return false;
-    }
-
-    throw error;
-  }
-}
 
 export async function getBrandProfile(userId?: string) {
   const dbProfile = await readUserJsonRecord<unknown>(
@@ -163,19 +54,11 @@ export async function getTopicsHistoryRecords(userId?: string) {
     null
   );
   if (dbRecords) {
-    return z
-      .array(z.union([z.string(), topicHistoryRecordSchema.partial()]))
-      .parse(dbRecords)
-      .map((entry) => normalizeTopicHistoryRecord(entry))
-      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+    return parseTopicHistoryRecords(dbRecords);
   }
 
   const raw = await readJsonFile<unknown>(TOPICS_HISTORY_PATH, []);
-  return z
-    .array(z.union([z.string(), topicHistoryRecordSchema.partial()]))
-    .parse(raw)
-    .map((entry) => normalizeTopicHistoryRecord(entry))
-    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+  return parseTopicHistoryRecords(raw);
 }
 
 export async function getTopicsHistory(userId?: string) {

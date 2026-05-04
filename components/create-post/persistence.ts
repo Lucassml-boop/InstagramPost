@@ -10,6 +10,7 @@ import {
   restoreCarouselContexts,
   sanitizeDraft
 } from "./utils";
+import { restorePersistedError } from "./persistence.errors";
 import type {
   CarouselSlideContext,
   CreatePostPersistedState,
@@ -17,7 +18,6 @@ import type {
   GeneratorErrorState,
   OutputLanguage,
   PostType,
-  SimilarPostErrorDetail,
   StoryCaptionMode,
   Tone
 } from "./types";
@@ -44,19 +44,6 @@ type RestoreHandlers = {
   setSettingsMessage: (value: string) => void;
   setDraft: (value: DraftResponse) => void;
 };
-
-function isSimilarPostErrorDetail(value: unknown): value is SimilarPostErrorDetail {
-  return Boolean(
-    value &&
-      typeof value === "object" &&
-      (value as { field?: unknown }).field &&
-      typeof (value as { field?: unknown }).field === "string" &&
-      typeof (value as { label?: unknown }).label === "string" &&
-      typeof (value as { matchType?: unknown }).matchType === "string" &&
-      typeof (value as { candidateValue?: unknown }).candidateValue === "string" &&
-      typeof (value as { existingValue?: unknown }).existingValue === "string"
-  );
-}
 
 export function restoreCreatePostState(handlers: RestoreHandlers) {
   const raw = window.localStorage.getItem(CREATE_POST_STORAGE_KEY);
@@ -160,42 +147,9 @@ export function restoreCreatePostState(handlers: RestoreHandlers) {
     handlers.setScheduleTime(parsed.scheduleTime);
   }
 
-  if (typeof parsed.error === "string") {
-    handlers.setError(parsed.error);
-  } else if (
-    parsed.error &&
-    typeof parsed.error === "object" &&
-    (parsed.error as { type?: unknown }).type === "similar-manual-post"
-  ) {
-    const candidate = parsed.error as {
-      message?: unknown;
-      similarPost?: {
-        id?: unknown;
-        href?: unknown;
-        createdAt?: unknown;
-        details?: unknown;
-      };
-    };
-
-    if (
-      typeof candidate.message === "string" &&
-      candidate.similarPost &&
-      typeof candidate.similarPost.id === "string" &&
-      typeof candidate.similarPost.href === "string" &&
-      typeof candidate.similarPost.createdAt === "string" &&
-      Array.isArray(candidate.similarPost.details)
-    ) {
-      handlers.setError({
-        type: "similar-manual-post",
-        message: candidate.message,
-        similarPost: {
-          id: candidate.similarPost.id,
-          href: candidate.similarPost.href,
-          createdAt: candidate.similarPost.createdAt,
-          details: candidate.similarPost.details.filter(isSimilarPostErrorDetail)
-        }
-      });
-    }
+  const restoredError = restorePersistedError(parsed.error);
+  if (restoredError) {
+    handlers.setError(restoredError);
   }
 
   if (typeof parsed.settingsMessage === "string") {

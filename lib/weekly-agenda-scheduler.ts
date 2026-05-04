@@ -74,7 +74,7 @@ async function createScheduledDraftFromAgendaItem(input: {
   scheduledTime: Date;
   brandColors: string;
 }) {
-  throwIfGenerationCancelled(input.userId);
+  await throwIfGenerationCancelled(input.userId);
   const startedAt = Date.now();
   const heartbeat = setInterval(() => {
     console.info("[content-system] Agenda post generation still running", {
@@ -122,7 +122,7 @@ async function createScheduledDraftFromAgendaItem(input: {
           css: generatedCarousel.slides[0].css
         }
       : await generateInstagramPost(generationInput);
-    throwIfGenerationCancelled(input.userId);
+    await throwIfGenerationCancelled(input.userId);
 
     const slidesToRender = generatedCarousel?.slides ?? [generated];
     const renderedImages = [];
@@ -137,7 +137,7 @@ async function createScheduledDraftFromAgendaItem(input: {
     });
 
     for (const [index, slide] of slidesToRender.entries()) {
-      throwIfGenerationCancelled(input.userId);
+      await throwIfGenerationCancelled(input.userId);
       console.info("[content-system] Rendering agenda slide", {
         userId: input.userId,
         date: input.item.date,
@@ -157,7 +157,7 @@ async function createScheduledDraftFromAgendaItem(input: {
 
       renderedImages.push(image);
     }
-    throwIfGenerationCancelled(input.userId);
+    await throwIfGenerationCancelled(input.userId);
 
     const draft = await createDraftPost({
       userId: input.userId,
@@ -233,7 +233,7 @@ async function materializeAgendaItems(input: {
     totalPosts?: number | null;
   }) => void;
 }) {
-  throwIfGenerationCancelled(input.user.id);
+  await throwIfGenerationCancelled(input.user.id);
   const referenceDate = input.referenceDate ?? new Date();
   const [agenda, brandProfile] = await Promise.all([
     getCurrentWeeklyAgenda(input.user.id),
@@ -289,7 +289,7 @@ async function materializeAgendaItems(input: {
   let prepared = 0;
 
   for (const [index, item] of dueItems.entries()) {
-    throwIfGenerationCancelled(input.user.id);
+    await throwIfGenerationCancelled(input.user.id);
     const runtimeKey = buildAgendaRuntimeKey({
       userId: input.user.id,
       date: item.date,

@@ -6,7 +6,7 @@ import { forgotPasswordSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = rateLimitResponse({
+    const rateLimit = await rateLimitResponse({
       key: `auth:forgot-password:${getClientIp(request)}`,
       limit: 5,
       windowMs: 60 * 60 * 1000

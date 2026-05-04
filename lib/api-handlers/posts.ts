@@ -175,7 +175,7 @@ export async function handleGeneratePost(
     }
 
     currentPhase = "loading-dependencies";
-    const generationRateLimit = rateLimitResponse({
+    const generationRateLimit = await rateLimitResponse({
       key: `posts:generate:${user.id}`,
       limit: 12,
       windowMs: 60 * 60 * 1000
@@ -368,7 +368,7 @@ export async function handlePublishPost(
       return jsonError("Unauthorized", 401);
     }
 
-    const publishRateLimit = rateLimitResponse({
+    const publishRateLimit = await rateLimitResponse({
       key: `posts:publish:${user.id}`,
       limit: 20,
       windowMs: 60 * 60 * 1000

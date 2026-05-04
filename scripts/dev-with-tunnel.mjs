@@ -1,6 +1,13 @@
 import { spawn } from "node:child_process";
-import fs from "node:fs";
 import path from "node:path";
+import { getCloudflaredCommand } from "./dev-with-tunnel.cloudflared.mjs";
+import {
+  normalizePublicUrl,
+  readEnvFile,
+  readEnvValue,
+  upsertEnvValue,
+  writeEnvFile
+} from "./dev-with-tunnel.env.mjs";
 
 const projectRoot = process.cwd();
 const envPath = path.join(projectRoot, ".env.local");
@@ -8,7 +15,7 @@ const localPort = 3020;
 const localUrl = `http://127.0.0.1:${localPort}`;
 const redirectPath = "/api/auth/instagram/callback";
 const shouldSkipTunnel = process.env.SKIP_TUNNEL === "1" || process.env.SKIP_TUNNEL === "true";
-const fixedPublicUrl = normalizePublicUrl(process.env.FIXED_PUBLIC_URL ?? readEnvValue("FIXED_PUBLIC_URL") ?? "");
+const fixedPublicUrl = normalizePublicUrl(process.env.FIXED_PUBLIC_URL ?? readEnvValue(envPath, "FIXED_PUBLIC_URL") ?? "");
 
 let shuttingDown = false;
 let nextProcess;
@@ -18,78 +25,12 @@ function log(message) {
   process.stdout.write(`[dev-with-tunnel] ${message}\n`);
 }
 
-function readEnvFile() {
-  try {
-    return fs.readFileSync(envPath, "utf8");
-  } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
-      return "";
-    }
-
-    throw error;
-  }
-}
-
-function readEnvValue(key) {
-  const pattern = new RegExp(`^${key}\\s*=\\s*(.*)$`, "m");
-  const match = readEnvFile().match(pattern);
-
-  if (!match) {
-    return "";
-  }
-
-  return match[1].trim().replace(/^["']|["']$/g, "");
-}
-
-function normalizePublicUrl(value) {
-  return value.trim().replace(/\/$/, "");
-}
-
-function upsertEnvValue(content, key, value) {
-  const line = `${key}=${value}`;
-  const pattern = new RegExp(`^${key}=.*$`, "m");
-
-  if (pattern.test(content)) {
-    return content.replace(pattern, line);
-  }
-
-  const suffix = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
-  return `${content}${suffix}${line}\n`;
-}
-
 function updateEnvFile(publicUrl) {
-  let content = readEnvFile();
+  let content = readEnvFile(envPath);
   content = upsertEnvValue(content, "APP_BASE_URL", publicUrl);
   content = upsertEnvValue(content, "INSTAGRAM_REDIRECT_URI", `${publicUrl}${redirectPath}`);
-  fs.writeFileSync(envPath, content, "utf8");
+  writeEnvFile(envPath, content);
   log(`.env.local atualizado com a URL do tunel: ${publicUrl}`);
-}
-
-function getCloudflaredCommand() {
-  const candidates = [
-    "cloudflared",
-    process.env.LOCALAPPDATA
-      ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WinGet", "Links", "cloudflared.exe")
-      : "",
-    process.env.LOCALAPPDATA
-      ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WindowsApps", "cloudflared.exe")
-      : ""
-  ].filter(Boolean);
-
-  const wingetPackagesDir = process.env.LOCALAPPDATA
-    ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WinGet", "Packages")
-    : "";
-
-  if (wingetPackagesDir && fs.existsSync(wingetPackagesDir)) {
-    const packageDirs = fs
-      .readdirSync(wingetPackagesDir, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && entry.name.startsWith("Cloudflare.cloudflared_"))
-      .map((entry) => path.join(wingetPackagesDir, entry.name, "cloudflared.exe"));
-
-    candidates.push(...packageDirs);
-  }
-
-  return candidates.find((candidate) => candidate === "cloudflared" || fs.existsSync(candidate)) ?? "cloudflared";
 }
 
 function cleanupAndExit(exitCode = 0) {

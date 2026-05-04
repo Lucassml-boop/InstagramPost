@@ -8,7 +8,6 @@ import { refreshInstagramAccessTokens } from "@/lib/instagram";
 import { processScheduledPosts } from "@/lib/posts";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __postSchedulerStarted__: boolean | undefined;
 }
 

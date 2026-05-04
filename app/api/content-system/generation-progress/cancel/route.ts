@@ -11,6 +11,6 @@ export async function POST() {
 
   return Response.json({
     ok: true,
-    progress: requestGenerationCancellation(user.id)
+    progress: await requestGenerationCancellation(user.id)
   });
 }

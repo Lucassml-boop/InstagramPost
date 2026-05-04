@@ -51,7 +51,7 @@ CRON_SECRET=replace-with-a-long-random-secret
 4. Create a Supabase project and open `Project Settings > Database`.
 5. Copy the Transaction Pooler connection string into `DATABASE_URL` and append `?pgbouncer=true`.
 6. Copy the Direct Connection string into `DIRECT_URL`.
-7. Run `npm run db:push`.
+7. Run `npm run db:push` for a quick local demo, or apply Prisma migrations for production.
 8. Start the app with `npm run dev`.
 9. Open `http://localhost:3020`.
 
@@ -71,7 +71,8 @@ When `FIXED_PUBLIC_URL` is present, `npm run dev` will stop generating a random 
 - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are used server-side for durable media uploads to Supabase Storage
 - `SUPABASE_STORAGE_BUCKET` defaults to `instagram-post-media` when omitted
 - Run `npm run db:generate` after dependency changes
-- Run `npm run db:push` whenever the schema changes
+- Use committed Prisma migrations for production schema changes
+- Run `npm run db:push` only for local demo iteration when migration history is not required
 
 ## Vercel Deploy
 
@@ -99,7 +100,7 @@ Production values should usually be:
 - `INSTAGRAM_REDIRECT_URI=https://your-project.vercel.app/api/auth/instagram/callback`
 - `CRON_SECRET=` a long random secret used by cron jobs and external automation calls
 
-After the variables are set, run `npm run db:push` once against the Supabase database to create the tables used by the app.
+After the variables are set, apply the committed Prisma migrations against the Supabase database to create or update the tables used by the app.
 
 ## Cron And Automation Security
 

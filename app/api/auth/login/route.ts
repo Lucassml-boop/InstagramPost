@@ -7,7 +7,7 @@ import { loginSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = rateLimitResponse({
+    const rateLimit = await rateLimitResponse({
       key: `auth:login:${getClientIp(request)}`,
       limit: 8,
       windowMs: 15 * 60 * 1000

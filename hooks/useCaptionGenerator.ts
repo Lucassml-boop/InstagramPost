@@ -19,21 +19,19 @@ import {
   createSlideContexts,
   getClientGenerationTimeoutMs,
   getGenerationStatus,
-  normalizeSlideContexts,
-  parseBrandColors,
-  serializeBrandColors
+  normalizeSlideContexts
 } from "@/components/create-post/utils";
 import { useCaptionGeneratorActions } from "./useCaptionGenerator.actions";
+import {
+  getDefaultBrandColors,
+  isLegacyDefaultPalette,
+  normalizeLegacyPalette
+} from "./useCaptionGenerator.palette";
 import { useCaptionGeneratorPersistence } from "./useCaptionGenerator.persistence";
 import type { UseCaptionGeneratorInput } from "./useCaptionGenerator.types";
 
 export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
-  const defaultBrandColors = serializeBrandColors({
-    primary: "#d62976",
-    background: "#101828",
-    support: "",
-    accent: ""
-  });
+  const defaultBrandColors = getDefaultBrandColors();
   const [activeTab, setActiveTab] = useState<"content" | "settings">("content");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
@@ -162,30 +160,14 @@ export function useCaptionGenerator(input: UseCaptionGeneratorInput) {
   const { clearPersistedState } = useCaptionGeneratorPersistence(state);
 
   useEffect(() => {
-    const palette = parseBrandColors(brandColors);
-    const isLegacyDefaultPalette =
-      palette.primary === "#d62976" &&
-      palette.background === "#101828" &&
-      palette.support === "#f59e0b" &&
-      palette.accent === "#f8fafc";
-
-    if (isLegacyDefaultPalette) {
+    if (isLegacyDefaultPalette(brandColors)) {
       setBrandColors(defaultBrandColors);
     }
   }, [brandColors, defaultBrandColors]);
 
   useEffect(() => {
     setBrandColorsHistory((current) => {
-      const normalized = current.map((value) => {
-        const palette = parseBrandColors(value);
-        const isLegacyDefaultPalette =
-          palette.primary === "#d62976" &&
-          palette.background === "#101828" &&
-          palette.support === "#f59e0b" &&
-          palette.accent === "#f8fafc";
-
-        return isLegacyDefaultPalette ? defaultBrandColors : value;
-      });
+      const normalized = current.map((value) => normalizeLegacyPalette(value, defaultBrandColors));
 
       const deduped = Array.from(new Set(normalized));
       const unchanged =

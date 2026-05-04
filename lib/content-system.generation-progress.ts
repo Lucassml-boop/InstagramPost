@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+
 export type ContentSystemGenerationStage =
   | "saving-settings"
   | "generating-weekly-plan"
@@ -21,8 +23,6 @@ export type ContentSystemGenerationProgress = {
   errorMessage: string | null;
 };
 
-const progressStore = new Map<string, ContentSystemGenerationProgress>();
-const cancelStore = new Set<string>();
 const COMPLETED_TTL_MS = 2 * 60 * 1000;
 
 function buildDefaultProgress(): ContentSystemGenerationProgress {
@@ -42,65 +42,83 @@ function buildDefaultProgress(): ContentSystemGenerationProgress {
   };
 }
 
-export function getGenerationProgress(userId: string) {
-  const current = progressStore.get(userId);
+function asProgress(payload: unknown): ContentSystemGenerationProgress {
+  return { ...buildDefaultProgress(), ...(payload as Partial<ContentSystemGenerationProgress>) };
+}
+
+export async function getGenerationProgress(userId: string) {
+  const current = await prisma.generationProgress.findUnique({ where: { userId } });
   if (!current) {
     return buildDefaultProgress();
   }
 
+  const progress = asProgress(current.payload);
   if (
-    (current.state === "completed" || current.state === "failed") &&
-    current.completedAt !== null &&
-    Date.now() - current.completedAt > COMPLETED_TTL_MS
+    (progress.state === "completed" || progress.state === "failed") &&
+    progress.completedAt !== null &&
+    Date.now() - progress.completedAt > COMPLETED_TTL_MS
   ) {
-    progressStore.delete(userId);
+    await prisma.generationProgress.delete({ where: { userId } });
     return buildDefaultProgress();
   }
 
-  return current;
+  return progress;
 }
 
-export function setGenerationProgress(
+export async function setGenerationProgress(
   userId: string,
   patch: Partial<ContentSystemGenerationProgress>
 ) {
-  const previous = getGenerationProgress(userId);
+  const previous = await getGenerationProgress(userId);
   const next: ContentSystemGenerationProgress = {
     ...previous,
     ...patch,
     updatedAt: Date.now()
   };
-  progressStore.set(userId, next);
+
+  await prisma.generationProgress.upsert({
+    where: { userId },
+    create: { userId, payload: next },
+    update: { payload: next }
+  });
+
   return next;
 }
 
-export function startGenerationProgress(
+export async function startGenerationProgress(
   userId: string,
   input?: Pick<ContentSystemGenerationProgress, "stage" | "message">
 ) {
-  cancelStore.delete(userId);
-  return setGenerationProgress(userId, {
+  const next = {
     ...buildDefaultProgress(),
-    state: "running",
+    state: "running" as const,
     stage: input?.stage ?? "saving-settings",
     message: input?.message ?? null,
     startedAt: Date.now(),
     updatedAt: Date.now()
+  };
+
+  await prisma.generationProgress.upsert({
+    where: { userId },
+    create: { userId, payload: next, cancelRequested: false },
+    update: { payload: next, cancelRequested: false }
   });
+
+  return next;
 }
 
-export function completeGenerationProgress(
+export async function completeGenerationProgress(
   userId: string,
   input?: Pick<ContentSystemGenerationProgress, "message" | "prepared" | "scanned">
 ) {
-  cancelStore.delete(userId);
+  const current = await getGenerationProgress(userId);
   return setGenerationProgress(userId, {
     state: "completed",
     stage: "completed",
     completedAt: Date.now(),
     message: input?.message ?? null,
-    prepared: input?.prepared ?? getGenerationProgress(userId).prepared,
-    scanned: input?.scanned ?? getGenerationProgress(userId).scanned,
+    prepared: input?.prepared ?? current.prepared,
+    scanned: input?.scanned ?? current.scanned,
     activeTheme: null,
     currentPostIndex: null,
     totalPosts: null,
@@ -108,8 +126,7 @@ export function completeGenerationProgress(
   });
 }
 
-export function failGenerationProgress(userId: string, errorMessage: string) {
-  cancelStore.delete(userId);
+export async function failGenerationProgress(userId: string, errorMessage: string) {
   return setGenerationProgress(userId, {
     state: "failed",
     stage: "failed",
@@ -120,24 +137,35 @@ export function failGenerationProgress(userId: string, errorMessage: string) {
   });
 }
 
-export function requestGenerationCancellation(userId: string) {
-  cancelStore.add(userId);
-  return setGenerationProgress(userId, {
+export async function requestGenerationCancellation(userId: string) {
+  const progress = await setGenerationProgress(userId, {
     state: "running",
     message: "Cancelamento solicitado. Encerrando a geracao no proximo ponto seguro."
   });
+
+  await prisma.generationProgress.update({
+    where: { userId },
+    data: { cancelRequested: true }
+  });
+
+  return progress;
 }
 
-export function clearGenerationCancellation(userId: string) {
-  cancelStore.delete(userId);
+export async function clearGenerationCancellation(userId: string) {
+  await prisma.generationProgress.upsert({
+    where: { userId },
+    create: { userId, payload: buildDefaultProgress(), cancelRequested: false },
+    update: { cancelRequested: false }
+  });
 }
 
-export function isGenerationCancellationRequested(userId: string) {
-  return cancelStore.has(userId);
-}
+export async function throwIfGenerationCancelled(userId: string) {
+  const current = await prisma.generationProgress.findUnique({
+    where: { userId },
+    select: { cancelRequested: true }
+  });
 
-export function throwIfGenerationCancelled(userId: string) {
-  if (isGenerationCancellationRequested(userId)) {
+  if (current?.cancelRequested) {
     throw new Error("A geracao foi cancelada pelo usuario.");
   }
 }

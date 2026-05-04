@@ -5,6 +5,17 @@ import type {
   ContentPlanItemWithStatus,
   WeeklyPostSummary
 } from "@/lib/content-system.agenda-status";
+import type {
+  AutomaticPostIdeaInput,
+  AutomaticSettingInput,
+  AutomaticSettingsBundleResponse,
+  BrandProfileResponse,
+  BrandProfileWithAgendaResponse,
+  GenerateWeeklyAgendaResponse,
+  GenerationProgressResponse
+} from "./content-system.types";
+
+export { runAutomationAction } from "./automation-action";
 
 export async function saveBrandProfile(profile: BrandProfile) {
   const response = await fetch("/api/content-system/brand-profile", {
@@ -13,7 +24,7 @@ export async function saveBrandProfile(profile: BrandProfile) {
     body: JSON.stringify(profile)
   });
 
-  return parseJsonOrThrow<{ profile?: BrandProfile; error?: string }>(
+  return parseJsonOrThrow<BrandProfileResponse>(
     response,
     "Unable to save content automation settings."
   );
@@ -26,15 +37,7 @@ export async function saveBrandProfileWithAgenda(profile: BrandProfile) {
     body: JSON.stringify(profile)
   });
 
-  return parseJsonOrThrow<{
-    profile?: BrandProfile;
-    agenda?: ContentPlanItemWithStatus[];
-    weekPosts?: WeeklyPostSummary[];
-    agendaSummary?: WeeklyAgendaUsageSummary;
-    prepared?: number;
-    scanned?: number;
-    error?: string;
-  }>(
+  return parseJsonOrThrow<BrandProfileWithAgendaResponse>(
     response,
     "Unable to save content automation settings."
   );
@@ -51,17 +54,10 @@ export async function generateWeeklyAgenda() {
       signal: controller.signal
     });
 
-    return parseJsonOrThrow<
-      {
-        agenda?: ContentPlanItemWithStatus[];
-        weekPosts?: WeeklyPostSummary[];
-        agendaSummary?: WeeklyAgendaUsageSummary;
-        currentTopics?: string[];
-        prepared?: number;
-        scanned?: number;
-        error?: string;
-      }
-    >(response, "Unable to generate the weekly content agenda.");
+    return parseJsonOrThrow<GenerateWeeklyAgendaResponse>(
+      response,
+      "Unable to generate the weekly content agenda."
+    );
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error("Geração de agenda excedeu o tempo limite de 30 minutos. Tente novamente.");
@@ -77,30 +73,7 @@ export async function fetchGenerationProgress() {
     cache: "no-store"
   });
 
-  return parseJsonResponse<{
-    progress?: {
-      state: "idle" | "running" | "completed" | "failed";
-      stage:
-        | "saving-settings"
-        | "generating-weekly-plan"
-        | "materializing-posts"
-        | "summarizing-response"
-        | "completed"
-        | "failed"
-        | null;
-      startedAt: number | null;
-      updatedAt: number | null;
-      completedAt: number | null;
-      message: string | null;
-      prepared: number;
-      scanned: number;
-      activeTheme: string | null;
-      currentPostIndex: number | null;
-      totalPosts: number | null;
-      errorMessage: string | null;
-    };
-    error?: string;
-  }>(response);
+  return parseJsonResponse<GenerationProgressResponse>(response);
 }
 
 export async function cancelGenerationProgress() {
@@ -114,11 +87,7 @@ export async function cancelGenerationProgress() {
   );
 }
 
-export async function generateAutomaticPostIdea(input: {
-  profile: BrandProfile;
-  day: string;
-  postIndex: number;
-}) {
+export async function generateAutomaticPostIdea(input: AutomaticPostIdeaInput) {
   const response = await fetch("/api/content-system/generate-post-idea", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -131,21 +100,7 @@ export async function generateAutomaticPostIdea(input: {
   );
 }
 
-export async function generateAutomaticSetting(input: {
-  profile: BrandProfile;
-  target:
-    | "brandName"
-    | "editableBrief"
-    | "services"
-    | "contentRules"
-    | "researchQueries"
-    | "carouselDefaultStructure"
-    | "goalPresets"
-    | "contentTypePresets"
-    | "formatPresets"
-    | "customInstructions";
-  currentValue: string;
-}) {
+export async function generateAutomaticSetting(input: AutomaticSettingInput) {
   const response = await fetch("/api/content-system/generate-setting", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -168,21 +123,10 @@ export async function generateAutomaticSettingsBundle(input: {
     body: JSON.stringify(input)
   });
 
-  return parseJsonOrThrow<
-    {
-      brandName?: string;
-      editableBrief?: string;
-      services?: string;
-      contentRules?: string;
-      researchQueries?: string;
-      carouselDefaultStructure?: string;
-      goalPresets?: string;
-      contentTypePresets?: string;
-      formatPresets?: string;
-      customInstructions?: string;
-      error?: string;
-    }
-  >(response, "Unable to generate automatic settings bundle.");
+  return parseJsonOrThrow<AutomaticSettingsBundleResponse>(
+    response,
+    "Unable to generate automatic settings bundle."
+  );
 }
 
 export async function fetchTopicsHistory() {
@@ -234,32 +178,4 @@ export async function keepUsingStaleAgenda() {
     response,
     "Unable to keep the previous weekly agenda."
   );
-}
-
-export async function runAutomationAction(input: {
-  endpoint: string;
-  method: "GET" | "POST";
-  body?: string;
-}) {
-  const response = await fetch(input.endpoint, {
-    method: input.method,
-    headers: input.body ? { "Content-Type": "application/json" } : undefined,
-    body: input.body
-  });
-
-  const text = await response.text();
-  const parsed = (() => {
-    try {
-      return JSON.parse(text) as unknown;
-    } catch {
-      return null;
-    }
-  })();
-
-  return {
-    response,
-    text,
-    parsed,
-    formatted: parsed ? JSON.stringify(parsed, null, 2) : text
-  };
 }

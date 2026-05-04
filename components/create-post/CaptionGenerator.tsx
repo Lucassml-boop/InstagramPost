@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 import { Panel } from "@/components/shared";
 import { useCaptionGenerator } from "@/hooks/useCaptionGenerator";
-import { AutoGenerateAllModal } from "./AutoGenerateAllModal";
 import { DEFAULT_CUSTOM_INSTRUCTIONS } from "./constants";
-import { PostLayoutPreview } from "./PostLayoutPreview";
 import { CaptionGeneratorDraft } from "./CaptionGeneratorDraft";
 import { CaptionGeneratorFields } from "./CaptionGeneratorFields";
+import { CaptionGeneratorAutoModal } from "./CaptionGeneratorAutoModal";
+import { CaptionGeneratorPreview } from "./CaptionGeneratorPreview";
+import { buildCaptionGeneratorDictionary } from "./caption-generator.dictionary";
 import type { OutputLanguage } from "./types";
 import { useAutoCreatePostInputs } from "./useAutoCreatePostInputs";
+import { useCaptionGeneratorNavigation } from "./useCaptionGeneratorNavigation";
 
 export function CaptionGenerator({
   initialOutputLanguage = "en",
@@ -20,8 +21,8 @@ export function CaptionGenerator({
   initialOutputLanguage?: OutputLanguage;
   initialCustomInstructions?: string;
 }) {
-  const router = useRouter();
   const { dictionary } = useI18n();
+  const navigation = useCaptionGeneratorNavigation();
   const [isAutoGenerateModalOpen, setIsAutoGenerateModalOpen] = useState(false);
   const {
     topic,
@@ -76,32 +77,9 @@ export function CaptionGenerator({
   } = useCaptionGenerator({
     initialOutputLanguage,
     initialCustomInstructions,
-    dictionary: {
-      common: {
-        serverConnectionError: dictionary.common.serverConnectionError,
-        save: dictionary.common.save
-      },
-      generator: {
-        generateError: dictionary.generator.generateError,
-        publishError: dictionary.generator.publishError,
-        scheduleError: dictionary.generator.scheduleError,
-        settingsSaveError: dictionary.generator.settingsSaveError,
-        settingsSaved: dictionary.generator.settingsSaved,
-        scheduleTimeRequired: dictionary.generator.scheduleTimeRequired,
-        generationSlow: dictionary.generator.generationSlow,
-        cancelGeneration: dictionary.generator.cancelGeneration,
-        generationCanceled: dictionary.generator.generationCanceled,
-        clearGeneratedPost: dictionary.generator.clearGeneratedPost
-      }
-    },
-    onPublished: () => {
-      router.push("/dashboard?published=1");
-      router.refresh();
-    },
-    onScheduled: () => {
-      router.push("/scheduled-posts?saved=1");
-      router.refresh();
-    }
+    dictionary: buildCaptionGeneratorDictionary(dictionary),
+    onPublished: navigation.onPublished,
+    onScheduled: navigation.onScheduled
   });
   const {
     autoFieldKey,
@@ -137,38 +115,34 @@ export function CaptionGenerator({
     <>
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Panel className="p-6">
-          <div className="grid gap-4">
-            <CaptionGeneratorFields
-              dictionary={dictionary}
-              autoFieldKey={autoFieldKey}
-              topic={topic}
-              setTopic={setTopic}
-              message={message}
-              setMessage={setMessage}
-              postType={postType}
-              setPostType={setPostType}
-              draft={draft}
-              setDraft={setDraft}
-              tone={tone}
-              setTone={setTone}
-              brandColors={brandColors}
-              setBrandColors={setBrandColors}
-              brandColorsHistory={brandColorsHistory}
-              saveBrandColorsToHistory={saveBrandColorsToHistory}
-              removeBrandColorsFromHistory={removeBrandColorsFromHistory}
-              carouselSlideCount={carouselSlideCount}
-              setCarouselSlideCount={setCarouselSlideCount}
-              carouselSlideContexts={carouselSlideContexts}
-              setCarouselSlideContexts={setCarouselSlideContexts}
-              storyCaptionMode={storyCaptionMode}
-              setStoryCaptionMode={setStoryCaptionMode}
-              keywords={keywords}
-              setKeywords={setKeywords}
-              onGenerateField={(field) => {
-                void generateCreatePostInputs(field);
-              }}
-            />
-          </div>
+          <CaptionGeneratorFields
+            dictionary={dictionary}
+            autoFieldKey={autoFieldKey}
+            topic={topic}
+            setTopic={setTopic}
+            message={message}
+            setMessage={setMessage}
+            postType={postType}
+            setPostType={setPostType}
+            draft={draft}
+            setDraft={setDraft}
+            tone={tone}
+            setTone={setTone}
+            brandColors={brandColors}
+            setBrandColors={setBrandColors}
+            brandColorsHistory={brandColorsHistory}
+            saveBrandColorsToHistory={saveBrandColorsToHistory}
+            removeBrandColorsFromHistory={removeBrandColorsFromHistory}
+            carouselSlideCount={carouselSlideCount}
+            setCarouselSlideCount={setCarouselSlideCount}
+            carouselSlideContexts={carouselSlideContexts}
+            setCarouselSlideContexts={setCarouselSlideContexts}
+            storyCaptionMode={storyCaptionMode}
+            setStoryCaptionMode={setStoryCaptionMode}
+            keywords={keywords}
+            setKeywords={setKeywords}
+            onGenerateField={(field) => void generateCreatePostInputs(field)}
+          />
           <CaptionGeneratorDraft
             dictionary={dictionary}
             isGenerating={isGenerating}
@@ -182,9 +156,7 @@ export function CaptionGenerator({
             cancelGeneration={cancelGeneration}
             isAutoGeneratingAll={isAutoGeneratingAll}
             openAutoGenerateAllModal={() => setIsAutoGenerateModalOpen(true)}
-            generatePost={() => {
-              void generatePost();
-            }}
+            generatePost={() => void generatePost()}
             generatePostIgnoringSimilar={generatePostIgnoringSimilar}
             lastAutoGenerateTopicHint={lastAutoGenerateTopicHint}
             clearFocusHints={clearFocusHints}
@@ -206,33 +178,21 @@ export function CaptionGenerator({
           />
         </Panel>
 
-        <PostLayoutPreview
-          imageUrl={draft?.imageUrl ?? null}
-          mediaItems={draft?.mediaItems ?? []}
+        <CaptionGeneratorPreview
+          draft={draft}
           caption={effectiveCaption}
           postType={postType}
-          mediaCount={draft?.mediaItems.length ?? 0}
           showCaption={shouldShowCaptionEditor}
         />
       </div>
 
-      <AutoGenerateAllModal
+      <CaptionGeneratorAutoModal
+        dictionary={dictionary}
         isOpen={isAutoGenerateModalOpen}
         isSubmitting={isAutoGeneratingAll}
         initialValue={lastAutoGenerateTopicHint}
-        dictionary={{
-          title: dictionary.generator.autoGenerateModalTitle,
-          description: dictionary.generator.autoGenerateModalDescription,
-          fieldLabel: dictionary.generator.autoGenerateModalFieldLabel,
-          fieldPlaceholder: dictionary.generator.autoGenerateModalFieldPlaceholder,
-          cancel: dictionary.generator.autoGenerateModalCancel,
-          submit: dictionary.generator.autoGenerateModalSubmit,
-          skip: dictionary.generator.autoGenerateModalSkip
-        }}
         onClose={() => setIsAutoGenerateModalOpen(false)}
-        onSubmit={(value, _submitMode) => {
-          void handleAutoGenerateAllSubmit(value);
-        }}
+        onSubmit={(value) => void handleAutoGenerateAllSubmit(value)}
       />
     </>
   );

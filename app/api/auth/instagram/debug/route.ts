@@ -6,6 +6,10 @@ import { jsonError } from "@/lib/server-utils";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return jsonError("Not found", 404);
+  }
+
   const user = await getCurrentUser();
 
   if (!user) {
@@ -28,13 +32,13 @@ export async function GET(request: Request) {
       authUrlRedirectUri
     },
     env: {
-      appBaseUrl: process.env.APP_BASE_URL ?? null,
-      instagramRedirectUri: process.env.INSTAGRAM_REDIRECT_URI ?? null,
-      instagramAppId: process.env.INSTAGRAM_APP_ID ?? null,
+      hasAppBaseUrl: Boolean(process.env.APP_BASE_URL),
+      hasInstagramRedirectUri: Boolean(process.env.INSTAGRAM_REDIRECT_URI),
+      hasInstagramAppId: Boolean(process.env.INSTAGRAM_APP_ID),
       nodeEnv: process.env.NODE_ENV ?? null,
       vercelEnv: process.env.VERCEL_ENV ?? null
     },
-    authorizeUrl: authUrl,
+    authorizeUrlHost: new URL(authUrl).host,
     metaChecklist: [
       "Valid OAuth Redirect URI must exactly match runtime.redirectUri",
       "No trailing slash and no extra query params",

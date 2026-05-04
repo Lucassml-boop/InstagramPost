@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { jsonError } from "@/lib/server-utils";
 
 type RateLimitBucket = {
@@ -11,22 +12,33 @@ type RateLimitOptions = {
   windowMs: number;
 };
 
-const buckets = new Map<string, RateLimitBucket>();
+const memoryBuckets = new Map<string, RateLimitBucket>();
 
-function now() {
+function getNow() {
   return Date.now();
 }
 
-function cleanupExpiredBuckets(referenceTime: number) {
-  if (buckets.size < 5000) {
-    return;
+function checkMemoryRateLimit(options: RateLimitOptions) {
+  const referenceTime = getNow();
+  const bucket = memoryBuckets.get(options.key);
+
+  if (!bucket || bucket.resetAt <= referenceTime) {
+    memoryBuckets.set(options.key, {
+      count: 1,
+      resetAt: referenceTime + options.windowMs
+    });
+    return { ok: true as const, retryAfterSeconds: 0 };
   }
 
-  for (const [key, bucket] of buckets) {
-    if (bucket.resetAt <= referenceTime) {
-      buckets.delete(key);
-    }
+  if (bucket.count >= options.limit) {
+    return {
+      ok: false as const,
+      retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - referenceTime) / 1000))
+    };
   }
+
+  bucket.count += 1;
+  return { ok: true as const, retryAfterSeconds: 0 };
 }
 
 export function getClientIp(request: Request) {
@@ -36,41 +48,63 @@ export function getClientIp(request: Request) {
   return forwardedFor || realIp || "unknown";
 }
 
-export function checkRateLimit(options: RateLimitOptions) {
-  const referenceTime = now();
-  cleanupExpiredBuckets(referenceTime);
+export async function checkRateLimit(options: RateLimitOptions) {
+  if (!process.env.DATABASE_URL) {
+    return checkMemoryRateLimit(options);
+  }
 
-  const bucket = buckets.get(options.key);
-  if (!bucket || bucket.resetAt <= referenceTime) {
-    buckets.set(options.key, {
-      count: 1,
-      resetAt: referenceTime + options.windowMs
+  try {
+    const referenceDate = new Date();
+    await prisma.rateLimitBucket.deleteMany({
+      where: { resetAt: { lte: referenceDate } }
     });
-    return {
-      ok: true as const,
-      remaining: options.limit - 1,
-      retryAfterSeconds: 0
-    };
-  }
 
-  if (bucket.count >= options.limit) {
-    return {
-      ok: false as const,
-      remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - referenceTime) / 1000))
-    };
-  }
+    const existing = await prisma.rateLimitBucket.findUnique({
+      where: { key: options.key }
+    });
 
-  bucket.count += 1;
-  return {
-    ok: true as const,
-    remaining: options.limit - bucket.count,
-    retryAfterSeconds: 0
-  };
+    if (!existing || existing.resetAt <= referenceDate) {
+      await prisma.rateLimitBucket.upsert({
+        where: { key: options.key },
+        create: {
+          key: options.key,
+          count: 1,
+          resetAt: new Date(referenceDate.getTime() + options.windowMs)
+        },
+        update: {
+          count: 1,
+          resetAt: new Date(referenceDate.getTime() + options.windowMs)
+        }
+      });
+      return { ok: true as const, retryAfterSeconds: 0 };
+    }
+
+    if (existing.count >= options.limit) {
+      return {
+        ok: false as const,
+        retryAfterSeconds: Math.max(
+          1,
+          Math.ceil((existing.resetAt.getTime() - referenceDate.getTime()) / 1000)
+        )
+      };
+    }
+
+    await prisma.rateLimitBucket.update({
+      where: { key: options.key },
+      data: { count: { increment: 1 } }
+    });
+    return { ok: true as const, retryAfterSeconds: 0 };
+  } catch (error) {
+    console.warn("[rate-limit] Falling back to in-memory bucket", {
+      key: options.key,
+      message: error instanceof Error ? error.message : "unknown"
+    });
+    return checkMemoryRateLimit(options);
+  }
 }
 
-export function rateLimitResponse(options: RateLimitOptions) {
-  const result = checkRateLimit(options);
+export async function rateLimitResponse(options: RateLimitOptions) {
+  const result = await checkRateLimit(options);
 
   if (result.ok) {
     return null;
@@ -79,8 +113,6 @@ export function rateLimitResponse(options: RateLimitOptions) {
   return jsonError(
     "Muitas tentativas em pouco tempo. Aguarde um pouco e tente novamente.",
     429,
-    {
-      retryAfterSeconds: result.retryAfterSeconds
-    }
+    { retryAfterSeconds: result.retryAfterSeconds }
   );
 }

@@ -24,10 +24,7 @@ export function getInstagramAuthUrl(state: string, redirectUri?: string) {
   );
   url.searchParams.set("state", state);
   url.searchParams.set("force_authentication", "1");
-  console.log("[instagram] Building auth URL", {
-    redirectUri: resolvedRedirectUri,
-    stateLength: state.length
-  });
+  console.info("[instagram] Building auth URL", { stateLength: state.length });
   return url.toString();
 }
 
@@ -40,10 +37,7 @@ export async function exchangeCodeForAccessToken(code: string, redirectUri?: str
     redirect_uri: resolvedRedirectUri,
     code
   });
-  console.log("[instagram] Exchanging code for token", {
-    redirectUri: resolvedRedirectUri,
-    codeLength: code.length
-  });
+  console.info("[instagram] Exchanging code for token", { codeLength: code.length });
   const response = await fetch("https://api.instagram.com/oauth/access_token", {
     method: "POST",
     body,
@@ -54,16 +48,12 @@ export async function exchangeCodeForAccessToken(code: string, redirectUri?: str
     console.error("[instagram] Token exchange failed", {
       status: response.status,
       statusText: response.statusText,
-      redirectUri: resolvedRedirectUri,
       errorType: json.error_type ?? null,
       errorMessage: json.error_message ?? null
     });
     throw new Error(json.error_message ?? "Unable to exchange Instagram code.");
   }
-  console.log("[instagram] Token exchange succeeded", {
-    status: response.status,
-    instagramUserId: String(json.user_id ?? "")
-  });
+  console.info("[instagram] Token exchange succeeded", { status: response.status });
   return {
     accessToken: String(json.access_token),
     instagramUserId: String(json.user_id ?? "")
@@ -102,9 +92,7 @@ async function requestGraphToken(
 }
 
 export async function exchangeForLongLivedAccessToken(shortLivedAccessToken: string) {
-  console.log("[instagram] Exchanging short-lived token for long-lived token", {
-    accessTokenLength: shortLivedAccessToken.length
-  });
+  console.info("[instagram] Exchanging short-lived token for long-lived token");
   const result = await requestGraphToken(
     "https://graph.instagram.com/access_token",
     new URLSearchParams({
@@ -114,16 +102,14 @@ export async function exchangeForLongLivedAccessToken(shortLivedAccessToken: str
     }),
     "Unable to exchange for a long-lived Instagram token."
   );
-  console.log("[instagram] Long-lived token exchange succeeded", {
+  console.info("[instagram] Long-lived token exchange succeeded", {
     expiresAt: result.expiresAt?.toISOString() ?? null
   });
   return result;
 }
 
 export async function refreshLongLivedAccessToken(accessToken: string) {
-  console.log("[instagram] Refreshing long-lived access token", {
-    accessTokenLength: accessToken.length
-  });
+  console.info("[instagram] Refreshing long-lived access token");
   const result = await requestGraphToken(
     "https://graph.instagram.com/refresh_access_token",
     new URLSearchParams({
@@ -132,7 +118,7 @@ export async function refreshLongLivedAccessToken(accessToken: string) {
     }),
     "Unable to refresh Instagram access token."
   );
-  console.log("[instagram] Token refresh succeeded", {
+  console.info("[instagram] Token refresh succeeded", {
     expiresAt: result.expiresAt?.toISOString() ?? null
   });
   return result;

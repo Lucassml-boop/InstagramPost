@@ -1,35 +1,14 @@
 import { parseJsonOrThrow, parseJsonResponse } from "@/lib/client/http";
 import type {
-  DraftResponse,
-  GeneratorErrorState,
-  MediaItem,
-  OutputLanguage,
-  PostType
-} from "@/components/create-post/types";
+  GenerateCreatePostInputsInput,
+  GeneratePostInput,
+  GeneratePostResponse,
+  InspectAiMetadataResponse,
+  PublishPostInput,
+  SchedulePostInput
+} from "./posts.types";
 
-type GeneratePostErrorResponse = {
-  error?: string;
-  errorDetails?: {
-    type: "similar-manual-post";
-    similarPost: Extract<GeneratorErrorState, { type: "similar-manual-post" }>["similarPost"];
-  };
-};
-
-export async function generatePost(input: {
-  topic: string;
-  message: string;
-  postType: PostType;
-  carouselSlideCount: number;
-  carouselSlideContexts: string[];
-  tone: "professional" | "casual" | "promotional";
-  outputLanguage: OutputLanguage;
-  customInstructions: string;
-  brandColors: string;
-  keywords: string;
-  userTopicHint?: string;
-  allowSimilarPost?: boolean;
-  signal?: AbortSignal;
-}) {
+export async function generatePost(input: GeneratePostInput) {
   const response = await fetch("/api/posts/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -52,18 +31,11 @@ export async function generatePost(input: {
 
   return {
     response,
-    json: await parseJsonResponse<DraftResponse & GeneratePostErrorResponse>(response)
+    json: await parseJsonResponse<GeneratePostResponse>(response)
   };
 }
 
-export async function publishPost(input: {
-  postId: string;
-  caption: string;
-  postType: PostType;
-  mediaItems: MediaItem[];
-  imageUrl: string;
-  imagePath: string;
-}) {
+export async function publishPost(input: PublishPostInput) {
   const response = await fetch("/api/posts/publish", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -76,15 +48,7 @@ export async function publishPost(input: {
   );
 }
 
-export async function schedulePost(input: {
-  postId: string;
-  caption: string;
-  scheduledTime: string;
-  postType: PostType;
-  mediaItems: MediaItem[];
-  imageUrl: string;
-  imagePath: string;
-}) {
+export async function schedulePost(input: SchedulePostInput) {
   const response = await fetch("/api/posts/schedule", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -151,40 +115,13 @@ export async function inspectAiMetadata(file: File) {
     body: formData
   });
 
-  return parseJsonOrThrow<
-    {
-      exiftoolAvailable: boolean;
-      expectedDigitalSourceType: string;
-      detected: {
-        digitalSourceType: string | null;
-        creator: string | null;
-        creatorTool: string | null;
-        description: string | null;
-        credit: string | null;
-        rights: string | null;
-      };
-      hasAiMetadata: boolean;
-      rawOutput: Record<string, unknown> | null;
-      error?: string;
-    }
-  >(response, "Unable to inspect AI metadata.");
+  return parseJsonOrThrow<InspectAiMetadataResponse>(
+    response,
+    "Unable to inspect AI metadata."
+  );
 }
 
-export async function generateCreatePostInputs(input: {
-  current: {
-    topic: string;
-    message: string;
-    postType: PostType;
-    tone: "professional" | "casual" | "promotional";
-    brandColors: string;
-    keywords: string;
-    carouselSlideCount: number;
-    carouselSlideContexts: string[];
-    outputLanguage: OutputLanguage;
-    customInstructions: string;
-  };
-  userTopicHint?: string;
-}) {
+export async function generateCreatePostInputs(input: GenerateCreatePostInputsInput) {
   const response = await fetch("/api/posts/generate-inputs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

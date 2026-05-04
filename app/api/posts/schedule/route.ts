@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return jsonError("Unauthorized", 401);
     }
 
-    const rateLimit = rateLimitResponse({
+    const rateLimit = await rateLimitResponse({
       key: `posts:schedule:${user.id}`,
       limit: 60,
       windowMs: 60 * 60 * 1000

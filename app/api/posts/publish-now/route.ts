@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return jsonError("Unauthorized", 401);
     }
 
-    const rateLimit = rateLimitResponse({
+    const rateLimit = await rateLimitResponse({
       key: `posts:publish-now:${user.id}`,
       limit: 20,
       windowMs: 60 * 60 * 1000

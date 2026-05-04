@@ -1,6 +1,7 @@
 "use client";
 
 import { AiMetadataDiagnostics } from "@/components/automation-diagnostics/AiMetadataDiagnostics";
+import { DiagnosticsIntroCards } from "@/components/automation-diagnostics/DiagnosticsIntroCards";
 import { useI18n } from "@/components/I18nProvider";
 import { Panel } from "@/components/shared";
 import { useAutomationDiagnostics } from "@/hooks/useAutomationDiagnostics";
@@ -48,32 +49,7 @@ export function AutomationDiagnostics() {
   return (
     <div className="space-y-6">
       <Panel className="p-6">
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {dictionary.automationDiagnostics.helpTitle}
-            </p>
-            <p className="mt-3 text-sm text-slate-600">
-              {dictionary.automationDiagnostics.helpDescription}
-            </p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {dictionary.automationDiagnostics.sectionRealtime}
-            </p>
-            <p className="mt-3 text-sm text-slate-600">
-              {dictionary.automationDiagnostics.sectionRealtimeDescription}
-            </p>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {dictionary.automationDiagnostics.sectionSafety}
-            </p>
-            <p className="mt-3 text-sm text-slate-600">
-              {dictionary.automationDiagnostics.sectionSafetyDescription}
-            </p>
-          </div>
-        </div>
+        <DiagnosticsIntroCards dictionary={dictionary.automationDiagnostics} />
       </Panel>
 
       <AiMetadataDiagnostics
